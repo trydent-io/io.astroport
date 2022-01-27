@@ -1,6 +1,5 @@
-package io.astroport.flight;
+package io.citadel.forum.member;
 
-import io.astroport.kernel.domain.UUIDAttribute;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,12 +10,12 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@UuidGenerator(name = Passenger.ID)
-public class Passenger {
+@UuidGenerator(name = Member.ID)
+public class Member {
   static final String ID = "PassengerId";
 
   @Id
-  @GeneratedValue(generator = Passenger.ID)
+  @GeneratedValue(generator = Member.ID)
   @Convert(converter = UUIDAttribute.class)
   public UUID id;
 
@@ -30,7 +29,7 @@ public class Passenger {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    final var passenger = (Passenger) o;
+    final var passenger = (Member) o;
 
     if (!id.equals(passenger.id))
       return false;

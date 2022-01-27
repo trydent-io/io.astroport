@@ -1,4 +1,4 @@
-package io.astroport;
+package io.citadel;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.vertx.core.Vertx;
