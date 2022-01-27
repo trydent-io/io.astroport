@@ -3,10 +3,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.trydent</groupId>
-  <artifactId>io.astroport</artifactId>
+  <artifactId>io.citadel</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>Astroport</name>
+  <name>Citadel</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -15,7 +15,7 @@
     <maven.compiler.target>${java.release}</maven.compiler.target>
 
     <mainClass>io.orm.MainKt</mainClass>
-    <final.name>io.orm</final.name>
+    <final.name>io.citadel</final.name>
 
     <vertx.version>4.2.4</vertx.version>
     <eclipselink.version>3.0.2</eclipselink.version>
