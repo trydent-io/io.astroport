@@ -1,5 +1,6 @@
 package io.citadel.forum.member;
 
+import io.citadel.domain.entity.Attribute;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,37 +13,13 @@ import java.util.UUID;
 @Entity
 @UuidGenerator(name = Member.ID)
 public class Member {
-  static final String ID = "PassengerId";
+  static final String ID = "MemberId";
 
   @Id
   @GeneratedValue(generator = Member.ID)
-  @Convert(converter = UUIDAttribute.class)
+  @Convert(converter = Attribute.AsUUID.class)
   public UUID id;
 
   public String firstName;
   public String lastName;
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-
-    final var passenger = (Member) o;
-
-    if (!id.equals(passenger.id))
-      return false;
-    if (!Objects.equals(firstName, passenger.firstName))
-      return false;
-    return Objects.equals(lastName, passenger.lastName);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = id.hashCode();
-    result = 31 * result + (firstName != null ? firstName.hashCode() : 0);
-    result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
-    return result;
-  }
 }

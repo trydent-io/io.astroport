@@ -1,8 +1,6 @@
 package io.citadel.forum.topic;
 
-import io.citadel.forum.topic.Attribute;
-import io.citadel.forum.topic.Name;
-import io.citadel.forum.topic.Type;
+import io.citadel.domain.entity.Attribute.AsUUID;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,13 +9,13 @@ import org.eclipse.persistence.annotations.UuidGenerator;
 
 import java.util.UUID;
 
-import static io.citadel.domain.entity.Attribute.AsUUID;
-
 @Entity
-@UuidGenerator(name = Name.TopicId)
+@UuidGenerator(name = Topic.ID)
 public class Topic implements Type {
+  public static final String ID = "TopicId";
+
   @Id
-  @GeneratedValue(generator = Name.TopicId)
+  @GeneratedValue(generator = Topic.ID)
   @Convert(converter = AsUUID.class)
   public UUID id;
 

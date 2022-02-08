@@ -16,7 +16,7 @@ public sealed interface Main {
       .disable(FAIL_ON_UNKNOWN_PROPERTIES)
       .disable(WRITE_DATES_AS_TIMESTAMPS);
 
-    vertx
+    vertx.eventBus().addInboundInterceptor()
   }
 }
 
