@@ -3,42 +3,27 @@ package io.citadel.domain.source;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Verticle;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.SqlClient;
 
 import java.util.UUID;
 
-public interface EventStore {
+public interface EventStore extends Verticle {
   Operations operations = Operations.Defaults;
   Events events = Events.Defaults;
 
   static EventStore service(SqlClient sqlClient) {
-    return new Service(new Sql(sqlClient));
+    return new Repository(new Sql(sqlClient));
   }
 
-  Future<StoredEvents> findBy(UUID id);
-  void persist(StoredEvents.Stored... events);
+  Future<EventLogs> findBy(UUID id);
+  void persist(EventLogs.Stored... events);
 
-  final class Sql implements EventStore {
-    private final SqlClient sqlClient;
+  final class Repository extends AbstractVerticle implements EventStore {
+    private final EventLogs eventLogs;
 
-    private Sql(final SqlClient sqlClient) {this.sqlClient = sqlClient;}
-
-    @Override
-    public Future<StoredEvents> findBy(final UUID id) {
-      return null;
-    }
-
-    @Override
-    public void persist(final StoredEvents.Stored... events) {
-
-    }
-  }
-
-  final class Service extends AbstractVerticle implements EventStore {
-    private final EventStore store;
-
-    public Service(final EventStore store) {this.store = store;}
+    public Repository(final EventLogs eventLogs) {this.eventLogs = eventLogs;}
 
     @Override
     public void start(final Promise<Void> start) {
@@ -53,16 +38,6 @@ public interface EventStore {
       );
 
       start.complete();
-    }
-
-    @Override
-    public Future<StoredEvents> findBy(final UUID id) {
-      return store.findBy(id);
-    }
-
-    @Override
-    public void persist(final StoredEvents.Stored... events) {
-      store.persist(events);
     }
   }
 }

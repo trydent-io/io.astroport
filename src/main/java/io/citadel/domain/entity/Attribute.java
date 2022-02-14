@@ -1,5 +1,6 @@
 package io.citadel.domain.entity;
 
+import io.vertx.core.json.JsonObject;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
@@ -51,5 +52,18 @@ public interface Attribute {
 
     @Override
     public UUID convertToEntityAttribute(final String value) { return UUID.fromString(value); }
+  }
+
+  @Converter
+  final class AsJson implements AttributeConverter<JsonObject, String> {
+    @Override
+    public String convertToDatabaseColumn(JsonObject json) {
+      return json.encodePrettily();
+    }
+
+    @Override
+    public JsonObject convertToEntityAttribute(String value) {
+      return new JsonObject(value);
+    }
   }
 }

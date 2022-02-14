@@ -3,12 +3,13 @@ package io.citadel;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Verticle;
 
-public sealed interface Citadel extends Verticle {
-  static Citadel service() {
-    return new Service();
+public sealed interface Citadel extends Verticle permits Main {
+  static Citadel domain() {
+    return new Domain();
   }
-}
+  static Citadel service() { return new Main(new Domain()); }
 
-final class Service extends AbstractVerticle implements Citadel {
-  private final Forums forums;
+  final class Domain extends AbstractVerticle implements Citadel {
+
+  }
 }
