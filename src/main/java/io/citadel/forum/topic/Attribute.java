@@ -1,6 +1,6 @@
 package io.citadel.forum.topic;
 
-import io.citadel.domain.entity.Attribute.FromString;
+import io.citadel.kernel.domain.Attribute.FromString;
 import jakarta.persistence.Converter;
 
 public interface Attribute {

@@ -1,4 +1,4 @@
-package io.citadel.media;
+package io.citadel.kernel.media;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

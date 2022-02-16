@@ -1,9 +1,6 @@
-package io.citadel.domain.source;
+package io.citadel.kernel.eventstore;
 
-import io.citadel.domain.message.Event;
-import io.citadel.domain.source.eventlog.AggregateInfo;
-import io.citadel.domain.source.eventlog.EventInfo;
-import io.citadel.domain.source.eventlog.Entry;
+import io.citadel.kernel.domain.Domain;
 import io.vertx.core.json.JsonObject;
 
 import java.time.LocalDateTime;
@@ -30,5 +27,5 @@ public sealed interface EventLog permits Entry {
     });
   }
 
-  Event asEvent();
+  Domain.Event asEvent();
 }

@@ -1,4 +1,4 @@
-package io.citadel.domain.source;
+package io.citadel.kernel.eventstore;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -11,14 +11,13 @@ import java.util.UUID;
 
 public interface EventStore extends Verticle {
   Operations operations = Operations.Defaults;
-  Events events = Events.Defaults;
 
   static EventStore service(SqlClient sqlClient) {
     return new Repository(new Sql(sqlClient));
   }
 
   Future<EventLogs> findBy(UUID id);
-  void persist(EventLogs.Stored... events);
+  void persist(EventLog... events);
 
   final class Repository extends AbstractVerticle implements EventStore {
     private final EventLogs eventLogs;

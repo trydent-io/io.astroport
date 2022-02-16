@@ -1,6 +1,6 @@
-package io.citadel.domain.source.eventlog;
+package io.citadel.kernel.eventstore;
 
-import io.citadel.domain.entity.Attribute;
+import io.citadel.kernel.domain.Attribute;
 import io.vertx.core.json.JsonObject;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;

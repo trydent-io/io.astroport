@@ -1,4 +1,4 @@
-package io.citadel.domain.entity;
+package io.citadel.kernel.domain;
 
 import io.vertx.core.json.JsonObject;
 import jakarta.persistence.AttributeConverter;

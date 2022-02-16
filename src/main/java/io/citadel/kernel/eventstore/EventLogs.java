@@ -1,4 +1,4 @@
-package io.citadel.domain.source;
+package io.citadel.kernel.eventstore;
 
 import io.vertx.core.Future;
 import org.eclipse.persistence.sessions.Session;
@@ -6,14 +6,18 @@ import org.eclipse.persistence.sessions.Session;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-public interface EventLogs {
+public sealed interface EventLogs {
   Future<Stream<EventLog>> findBy(UUID id, String aggregateName);
   Future<Void> persist(EventLog... eventLogs);
 
-  final class EclipseLink implements EventLogs {
+  static EventLogs persistence(Session session) {
+    return new Persistence(session);
+  }
+
+  final class Persistence implements EventLogs {
     private final Session session;
 
-    private EclipseLink(Session session) {
+    private Persistence(Session session) {
       this.session = session;
     }
 

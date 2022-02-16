@@ -1,18 +1,13 @@
 package io.citadel.forum.event;
 
-import io.citadel.domain.message.Command;
-import io.citadel.domain.message.Event;
-import io.vertx.core.json.JsonObject;
+import io.citadel.kernel.domain.Domain;
+import io.citadel.member.MemberID;
 
-import java.util.Optional;
+import java.time.LocalDateTime;
 
-public record Closed() implements Event {
-  public static Optional<Event> from(JsonObject json) {
-    return Optional.ofNullable(json).map(it -> new Closed());
-  }
-
+public record Closed(LocalDateTime at, MemberID by) implements Domain.Event {
   @Override
-  public Command asCommand() {
+  public Domain.Command asCommand() {
     return null;
   }
 }

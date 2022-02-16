@@ -1,4 +1,4 @@
-package io.citadel.domain.source.eventlog;
+package io.citadel.kernel.eventstore;
 
 import jakarta.persistence.Embeddable;
 

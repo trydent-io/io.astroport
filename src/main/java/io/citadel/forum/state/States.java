@@ -1,20 +1,20 @@
 package io.citadel.forum.state;
 
-import io.citadel.domain.message.Event;
 import io.citadel.forum.Forum;
-import io.citadel.forum.entity.Root;
-import io.vertx.core.eventbus.EventBus;
+import io.citadel.kernel.domain.Domain;
 
 public enum States {
   Defaults;
 
-  public Forum initial(EventBus eventBus) { return new Initial(eventBus); }
-
-  public Forum opened(EventBus eventBus, Root root) {
-    return new Opened(eventBus, root);
+  public Forum initial(Forum.ID identity) {
+    return new Forum.Aggregate(Model.of(identity));
   }
 
-  public Forum closed() { return null; }
+  public Forum opened(Model model, Domain.Event... events) {
+    return new Forum.Aggregate(model, Forum.State.Opened, events);
+  }
 
-  public Forum changed(EventBus eventBus, Event... events) {}
+  public Forum closed(Model model, Domain.Event... events) {
+    return new Forum.Aggregate(model, Forum.State.Closed, events);
+  }
 }

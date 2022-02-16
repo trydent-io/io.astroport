@@ -1,13 +1,12 @@
-package io.citadel.forum.member;
+package io.citadel.member;
 
-import io.citadel.domain.entity.Attribute;
+import io.citadel.kernel.domain.Attribute;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import org.eclipse.persistence.annotations.UuidGenerator;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Entity

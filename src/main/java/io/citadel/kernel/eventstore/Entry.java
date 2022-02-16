@@ -1,8 +1,7 @@
-package io.citadel.domain.source.eventlog;
+package io.citadel.kernel.eventstore;
 
-import io.citadel.domain.entity.Attribute;
-import io.citadel.domain.message.Event;
-import io.citadel.domain.source.EventLog;
+import io.citadel.kernel.domain.Attribute;
+import io.citadel.kernel.domain.Domain;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -40,7 +39,7 @@ public non-sealed class Entry implements EventLog {
   }
 
   @Override
-  public Event asEvent() {
-    return Event.defaults.from(event.name, event.data).orElseThrow(() -> new IllegalStateException("Can't find factory method for event %s".formatted(event.name)));
+  public Domain.Event asEvent() {
+    return Domain.Event.defaults.from(event.name, event.data).orElseThrow(() -> new IllegalStateException("Can't find factory method for event %s".formatted(event.name)));
   }
 }

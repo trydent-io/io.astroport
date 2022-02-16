@@ -1,6 +1,6 @@
 package io.citadel.forum.event;
 
-import io.citadel.domain.message.Event;
+import io.citadel.kernel.domain.Domain;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;
@@ -10,7 +10,7 @@ public enum Events {
 
   private enum Names { Opened, Closed }
 
-  public Optional<Event> from(String name, JsonObject json) {
+  public Optional<Domain.Event> from(String name, JsonObject json) {
     try {
       return switch (Names.valueOf(name)) {
         case Opened -> Opened.from(json);

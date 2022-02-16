@@ -1,6 +1,6 @@
 package io.citadel.forum;
 
-import io.citadel.domain.source.Event;
+import io.citadel.kernel.eventstore.Event;
 
 import java.util.UUID;
 

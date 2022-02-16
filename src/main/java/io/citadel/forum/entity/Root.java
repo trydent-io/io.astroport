@@ -1,7 +1,7 @@
 package io.citadel.forum.entity;
 
-import io.citadel.domain.entity.Attribute;
-import io.citadel.forum.member.Member;
+import io.citadel.kernel.domain.Attribute;
+import io.citadel.member.Member;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

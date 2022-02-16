@@ -1,6 +1,6 @@
 package io.citadel.forum.topic;
 
-import io.citadel.domain.entity.Attribute.AsUUID;
+import io.citadel.kernel.domain.Attribute.AsUUID;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
