@@ -1,4 +1,4 @@
-package io.citadel.forum.topic;
+package io.citadel.topic;
 
 import io.citadel.kernel.domain.Attribute.AsUUID;
 import jakarta.persistence.Convert;

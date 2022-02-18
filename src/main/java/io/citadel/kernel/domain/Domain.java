@@ -12,34 +12,24 @@ import java.util.function.Supplier;
 public sealed interface Domain {
   enum Namespace implements Domain {}
 
-  interface Command {
-    default Event[] asEvents() {
-      return new Event[] {asEvent()};
-    }
-
-    Event asEvent();
+  interface Command<E extends Event<?>> {
+    E asEvent();
   }
 
-  interface Event {
-    Command asCommand();
+  interface Event<C extends Command<?>> {
+    C asCommand();
 
     default EventLog asEventLog(UUID aggregateId, String aggregateName, UUID revision) {
       return EventLog.of(this.getClass().getSimpleName(), JsonObject.mapFrom(this), aggregateId, aggregateName, revision);
     }
   }
 
-  interface State<E extends Enum<E> & State<E>> {}
-
-  interface Aggregate<C extends Domain.Command, S extends State<?>, A extends Aggregate<C, S, A>> extends Iterable<Domain.Event>, Function<C, A> {
+  interface Aggregate<C extends Domain.Command<E>, E extends Domain.Event<C>, A extends Aggregate<C, E, A>> extends Iterable<E>, Function<C, A> {
     @Override
-    default Iterator<Domain.Event> iterator() { return new ArrayIterator<>(); }
+    default Iterator<E> iterator() { return new ArrayIterator<>(); }
 
     @SuppressWarnings("unchecked")
-    A flush();
-
-    default boolean is(S state) {
-      return false;
-    }
+    default A flush() { return (A) this; }
   }
 
   interface ID<T> extends Supplier<T> {}

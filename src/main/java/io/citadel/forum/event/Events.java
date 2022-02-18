@@ -12,10 +12,10 @@ public enum Events {
 
   public Optional<Domain.Event> from(String name, JsonObject json) {
     try {
-      return switch (Names.valueOf(name)) {
-        case Opened -> Opened.from(json);
-        case Closed -> Closed.from(json);
-      };
+      return Optional.of(switch (Names.valueOf(name)) {
+        case Opened -> json.mapTo(Opened.class);
+        case Closed -> json.mapTo(Closed.class);
+      });
     } catch (IllegalArgumentException e) {
       return Optional.empty();
     }

@@ -1,4 +1,4 @@
-package io.citadel.forum.state;
+package io.citadel.forum.model;
 
 import io.citadel.forum.Forum;
 import io.citadel.member.MemberID;

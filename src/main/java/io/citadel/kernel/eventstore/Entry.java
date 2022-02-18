@@ -39,7 +39,7 @@ public non-sealed class Entry implements EventLog {
   }
 
   @Override
-  public Domain.Event asEvent() {
+  public Domain.Event<?> asEvent() {
     return Domain.Event.defaults.from(event.name, event.data).orElseThrow(() -> new IllegalStateException("Can't find factory method for event %s".formatted(event.name)));
   }
 }

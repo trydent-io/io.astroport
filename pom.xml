@@ -28,6 +28,7 @@
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <exec-plugin.version>3.0.0</exec-plugin.version>
     <vertx-plugin.version>1.0.23</vertx-plugin.version>
+    <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -118,6 +119,21 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <version>${versions-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>versions</id>
+            <phase>test</phase>
+            <goals>
+              <goal>display-dependency-updates</goal>
+              <goal>display-plugin-updates</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
