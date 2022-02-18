@@ -2,20 +2,23 @@ package io.citadel.forum.state;
 
 import io.citadel.forum.Forum;
 import io.citadel.forum.model.Model;
-import io.citadel.kernel.domain.Domain;
 
 public enum States {
   Defaults;
 
   public Forum initial(Forum.ID identity) {
-    return new Identity(identity);
+    return new Initial(identity);
+  }
+
+  public Forum registered(Model model, Forum.Event event) {
+    return new Registered(model, event);
   }
 
   public Forum opened(Model model, Forum.Event event) {
     return new Opened(model, event);
   }
 
-  public Forum closed(Model model, Domain.Event... events) {
+  public Forum closed(Model model, Forum.Event... events) {
     return new Forum.Aggregate(model, Forum.State.Closed, events);
   }
 }

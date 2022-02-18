@@ -7,14 +7,14 @@ import io.citadel.forum.command.Open;
 import io.citadel.forum.event.Events;
 import io.citadel.forum.event.Opened;
 import io.citadel.forum.state.Closed;
-import io.citadel.forum.state.Identity;
+import io.citadel.forum.state.Initial;
 import io.citadel.forum.state.States;
 import io.citadel.kernel.domain.Domain;
 
 import java.util.UUID;
 import java.util.stream.Stream;
 
-public sealed interface Forum extends Domain.Aggregate<Forum.Command, Forum.Event, Forum> permits Closed, Identity, io.citadel.forum.state.Opened {
+public sealed interface Forum extends Domain.Aggregate<Forum.Command, Forum.Event, Forum> permits Closed, Initial, io.citadel.forum.state.Opened {
   String name = "Forum";
   Commands commands = Commands.Defaults;
   Events events = Events.Defaults;
@@ -28,8 +28,11 @@ public sealed interface Forum extends Domain.Aggregate<Forum.Command, Forum.Even
       .flush();
   }
 
-  sealed interface Command extends Domain.Command<Forum.Event> permits Close, Open {}
-  sealed interface Event extends Domain.Event<Forum.Command> permits Opened {}
+  sealed interface Command extends Domain.Command<Forum.Event>
+    permits Close, Open {}
+
+  sealed interface Event extends Domain.Event<Forum.Command>
+    permits Opened {}
 
   record ID(UUID get) implements Domain.ID<UUID> {}
 }

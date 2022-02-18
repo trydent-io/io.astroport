@@ -14,7 +14,7 @@ public record Model(
   MemberID openedBy,
   MemberID closedBy
 ) {
-  public static Model of(Forum.ID identify) { return new Model(identify, null, null, null, null, null, null); }
+  public static Model with(Forum.ID identify) { return new Model(identify, null, null, null, null, null, null); }
   public Model name(String name) {
     return new Model(forumID, name, description, openedAt, closedAt, openedBy, closedBy);
   }
