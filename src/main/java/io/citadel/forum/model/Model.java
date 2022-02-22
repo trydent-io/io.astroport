@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 
 public record Model(
   Forum.ID forumID,
-  String name,
-  String description,
+  Forum.Name name,
+  Forum.Description description,
   LocalDateTime openedAt,
   LocalDateTime closedAt,
   MemberID openedBy,
@@ -16,11 +16,11 @@ public record Model(
 ) {
   public static Model with(Forum.ID identify) { return new Model(identify, null, null, null, null, null, null); }
   public Model name(String name) {
-    return new Model(forumID, name, description, openedAt, closedAt, openedBy, closedBy);
+    return new Model(forumID, Forum.attributes.name(name).orElseThrow(), description, openedAt, closedAt, openedBy, closedBy);
   }
 
   public Model description(String description) {
-    return new Model(forumID, name, description, openedAt, closedAt, openedBy, closedBy);
+    return new Model(forumID, name, Forum.attributes.description(description).orElseThrow(), openedAt, closedAt, openedBy, closedBy);
   }
 
   public Model openedAt(LocalDateTime openedAt) {

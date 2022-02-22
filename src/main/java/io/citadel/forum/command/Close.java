@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 public record Close(LocalDateTime at, MemberID by) implements Forum.Command {
   @Override
-  public Domain.Event asEvent() {
+  public Forum.Event asEvent() {
     return new Closed(at, by);
   }
 }

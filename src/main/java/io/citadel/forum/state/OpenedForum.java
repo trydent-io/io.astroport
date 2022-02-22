@@ -5,20 +5,27 @@ import io.citadel.forum.model.Model;
 import io.citadel.forum.command.Close;
 import io.citadel.kernel.domain.CommandException;
 
-public final class Opened implements Forum {
-  private final Model model;
-  private final Event event;
+import java.util.List;
+import java.util.stream.Stream;
 
-  public Opened(final Model model, final Event event) {
+import static java.util.stream.Stream.concat;
+
+public final class OpenedForum implements Forum {
+  private static final String STATE = "Opened";
+
+  private final Model model;
+  private final List<Event> events;
+
+  OpenedForum(final Model model, final Event... events) {
     this.model = model;
-    this.event = event;
+    this.events = List.of(events);
   }
 
   @Override
   public Forum apply(final Command command) {
     return switch (command) {
       case Close close -> apply(close);
-      default -> throw new CommandException(command, Forum.name, "Opened");
+      default -> throw new CommandException(command, Forum.NAME, STATE);
     };
   }
 
@@ -27,7 +34,7 @@ public final class Opened implements Forum {
       model
         .closedAt(close.at())
         .closedBy(close.by()),
-      close.asEvent()
+      (Event[]) concat(events.stream(), Stream.of(close.asEvent())).toArray()
     );
   }
 }

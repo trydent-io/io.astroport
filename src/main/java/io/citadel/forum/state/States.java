@@ -11,14 +11,14 @@ public enum States {
   }
 
   public Forum registered(Model model, Forum.Event event) {
-    return new Registered(model, event);
+    return new RegisteredForum(model, event);
   }
 
-  public Forum opened(Model model, Forum.Event event) {
-    return new Opened(model, event);
+  public Forum opened(Model model, Forum.Event... event) {
+    return new OpenedForum(model, event);
   }
 
   public Forum closed(Model model, Forum.Event... events) {
-    return new Forum.Aggregate(model, Forum.State.Closed, events);
+    return new ClosedForum(model, events);
   }
 }

@@ -1,5 +1,6 @@
 package io.citadel.forum.event;
 
+import io.citadel.forum.Forum;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.json.JsonObject;
 
@@ -7,6 +8,14 @@ import java.util.Optional;
 
 public enum Events {
   Defaults;
+
+  public Forum.Event edited(final Forum.Description description) {
+    return new Edited.Description(description);
+  }
+
+  public Forum.Event edited(final Forum.Name name) {
+    return new Edited.Name(name);
+  }
 
   private enum Names { Opened, Closed }
 
