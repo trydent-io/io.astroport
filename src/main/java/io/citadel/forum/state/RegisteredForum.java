@@ -1,6 +1,7 @@
 package io.citadel.forum.state;
 
 import io.citadel.forum.Forum;
+import io.citadel.forum.command.Edit;
 import io.citadel.forum.command.EditDescription;
 import io.citadel.forum.command.EditName;
 import io.citadel.forum.command.Open;
@@ -19,8 +20,7 @@ public final class RegisteredForum implements Forum {
   @Override
   public Forum apply(final Command command) {
     return switch (command) {
-      case EditName edit -> apply(edit);
-      case EditDescription edit -> apply(edit);
+      case Edit edit -> apply(edit);
       case Open open -> apply(open);
       default -> throw new CommandException(command, Forum.NAME, getClass().getSimpleName());
     };
@@ -30,11 +30,11 @@ public final class RegisteredForum implements Forum {
     return Forum.states.opened(model, event, open.asEvent());
   }
 
-  private Forum apply(final EditDescription edit) {
-    return Forum.states.opened(model.description(edit.description()), edit.asEvent());
-  }
-
-  private Forum apply(final EditName edit) {
-    return Forum.states.opened(model.name(edit.name()), edit.asEvent());
+  private Forum apply(final Edit edit) {
+    return switch (edit) {
+      case Edit.Name it -> model.name(it.name());
+      case Edit.Description it -> model.description(it.description());
+    }
+      Forum.states.opened(model.description(edit.description()), edit.asEvent());
   }
 }
