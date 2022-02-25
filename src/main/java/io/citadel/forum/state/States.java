@@ -1,34 +1,62 @@
 package io.citadel.forum.state;
 
 import io.citadel.forum.Forum;
+import io.citadel.forum.Events;
 import io.citadel.forum.model.State;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.func.ThrowableTriFunction;
 import io.citadel.kernel.media.Array;
 
-public sealed interface States extends Forum {
+import java.util.stream.Stream;
 
-  record Initial(Forum.ID id, Domain.Version version) implements States {
+public enum States {
+  Defaults;
+
+  public Forum of(Forum.ID identity) {
+    return new States.Initial(identity, Domain.Version.zero());
+  }
+
+  public Forum from(Forum.ID identity, Domain.Version version, Forum.Event... events) {
+    return Stream.of(events).reduce(
+        Forum.states.of(identity, version),
+        (forum, event) -> switch (event) {
+          case Events.Registered registered -> forum.register(registered.name(), registered.description(), registered.at(), registered.by());
+          case Events.Opened opened -> forum.open(opened.at(), opened.by());
+          case Events.Closed closed -> forum.close(closed.at(), closed.by());
+          case Events.Edited.Name edit -> forum.edit(edit.name());
+          case Events.Edited.Description edit -> forum.edit(edit.description());
+          case Events.Reopened reopened -> forum.reopen(reopened.at(), reopened.memberID());
+        },
+        (f, f2) -> f2)
+      .flush();
+  }
+
+  public Forum of(Forum.ID identity, Domain.Version version) {
+    return new States.Initial(identity, version);
+  }
+
+
+  public record Initial(Forum.ID id, Domain.Version version) implements Forum {
     @Override
-    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) throws Throwable {
+    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) {
       return null;
     }
   }
-  record Registered(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements States {
+  public record Registered(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements Forum {
     @Override
-    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) throws Throwable {
+    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) {
       return null;
     }
   }
-  record Open(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements States {
+  public record Open(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements Forum {
     @Override
-    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) throws Throwable {
+    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) {
       return null;
     }
   }
-  record Closed(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements States {
+  public record Closed(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements Forum {
     @Override
-    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) throws Throwable {
+    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) {
       return null;
     }
   }

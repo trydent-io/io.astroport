@@ -1,6 +1,5 @@
-package io.citadel.forum.event;
+package io.citadel.forum;
 
-import io.citadel.forum.Forum;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.member.MemberID;
 import io.vertx.core.json.JsonObject;
@@ -31,6 +30,10 @@ public enum Events {
     return new Closed(at, by);
   }
 
+  public Forum.Event reopened(final LocalDateTime at, final MemberID by) {
+    return new Reopened(at, by);
+  }
+
   private enum Names { Opened, Closed }
 
   public Optional<Domain.Event> from(String name, JsonObject json) {
@@ -42,5 +45,18 @@ public enum Events {
     } catch (IllegalArgumentException e) {
       return Optional.empty();
     }
+  }
+
+  public record Closed(LocalDateTime at, MemberID by) implements Forum.Event {}
+
+  public record Opened(LocalDateTime at, MemberID by) implements Forum.Event {}
+
+  public record Registered(Forum.Name name, Forum.Description description, LocalDateTime at, MemberID by) implements Forum.Event {}
+
+  public record Reopened(LocalDateTime at, MemberID memberID) implements Forum.Event {}
+
+  public sealed static interface Edited extends Forum.Event {
+    record Name(Forum.Name name) implements Edited {}
+    record Description(Forum.Description description) implements Edited {}
   }
 }

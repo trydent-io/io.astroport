@@ -39,5 +39,4 @@ public sealed interface Editable extends Domain.Aggregate<Forum> permits Forum {
       default -> throw new IllegalStateException("Unexpected value: " + this);
     };
   }
-
 }

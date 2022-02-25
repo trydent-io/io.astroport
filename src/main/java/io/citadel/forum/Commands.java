@@ -1,4 +1,4 @@
-package io.citadel.forum.command;
+package io.citadel.forum;
 
 import io.citadel.forum.Forum;
 import io.citadel.member.MemberID;
@@ -19,4 +19,17 @@ public enum Commands {
   public Edit edit(Forum.Description description) { return new Edit.Description(description); }
 
   public Reopen reopen(LocalDateTime at, MemberID memberID) { return new Reopen(at, memberID); }
+
+  public record Close(LocalDateTime at, MemberID by) implements Forum.Command {}
+
+  public record Open(LocalDateTime at, MemberID by) implements Forum.Command {}
+
+  public record Register(String name, String description, LocalDateTime at, MemberID by) implements Forum.Command {}
+
+  public record Reopen(LocalDateTime at, MemberID memberID) implements Forum.Command {}
+
+  public sealed interface Edit extends Forum.Command {
+    record Description(Forum.Description description) implements Edit {}
+    record Name(Forum.Name name) implements Edit {}
+  }
 }

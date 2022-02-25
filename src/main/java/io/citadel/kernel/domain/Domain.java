@@ -1,13 +1,10 @@
 package io.citadel.kernel.domain;
 
 import io.citadel.kernel.domain.attribute.Serial;
-import io.citadel.kernel.eventstore.EventLog;
 import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowableTriFunction;
-import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
@@ -19,11 +16,7 @@ public sealed interface Domain {
 
   interface Command {}
 
-  interface Event {
-    default EventLog asEventLog(UUID aggregateId, String aggregateName, UUID revision) {
-      return EventLog.of(this.getClass().getSimpleName(), JsonObject.mapFrom(this), aggregateId, aggregateName, revision);
-    }
-  }
+  interface Event {}
 
   interface Aggregate<A extends Aggregate<A>> extends ThrowableFunction<ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], A>, A> {}
 

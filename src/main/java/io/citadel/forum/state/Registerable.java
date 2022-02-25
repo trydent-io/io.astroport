@@ -20,7 +20,7 @@ public sealed interface Registerable extends Domain.Aggregate<Forum> permits For
           .description(description)
           .registered(new Actioned(at, by)),
         Array.of(Forum.events.registered(name, description, at, by))
-      )
+      );
       default -> throw new IllegalStateException("Unexpected value: " + this);
     };
   }
