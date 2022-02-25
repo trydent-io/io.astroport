@@ -6,9 +6,4 @@ import io.citadel.member.MemberID;
 
 import java.time.LocalDateTime;
 
-public record Registered(String name, String description, LocalDateTime at, MemberID by) implements Forum.Event {
-  @Override
-  public Forum.Command asCommand() {
-    return new Register(name, description, at, by);
-  }
-}
+public record Registered(Forum.Name name, Forum.Description description, LocalDateTime at, MemberID by) implements Forum.Event {}

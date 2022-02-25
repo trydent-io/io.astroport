@@ -13,36 +13,43 @@ import io.citadel.forum.event.Opened;
 import io.citadel.forum.event.Registered;
 import io.citadel.forum.event.Reopened;
 import io.citadel.forum.model.Attributes;
-import io.citadel.forum.model.Model;
-import io.citadel.forum.state.ClosedForum;
-import io.citadel.forum.state.Initial;
-import io.citadel.forum.state.OpenedForum;
+import io.citadel.forum.state.Closeable;
+import io.citadel.forum.state.Editable;
+import io.citadel.forum.state.Openable;
 import io.citadel.forum.state.Registerable;
-import io.citadel.forum.state.RegisteredForum;
 import io.citadel.forum.state.States;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.func.ThrowableTriFunction;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
-public sealed interface Forum extends Registerable permits ClosedForum, Initial, OpenedForum, RegisteredForum {
-  String NAME = "Forum";
-
+public sealed interface Forum extends Registerable, Openable, Editable, Closeable permits States {
   Commands commands = Commands.Defaults;
   Events events = Events.Defaults;
-  States states = States.Defaults;
   Attributes attributes = Attributes.Defaults;
 
   static Forum of(ID identity) {
-    return new Aggregate(Model.with(identity), Domain.Version.zero(), )
+    return new States.Initial(identity, Domain.Version.zero());
   }
 
-  static Forum from(ID identity, Map<Domain.Version, Forum.Event> events) {
-    return events
-      .map(Forum.Event::asCommand)
-      .reduce(Forum.states.initial(identity), Forum::apply, (f, f2) -> f2)
+  static Forum from(ID identity, Domain.Version version, Event... events) {
+    return Stream.of(events).reduce(
+        Forum.of(identity, version),
+        (forum, event) -> switch (event) {
+          case Registered registered -> forum.register(registered.name(), registered.description(), registered.at(), registered.by());
+          case Opened opened -> forum.open(opened.at(), opened.by());
+          case Closed closed -> forum.close(closed.at(), closed.by());
+          case Edited.Name edit -> forum.edit(edit.name());
+          case Edited.Description edit -> forum.edit(edit.description());
+          case Reopened reopened -> forum.open();
+        },
+        (f, f2) -> f2)
       .flush();
+  }
+
+  static Forum of(ID identity, Domain.Version version) {
+    return new States.Initial(identity, version);
   }
 
   sealed interface Command extends Domain.Command<Forum.Event>
@@ -52,23 +59,9 @@ public sealed interface Forum extends Registerable permits ClosedForum, Initial,
     permits Closed, Edited, Opened, Registered, Reopened {}
 
   record ID(UUID value) implements Domain.ID<UUID> {}
+
   record Name(String value) implements Domain.Attribute<String> {}
+
   record Description(String value) implements Domain.Attribute<String> {}
 }
 
-final class Aggregate implements Forum {
-  private final Model model;
-  private final Domain.Version version;
-  private final Event[] events;
-
-  Aggregate(final Model model, final Domain.Version version, final Event... events) {
-    this.model = model;
-    this.version = version;
-    this.events = events;
-  }
-
-  @Override
-  public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) {
-    return apply.tryApply();
-  }
-}

@@ -1,12 +1,11 @@
 package io.citadel.kernel.domain;
 
+import io.citadel.kernel.domain.attribute.Serial;
 import io.citadel.kernel.eventstore.EventLog;
 import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowableTriFunction;
-import io.citadel.kernel.media.ArrayIterator;
 import io.vertx.core.json.JsonObject;
 
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
@@ -35,18 +34,12 @@ public sealed interface Domain {
     T value();
   }
 
-  record Version(long value) implements LongAttribute {
-    public Version {
-      if (value < 0)
-        throw new IllegalArgumentException("Version can't be less than 0");
-    }
-
-    public static Version zero() {return new Version(0);}
-    public static Optional<Version> of(long value) {
-      return Optional.of(value).filter(it -> it >= 0).map(Version::new);
+  interface Version extends LongAttribute {
+    static Domain.Version zero() {return new Serial(0);}
+    static Optional<Domain.Version> of(long value) {
+      return Optional.of(value).filter(it -> it >= 0).map(Serial::new);
     }
   }
-
   interface ID<T> extends Attribute<T> {}
 
   interface IntAttribute extends IntSupplier {
@@ -74,3 +67,4 @@ public sealed interface Domain {
     long value();
   }
 }
+

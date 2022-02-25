@@ -1,24 +1,35 @@
 package io.citadel.forum.state;
 
 import io.citadel.forum.Forum;
-import io.citadel.forum.model.Model;
+import io.citadel.forum.model.State;
+import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.func.ThrowableTriFunction;
+import io.citadel.kernel.media.Array;
 
-public enum States {
-  Defaults;
+public sealed interface States extends Forum {
 
-  public Forum initial(Forum.ID identity) {
-    return new Initial(identity);
+  record Initial(Forum.ID id, Domain.Version version) implements States {
+    @Override
+    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) throws Throwable {
+      return null;
+    }
   }
-
-  public Forum registered(Model model, Forum.Event event) {
-    return new RegisteredForum(model, event);
+  record Registered(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements States {
+    @Override
+    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) throws Throwable {
+      return null;
+    }
   }
-
-  public Forum opened(Model model, Forum.Event... event) {
-    return new OpenedForum(model, event);
+  record Open(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements States {
+    @Override
+    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) throws Throwable {
+      return null;
+    }
   }
-
-  public Forum closed(Model model, Forum.Event... events) {
-    return new ClosedForum(model, events);
+  record Closed(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements States {
+    @Override
+    public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) throws Throwable {
+      return null;
+    }
   }
 }
