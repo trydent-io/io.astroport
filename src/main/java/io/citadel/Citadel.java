@@ -1,7 +1,6 @@
 package io.citadel;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Verticle;
 
 public sealed interface Citadel {
   static Citadel domain() {
