@@ -9,6 +9,7 @@ import io.vertx.core.json.jackson.DatabindCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Driver;
 import java.time.ZoneId;
 import java.util.TimeZone;
 
@@ -22,8 +23,9 @@ public final class Main extends AbstractVerticle implements Verticle {
   private final Citadel citadel;
   private final EventStore eventStore;
 
-  public Main(Citadel citadel) {
+  public Main(Citadel citadel, EventStore eventStore) {
     this.citadel = citadel;
+    this.eventStore = eventStore;
   }
 
   @Override
@@ -36,15 +38,17 @@ public final class Main extends AbstractVerticle implements Verticle {
       .disable(WRITE_DATES_AS_TIMESTAMPS);
 
     vertx
-      .deployVerticle(eventStore);
+      .deployVerticle(eventStore.asVerticle().orElseThrow(() -> new IllegalStateException("Can't retrieve EventStore as verticle")))
+      .compose(it -> vertx.deployVerticle(citadel));
 
     start.complete();
   }
 
   static void main(String[] args) {
-    vertx()
-      .deployVerticle(new Main(Citadel.domain()))
-      .onSuccess(it -> log.info("Main has been deployed with id %s".formatted(it)))
-      .onFailure(it -> log.error("Can't deploy main", it));
+    final var vertx = vertx();
+    vertx
+      .deployVerticle(new Main(Citadel.domain(), EventStore.service(vertx, new EventStore.DatabaseConnection<>("eventstore", "postgres", "docker", "jdbc:psql://localhost", 5432, Driver.class))))
+      .onSuccess(it -> log.info("Main service has been deployed with id %s".formatted(it)))
+      .onFailure(it -> log.error("Can't deploy main service", it));
   }
 }
