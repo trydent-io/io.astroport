@@ -2,7 +2,7 @@ package io.citadel.domain.forum.state;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.Events;
-import io.citadel.domain.forum.model.State;
+import io.citadel.domain.forum.model.Model;
 import io.citadel.shared.domain.Domain;
 import io.citadel.shared.func.ThrowableTriFunction;
 import io.citadel.shared.media.Array;
@@ -27,8 +27,7 @@ public enum States {
           case Events.Edited.Description edit -> forum.edit(edit.description());
           case Events.Reopened reopened -> forum.reopen(reopened.at(), reopened.memberID());
         },
-        (f, f2) -> f2)
-      .flush();
+        (f, f2) -> f2);
   }
 
   public Forum of(Forum.ID identity, Domain.Version version) {
@@ -42,19 +41,19 @@ public enum States {
       return null;
     }
   }
-  public record Registered(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements Forum {
+  public record Registered(Forum.ID id, Domain.Version version, Model model, Array<Forum.Event> events) implements Forum {
     @Override
     public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) {
       return null;
     }
   }
-  public record Open(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements Forum {
+  public record Open(Forum.ID id, Domain.Version version, Model model, Array<Forum.Event> events) implements Forum {
     @Override
     public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) {
       return null;
     }
   }
-  public record Closed(Forum.ID id, Domain.Version version, State state, Array<Forum.Event> events) implements Forum {
+  public record Closed(Forum.ID id, Domain.Version version, Model model, Array<Forum.Event> events) implements Forum {
     @Override
     public Forum tryApply(final ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], Forum> apply) {
       return null;

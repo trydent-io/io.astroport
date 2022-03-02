@@ -1,7 +1,7 @@
 package io.citadel.domain.forum;
 
 import io.citadel.shared.domain.Domain;
-import io.citadel.domain.member.MemberID;
+import io.citadel.domain.member.Member;
 import io.vertx.core.json.JsonObject;
 
 import java.time.LocalDateTime;
@@ -18,19 +18,19 @@ public enum Events {
     return new Edited.Name(name);
   }
 
-  public Forum.Event registered(Forum.Name name, Forum.Description description, LocalDateTime at, MemberID by) {
+  public Forum.Event registered(Forum.Name name, Forum.Description description, LocalDateTime at, Member.ID by) {
     return new Registered(name, description, at, by);
   }
 
-  public Forum.Event opened(final LocalDateTime at, final MemberID by) {
+  public Forum.Event opened(final LocalDateTime at, final Member.ID by) {
     return new Opened(at, by);
   }
 
-  public Forum.Event closed(final LocalDateTime at, final MemberID by) {
+  public Forum.Event closed(final LocalDateTime at, final Member.ID by) {
     return new Closed(at, by);
   }
 
-  public Forum.Event reopened(final LocalDateTime at, final MemberID by) {
+  public Forum.Event reopened(final LocalDateTime at, final Member.ID by) {
     return new Reopened(at, by);
   }
 
@@ -47,13 +47,13 @@ public enum Events {
     }
   }
 
-  public record Closed(LocalDateTime at, MemberID by) implements Forum.Event {}
+  public record Closed(LocalDateTime at, Member.ID by) implements Forum.Event {}
 
-  public record Opened(LocalDateTime at, MemberID by) implements Forum.Event {}
+  public record Opened(LocalDateTime at, Member.ID by) implements Forum.Event {}
 
-  public record Registered(Forum.Name name, Forum.Description description, LocalDateTime at, MemberID by) implements Forum.Event {}
+  public record Registered(Forum.Name name, Forum.Description description, LocalDateTime at, Member.ID by) implements Forum.Event {}
 
-  public record Reopened(LocalDateTime at, MemberID memberID) implements Forum.Event {}
+  public record Reopened(LocalDateTime at, Member.ID memberID) implements Forum.Event {}
 
   public sealed static interface Edited extends Forum.Event {
     record Name(Forum.Name name) implements Edited {}

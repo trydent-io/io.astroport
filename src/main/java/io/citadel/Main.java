@@ -2,6 +2,7 @@ package io.citadel;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.citadel.eventstore.EventStore;
+import io.citadel.shared.db.Database;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
@@ -38,8 +39,8 @@ public final class Main extends AbstractVerticle implements Verticle {
       .disable(WRITE_DATES_AS_TIMESTAMPS);
 
     vertx
-      .deployVerticle(eventStore.asVerticle().orElseThrow(() -> new IllegalStateException("Can't retrieve EventStore as verticle")))
-      .compose(it -> vertx.deployVerticle(citadel));
+      .deployVerticle(eventStore.asVerticle())
+      .compose(it -> vertx.deployVerticle(citadel.asVerticle()));
 
     start.complete();
   }
@@ -47,7 +48,10 @@ public final class Main extends AbstractVerticle implements Verticle {
   static void main(String[] args) {
     final var vertx = vertx();
     vertx
-      .deployVerticle(new Main(Citadel.domain(), EventStore.service(vertx, new EventStore.DatabaseConnection<>("eventstore", "postgres", "docker", "jdbc:psql://localhost", 5432, Driver.class))))
+      .deployVerticle(
+        new Main(
+          Citadel.domain(),
+          EventStore.service(vertx, new Database.Info<>("eventstore", "postgres", "docker", "jdbc:psql://localhost", 5432, Driver.class))))
       .onSuccess(it -> log.info("Main service has been deployed with id %s".formatted(it)))
       .onFailure(it -> log.error("Can't deploy main service", it));
   }

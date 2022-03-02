@@ -18,7 +18,7 @@ public sealed interface Array<T> extends Iterable<T> {
 
   @SafeVarargs
   static <T> Array<T> of(T... elements) {
-    return new Type.Plain<>(elements);
+    return new Type.Pushed<>(Arrays.copyOf(elements, elements.length));
   }
 
   @SuppressWarnings("unchecked")
@@ -47,7 +47,7 @@ public sealed interface Array<T> extends Iterable<T> {
         final var someElements = some.elements();
         var copied = Arrays.copyOf(someElements, someElements.length + elements.length);
         System.arraycopy(elements, 0, copied, someElements.length, elements.length);
-        yield new Type.Plain<>(copied);
+        yield new Type.Pushed<>(copied);
       }
     };
   }
@@ -121,7 +121,7 @@ public sealed interface Array<T> extends Iterable<T> {
 
     private enum Empty implements Array<Object> {Default}
 
-    private record Plain<T>(T[] elements) implements Some<T> {}
+    private record Pushed<T>(T[] elements) implements Some<T> {}
     private record Popped<T>(T[] elements, T outer) implements Some<T> {}
   }
 

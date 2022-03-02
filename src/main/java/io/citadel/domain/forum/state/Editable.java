@@ -9,13 +9,13 @@ public sealed interface Editable extends Domain.Aggregate<Forum> permits Forum {
       case States.Registered it -> new States.Registered(
         it.id(),
         it.version(),
-        it.state().name(name),
+        it.model().name(name),
         it.events().push(Forum.events.edited(name))
       );
       case States.Open it -> new States.Open(
         it.id(),
         it.version(),
-        it.state().name(name),
+        it.model().name(name),
         it.events().push(Forum.events.edited(name))
       );
       default -> throw new IllegalStateException("Unexpected value: " + this);
@@ -27,13 +27,13 @@ public sealed interface Editable extends Domain.Aggregate<Forum> permits Forum {
       case States.Registered it -> new States.Registered(
         it.id(),
         it.version(),
-        it.state().description(description),
+        it.model().description(description),
         it.events().push(Forum.events.edited(description))
       );
       case States.Open it -> new States.Open(
         it.id(),
         it.version(),
-        it.state().description(description),
+        it.model().description(description),
         it.events().push(Forum.events.edited(description))
       );
       default -> throw new IllegalStateException("Unexpected value: " + this);

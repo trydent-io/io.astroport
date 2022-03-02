@@ -1,7 +1,5 @@
 package io.citadel.shared.func;
 
-import io.alpenglow.kernel.Maybe;
-
 import java.util.function.Function;
 
 @FunctionalInterface
@@ -11,9 +9,9 @@ public interface ThrowableFunction<T, R> extends Function<T, Maybe<R>> {
   @Override
   default Maybe<R> apply(T t) {
     try {
-      return Maybe.value(tryApply(t));
+      return Maybe.of(tryApply(t));
     } catch (Throwable e) {
-      return Maybe.error(e);
+      return Maybe.failure(e);
     }
   }
 }

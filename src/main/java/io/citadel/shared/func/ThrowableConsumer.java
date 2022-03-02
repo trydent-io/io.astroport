@@ -15,7 +15,7 @@ public interface ThrowableConsumer<A> extends Consumer<A> {
 
   void tryAccept(A a) throws Throwable;
 
-  default <T> T accepting(T $this, A a) {
+  default <T> T accept(T $this, A a) {
     accept(a);
     return $this;
   }

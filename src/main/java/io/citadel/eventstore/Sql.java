@@ -5,7 +5,6 @@ import io.vertx.core.Future;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
 
-import javax.sql.DataSource;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -13,11 +12,9 @@ import static java.util.stream.StreamSupport.stream;
 
 final class Sql implements EventStore {
   private final SqlClient client;
-  private final DataSource dataSource;
 
-  Sql(final SqlClient client, final DataSource dataSource) {
+  Sql(final SqlClient client) {
     this.client = client;
-    this.dataSource = dataSource;
   }
 
   @Override
@@ -41,10 +38,17 @@ final class Sql implements EventStore {
   @Override
   public Future<Void> persist(EventLog.AggregateInfo aggregate, EventLog.EventInfo... events) {
     final var template = """
-      with entries as (
-        select  entries -> 'event' ->> 'name' event_name,
-                entries -> 'event' ->> 'data' event_data
-        from json_array_elements(#{events}) entries
+      with events as (
+        select  es -> 'event' ->> 'name' event_name,
+                es -> 'event' ->> 'data' event_data
+        from json_array_elements(#{events}) es
+      ),
+      last_version as (
+        select  e.aggregate_version
+        from    event_logs e
+        where   aggregate_id = #{aggregateId}
+        order by e.aggregate_version desc
+        limit 1
       )
       insert into event_logs(event_name, event_data, aggregate_id, aggregate_name, aggregate_version)
       select  event_name,
@@ -52,7 +56,8 @@ final class Sql implements EventStore {
               #{aggregateId},
               #{aggregateName},
               #{aggregateVersion} + 1
-      from entries
+      from  events
+      where #{aggregateVersion} = last_version or (#{aggregateVersion} = 0 and not exists(select id from event_logs where aggregate_id = #{aggregateId}))
       returning *
       """;
     return SqlTemplate.forUpdate(client, template)

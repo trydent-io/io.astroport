@@ -1,7 +1,5 @@
 package io.citadel.shared.func;
 
-import io.alpenglow.kernel.Maybe;
-
 import java.util.function.BiFunction;
 
 @FunctionalInterface
@@ -11,9 +9,9 @@ public interface ThrowableBiFunction<A, B, R> extends BiFunction<A, B, Maybe<R>>
   @Override
   default Maybe<R> apply(A a, B b) {
     try {
-      return Maybe.value(tryApply(a, b));
+      return Maybe.of(tryApply(a, b));
     } catch (Throwable e) {
-      return Maybe.error(e);
+      return Maybe.failure(e);
     }
   }
 }

@@ -158,6 +158,68 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>0.34.1</version>
+        <executions>
+          <execution>
+            <id>stop-docker</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>stop</goal>
+              <goal>remove</goal>
+              <goal>volume-remove</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>start-docker</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>start</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <logDate>default</logDate>
+          <verbose>true</verbose>
+          <imagePullPolicy>IfNotPresent</imagePullPolicy>
+          <volumes>
+            <volume>${user.home}/sdk/docker/volume/postgres/citadel</volume>
+          </volumes>
+          <images>
+            <image>
+              <alias>citadel</alias>
+              <name>postgres</name>
+              <run>
+                <namingStrategy>none</namingStrategy>
+                <volumes>
+                  <bind>
+                    <volume>${user.home}/sdk/docker/volume/postgres/citadel:/var/lib/postgresql/data</volume>
+                  </bind>
+                </volumes>
+                <env>
+                  <POSTGRES_USER>citadel</POSTGRES_USER>
+                  <POSTGRES_PASSWORD>docker</POSTGRES_PASSWORD>
+                  <POSTGRES_DB>citadel</POSTGRES_DB>
+                </env>
+                <ports>
+                  <port>5433:5432</port>
+                </ports>
+                <wait>
+                  <time>10000</time>
+                </wait>
+                <log>
+                  <prefix>citadeldb »</prefix>
+                  <enabled>true</enabled>
+                  <color>yellow</color>
+                </log>
+              </run>
+            </image>
+          </images>
+          <watchInterval>500</watchInterval>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
