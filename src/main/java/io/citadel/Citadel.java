@@ -1,19 +1,22 @@
 package io.citadel;
 
-import io.vertx.core.AbstractVerticle;
+import io.citadel.domain.Domain;
+import io.citadel.eventstore.EventStore;
+import io.citadel.shared.sql.Database;
 import io.vertx.core.Verticle;
+import io.vertx.core.Vertx;
 
-public sealed interface Citadel {
-  static Citadel domain() {
-    return new Domain();
+import static io.vertx.core.Vertx.vertx;
+
+public sealed interface Citadel permits Service {
+  static Citadel service(Vertx vertx) {
+    return new Service(
+      EventStore.service(vertx, Database.connection("jdbc:postgresql", "localhost", 5433, "citadel", "citadel", "docker", org.postgresql.Driver.class)),
+      Domain.service()
+    );
   }
-  static Citadel service() { return new Domain(); }
 
   default Verticle asVerticle() {
-    return switch (this) { case Domain domain -> domain; };
-  }
-
-  final class Domain extends AbstractVerticle implements Citadel {
-
+    return switch (this) { case Service service -> service; };
   }
 }

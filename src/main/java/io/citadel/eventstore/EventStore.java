@@ -1,23 +1,30 @@
 package io.citadel.eventstore;
 
-import io.citadel.shared.db.Database;
+import io.citadel.shared.sql.Database;
+import io.citadel.shared.sql.Migration;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
-import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.SqlClient;
 
-import java.sql.Driver;
-import java.util.Optional;
 import java.util.stream.Stream;
 
-import static java.util.stream.StreamSupport.stream;
-
-public sealed interface EventStore permits Sql, Service {
+public sealed interface EventStore permits Client, Service {
   Operations operations = Operations.Defaults;
 
-  static <D extends Driver> EventStore service(Vertx vertx, Database.Info<D> info) {
-    return new Service(new Sql(JDBCPool.pool(vertx, info.asOptions(), new PoolOptions().setMaxSize(10))));
+  static EventStore service(Vertx vertx, Database database) {
+    return new Service(
+      Migration.eventStore(vertx, database),
+      EventStore.client(
+        PgPool.pool(vertx, database.asPgOptions(), new PoolOptions().setMaxSize(10))
+      )
+    );
+  }
+
+  static EventStore client(SqlClient client) {
+    return new Client(client);
   }
 
   default Verticle asVerticle() {

@@ -10,10 +10,10 @@ import java.util.stream.Stream;
 
 import static java.util.stream.StreamSupport.stream;
 
-final class Sql implements EventStore {
+final class Client implements EventStore {
   private final SqlClient client;
 
-  Sql(final SqlClient client) {
+  Client(final SqlClient client) {
     this.client = client;
   }
 

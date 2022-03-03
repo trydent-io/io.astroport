@@ -1,5 +1,6 @@
 package io.citadel.shared.func;
 
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 @SuppressWarnings({"unchecked"})
@@ -19,7 +20,7 @@ public sealed interface Maybe<T> {
   default  <R> Maybe<R> map(ThrowableFunction<? super T, ? extends R> function) {
     return switch (this) {
       case Type.Empty ignored -> empty();
-      case Type.Right<T> right -> function.apply(right.value).map(it -> it);
+      case Type.Right<T> right -> (Maybe<R>) function.apply(right.value);
       case Type.Left<T> left -> new Type.Left<>(left.throwable);
     };
   }

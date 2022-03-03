@@ -15,7 +15,7 @@
     <maven.compiler.target>${java.release}</maven.compiler.target>
 
     <mainClass>io.citadel.Main</mainClass>
-    <final.name>io.citadel</final.name>
+    <final.name>citadel</final.name>
 
     <vertx.version>4.2.4</vertx.version>
     <eclipselink.version>3.0.2</eclipselink.version>
@@ -30,6 +30,8 @@
     <vertx-plugin.version>1.0.23</vertx-plugin.version>
     <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
     <flyway.version>8.5.0</flyway.version>
+    <hikaricp.version>5.0.1</hikaricp.version>
+    <postgresql.version>42.3.2</postgresql.version>
   </properties>
 
   <dependencyManagement>
@@ -45,12 +47,22 @@
   <dependencies>
     <dependency>
       <groupId>io.vertx</groupId>
+      <artifactId>vertx-config</artifactId>
+      <version>${vertx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
       <artifactId>vertx-shell</artifactId>
       <version>${vertx.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-jdbc-client</artifactId>
+      <version>${vertx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-pg-client</artifactId>
       <version>${vertx.version}</version>
     </dependency>
     <dependency>
@@ -62,6 +74,16 @@
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j18-impl</artifactId>
       <version>${log4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>${hikaricp.version}</version>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
@@ -164,6 +186,13 @@
         <version>0.34.1</version>
         <executions>
           <execution>
+            <id>start-docker</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>start</goal>
+            </goals>
+          </execution>
+          <execution>
             <id>stop-docker</id>
             <phase>clean</phase>
             <goals>
@@ -172,20 +201,22 @@
               <goal>volume-remove</goal>
             </goals>
           </execution>
-          <execution>
-            <id>start-docker</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>start</goal>
-            </goals>
-          </execution>
         </executions>
         <configuration>
           <logDate>default</logDate>
           <verbose>true</verbose>
           <imagePullPolicy>IfNotPresent</imagePullPolicy>
+          <watchInterval>500</watchInterval>
           <volumes>
-            <volume>${user.home}/sdk/docker/volume/postgres/citadel</volume>
+            <volume>
+              <name>temp-volume</name>
+              <driver>local</driver>
+              <opts>
+                <type>tmpfs</type>
+                <device>tmpfs</device>
+                <o>size=100m,uid=1000</o>
+              </opts>
+            </volume>
           </volumes>
           <images>
             <image>
@@ -195,7 +226,7 @@
                 <namingStrategy>none</namingStrategy>
                 <volumes>
                   <bind>
-                    <volume>${user.home}/sdk/docker/volume/postgres/citadel:/var/lib/postgresql/data</volume>
+                    <volume>${user.home}/sdk/docker/volume/citadel:/var/lib/postgresql/data</volume>
                   </bind>
                 </volumes>
                 <env>
@@ -210,14 +241,13 @@
                   <time>10000</time>
                 </wait>
                 <log>
-                  <prefix>citadeldb »</prefix>
+                  <prefix>citadeldb » .</prefix>
                   <enabled>true</enabled>
                   <color>yellow</color>
                 </log>
               </run>
             </image>
           </images>
-          <watchInterval>500</watchInterval>
         </configuration>
       </plugin>
     </plugins>
