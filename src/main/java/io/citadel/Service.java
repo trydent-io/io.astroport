@@ -1,7 +1,7 @@
 package io.citadel;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.citadel.domain.Domain;
+import io.citadel.context.Context;
 import io.citadel.eventstore.EventStore;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -18,11 +18,11 @@ import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS
 public final class Service extends AbstractVerticle implements Citadel {
   private static final Logger log = LoggerFactory.getLogger(Citadel.class);
 
-  private final Domain domain;
+  private final Context context;
   private final EventStore eventStore;
 
-  Service(EventStore eventStore, Domain domain) {
-    this.domain = domain;
+  Service(EventStore eventStore, Context context) {
+    this.context = context;
     this.eventStore = eventStore;
   }
 
@@ -37,7 +37,7 @@ public final class Service extends AbstractVerticle implements Citadel {
 
     vertx
       .deployVerticle(eventStore.asVerticle())
-      .compose(it -> vertx.deployVerticle(domain.asVerticle()))
+      .compose(it -> vertx.deployVerticle(context.asVerticle()))
       .<Void>mapEmpty()
       .onSuccess(start::complete)
       .onFailure(start::fail);

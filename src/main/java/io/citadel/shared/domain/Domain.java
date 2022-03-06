@@ -14,11 +14,13 @@ import java.util.function.Supplier;
 public sealed interface Domain {
   enum Namespace implements Domain {}
 
+  interface State {}
   interface Command {}
-
   interface Event {}
 
-  interface Aggregate<A extends Aggregate<A>> extends ThrowableFunction<ThrowableTriFunction<Domain.ID<?>, Domain.Version, Domain.Event[], A>, A> {}
+  interface Aggregate<A extends Aggregate<A>> {
+    boolean is()
+  }
 
   interface Attribute<T> extends Supplier<T> {
 
@@ -37,26 +39,21 @@ public sealed interface Domain {
 
   interface IntAttribute extends IntSupplier {
     default int getAsInt() {return value();}
-
     int value();
   }
 
   interface DoubleAttribute extends DoubleSupplier {
     default double getAsDouble() {return value();}
-
     double value();
   }
 
   interface BooleanAttribute extends BooleanSupplier {
     default boolean getAsBoolean() {return value();}
-
     boolean value();
-
   }
 
   interface LongAttribute extends LongSupplier {
     default long getAsLong() {return value();}
-
     long value();
   }
 }

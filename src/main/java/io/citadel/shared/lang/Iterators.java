@@ -1,4 +1,4 @@
-package io.citadel.shared.media;
+package io.citadel.shared.lang;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;

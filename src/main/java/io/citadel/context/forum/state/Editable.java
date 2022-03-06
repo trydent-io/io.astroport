@@ -1,18 +1,21 @@
-package io.citadel.domain.forum.state;
+package io.citadel.context.forum.state;
 
-import io.citadel.domain.forum.Forum;
+import io.citadel.context.forum.Forum;
 import io.citadel.shared.domain.Domain;
 
-public sealed interface Editable extends Domain.Aggregate<Forum> permits Forum {
+import static io.citadel.context.forum.Forum.State.Open;
+import static io.citadel.context.forum.Forum.State.Registered;
+
+public sealed interface Editable permits Forum {
   default Forum edit(Forum.Name name) {
     return switch (this) {
-      case States.Registered it -> new States.Registered(
+      case States.Aggregate it && it.is(Registered) -> Forum.states.registered(
         it.id(),
         it.version(),
         it.model().name(name),
         it.events().push(Forum.events.edited(name))
       );
-      case States.Open it -> new States.Open(
+      case States.Aggregate it && it.is(Open) -> Forum.states.open(
         it.id(),
         it.version(),
         it.model().name(name),

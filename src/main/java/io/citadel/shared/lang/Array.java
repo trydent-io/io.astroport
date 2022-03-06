@@ -1,4 +1,4 @@
-package io.citadel.shared.media;
+package io.citadel.shared.lang;
 
 import io.vertx.core.json.JsonArray;
 

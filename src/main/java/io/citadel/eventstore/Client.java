@@ -1,6 +1,6 @@
 package io.citadel.eventstore;
 
-import io.citadel.shared.media.Array;
+import io.citadel.shared.lang.Array;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
@@ -20,7 +20,7 @@ final class Client implements EventStore {
   @Override
   public Future<Stream<EventLog>> findBy(final String aggregateId, final String aggregateName) {
     return SqlTemplate.forQuery(client, """
-        select  id, event_name, event_data, aggregate_id, aggregate_name, aggregate_version, persisted_at 
+        select  id, event_name, event_data, aggregate_id, aggregate_name, aggregate_version, persisted_at
         from    event_logs
         where   aggregate_id = #{aggregateId} and aggregate_name = #{aggregateName}
         """)

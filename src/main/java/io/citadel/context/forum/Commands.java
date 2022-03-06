@@ -1,6 +1,6 @@
-package io.citadel.domain.forum;
+package io.citadel.context.forum;
 
-import io.citadel.domain.member.Member;
+import io.citadel.context.member.Member;
 
 import java.time.LocalDateTime;
 

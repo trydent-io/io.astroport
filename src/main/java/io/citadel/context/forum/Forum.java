@@ -1,20 +1,22 @@
-package io.citadel.domain.forum;
+package io.citadel.context.forum;
 
-import io.citadel.domain.forum.model.Attributes;
-import io.citadel.domain.forum.state.Closeable;
-import io.citadel.domain.forum.state.Editable;
-import io.citadel.domain.forum.state.Openable;
-import io.citadel.domain.forum.state.Registerable;
-import io.citadel.domain.forum.state.States;
+import io.citadel.context.forum.model.Attributes;
+import io.citadel.context.forum.state.Closeable;
+import io.citadel.context.forum.state.Editable;
+import io.citadel.context.forum.state.Openable;
+import io.citadel.context.forum.state.Registerable;
+import io.citadel.context.forum.state.States;
 import io.citadel.shared.domain.Domain;
 
 import java.util.UUID;
 
-public sealed interface Forum extends Registerable, Openable, Editable, Closeable permits States.Closed, States.Initial, States.Open, States.Registered {
+public sealed interface Forum extends Registerable, Openable, Editable, Closeable permits States.Aggregate {
   Commands commands = Commands.Defaults;
   Events events = Events.Defaults;
   Attributes attributes = Attributes.Defaults;
   States states = States.Defaults;
+
+  enum State {Initial, Registered, Open, Closed}
 
   sealed interface Command extends Domain.Command permits Commands.Close, Commands.Edit, Commands.Open, Commands.Register, Commands.Reopen {}
 
@@ -23,5 +25,7 @@ public sealed interface Forum extends Registerable, Openable, Editable, Closeabl
   record ID(UUID value) implements Domain.ID<UUID> {}
   record Name(String value) implements Domain.Attribute<String> {}
   record Description(String value) implements Domain.Attribute<String> {}
+
+  boolean is(State state);
 }
 

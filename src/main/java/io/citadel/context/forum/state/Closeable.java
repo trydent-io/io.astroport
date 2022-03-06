@@ -1,13 +1,13 @@
-package io.citadel.domain.forum.state;
+package io.citadel.context.forum.state;
 
-import io.citadel.domain.forum.Actioned;
-import io.citadel.domain.forum.Forum;
+import io.citadel.context.forum.Actioned;
+import io.citadel.context.forum.Forum;
 import io.citadel.shared.domain.Domain;
-import io.citadel.domain.member.Member;
+import io.citadel.context.member.Member;
 
 import java.time.LocalDateTime;
 
-public sealed interface Closeable extends Domain.Aggregate<Forum> permits Forum {
+public sealed interface Closeable permits Forum {
   default Forum close(LocalDateTime at, Member.ID by) {
     return switch (this) {
       case States.Open it -> new States.Closed(

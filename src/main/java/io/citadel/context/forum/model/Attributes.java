@@ -1,6 +1,6 @@
-package io.citadel.domain.forum.model;
+package io.citadel.context.forum.model;
 
-import io.citadel.domain.forum.Forum;
+import io.citadel.context.forum.Forum;
 
 import java.util.Optional;
 import java.util.UUID;
