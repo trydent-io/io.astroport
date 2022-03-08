@@ -5,6 +5,7 @@ import io.citadel.context.forum.Events;
 import io.citadel.context.forum.model.Model;
 import io.citadel.shared.domain.Domain;
 import io.citadel.shared.lang.Array;
+import io.vertx.core.eventbus.EventBus;
 
 import java.util.stream.Stream;
 
@@ -17,6 +18,10 @@ public enum States {
 
   public Forum open(final Forum.ID id, final Domain.Version version, final Model model, final Array<Forum.Event> events) {
     return new Aggregate(id, version, model, Forum.State.Open, events);
+  }
+
+  public Forum from(Forum.ID id, EventBus eventBus) {
+    return new EventSourced(id, eventBus);
   }
 
   public Forum of(Forum.ID identity) {
@@ -48,6 +53,13 @@ public enum States {
     @Override
     public boolean is(final State state) {
       return this.state.equals(state);
+    }
+  }
+
+  public record EventSourced(Forum.ID id, EventBus eventBus) implements Forum {
+    @Override
+    public boolean is(State state) {
+      return false;
     }
   }
 }

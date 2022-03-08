@@ -1,8 +1,7 @@
 package io.citadel.shared.domain;
 
 import io.citadel.shared.domain.attribute.Serial;
-import io.citadel.shared.func.ThrowableFunction;
-import io.citadel.shared.func.ThrowableTriFunction;
+import io.vertx.core.Future;
 
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -14,12 +13,15 @@ import java.util.function.Supplier;
 public sealed interface Domain {
   enum Namespace implements Domain {}
 
-  interface State {}
+  interface State<E extends Enum<E>> {}
   interface Command {}
   interface Event {}
 
-  interface Aggregate<A extends Aggregate<A>> {
-    boolean is()
+  interface Aggregate<S extends State<?>> {
+    boolean is(S state);
+  }
+  interface Repository<I extends ID<?>, A extends Aggregate<?>> {
+    A load(I id);
   }
 
   interface Attribute<T> extends Supplier<T> {
@@ -40,21 +42,22 @@ public sealed interface Domain {
   interface IntAttribute extends IntSupplier {
     default int getAsInt() {return value();}
     int value();
-  }
 
+  }
   interface DoubleAttribute extends DoubleSupplier {
     default double getAsDouble() {return value();}
     double value();
-  }
 
+  }
   interface BooleanAttribute extends BooleanSupplier {
     default boolean getAsBoolean() {return value();}
     boolean value();
-  }
 
+  }
   interface LongAttribute extends LongSupplier {
     default long getAsLong() {return value();}
     long value();
+
   }
 }
 

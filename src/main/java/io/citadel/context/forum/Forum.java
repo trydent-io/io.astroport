@@ -10,13 +10,13 @@ import io.citadel.shared.domain.Domain;
 
 import java.util.UUID;
 
-public sealed interface Forum extends Registerable, Openable, Editable, Closeable permits States.Aggregate {
+public sealed interface Forum extends Registerable, Openable, Editable, Closeable permits States.Aggregate, States.EventSourced {
   Commands commands = Commands.Defaults;
   Events events = Events.Defaults;
   Attributes attributes = Attributes.Defaults;
   States states = States.Defaults;
 
-  enum State {Initial, Registered, Open, Closed}
+  enum State implements Domain.State<State> {Initial, Registered, Open, Closed}
 
   sealed interface Command extends Domain.Command permits Commands.Close, Commands.Edit, Commands.Open, Commands.Register, Commands.Reopen {}
 
@@ -25,7 +25,5 @@ public sealed interface Forum extends Registerable, Openable, Editable, Closeabl
   record ID(UUID value) implements Domain.ID<UUID> {}
   record Name(String value) implements Domain.Attribute<String> {}
   record Description(String value) implements Domain.Attribute<String> {}
-
-  boolean is(State state);
 }
 

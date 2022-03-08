@@ -1,7 +1,7 @@
 package io.citadel.context.forum;
 
 import io.citadel.context.member.Member;
-import io.citadel.shared.domain.Domain;
+import io.citadel.eventstore.EventLog;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;
@@ -33,9 +33,13 @@ public enum Events {
     return new Reopened(by);
   }
 
+  public Forum.Event fromInfo(EventLog.EventInfo info) {
+    return from(info.name(), info.data()).orElseThrow();
+  }
+
   private enum Names { Opened, Closed, Registered, Reopened }
 
-  public Optional<Domain.Event> from(String name, JsonObject json) {
+  public Optional<Forum.Event> from(String name, JsonObject json) {
     try {
       return Optional.of(switch (Names.valueOf(name)) {
         case Opened -> json.mapTo(Opened.class);

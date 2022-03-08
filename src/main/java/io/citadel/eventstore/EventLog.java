@@ -1,16 +1,17 @@
 package io.citadel.eventstore;
 
 import io.citadel.shared.domain.Domain;
+import io.citadel.shared.func.Maybe;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 public record EventLog(UUID id, AggregateInfo aggregate, EventInfo event, LocalDateTime persistedAt, String persistedBy) {
-  record AggregateInfo(String id, String name, Domain.Version version) {}
-
-  record EventInfo(String name, JsonObject data) {}
+  public record AggregateInfo(String id, String name, Domain.Version version) {}
+  public record EventInfo(String name, JsonObject data) {}
 
   record Entry(EventInfo event, AggregateInfo aggregate) {}
 
@@ -27,7 +28,7 @@ public record EventLog(UUID id, AggregateInfo aggregate, EventInfo event, LocalD
         row.getJsonObject("event_data")
       ),
       row.getLocalDateTime("persisted_at"),
-      row.getString("persisted_by")
+      Maybe.of(row.getString("persisted_by")).or("none")
     );
   }
 }
