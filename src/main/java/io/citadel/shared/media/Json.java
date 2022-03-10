@@ -4,6 +4,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
+import java.util.function.IntFunction;
+import java.util.function.IntSupplier;
+import java.util.stream.Stream;
 
 public sealed interface Json {
   enum Namespace implements Json {}
@@ -26,5 +29,9 @@ public sealed interface Json {
 
   static JsonArray array(JsonObject... jsons) {
     return new JsonArray(List.of(jsons));
+  }
+
+  static <T> JsonArray array(Stream<T> items) {
+    return Json.array(items.map(Json::from).toArray(JsonObject[]::new));
   }
 }

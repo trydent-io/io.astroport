@@ -1,7 +1,7 @@
 package io.citadel.context.forum;
 
 import io.citadel.context.member.Member;
-import io.citadel.eventstore.EventLog;
+import io.citadel.eventstore.Entries;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;
@@ -33,8 +33,8 @@ public enum Events {
     return new Reopened(by);
   }
 
-  public Forum.Event fromInfo(EventLog.EventInfo info) {
-    return from(info.name(), info.data()).orElseThrow();
+  public Forum.Event fromFound(Entries.Event event) {
+    return from(event.name(), event.data()).orElseThrow();
   }
 
   private enum Names { Opened, Closed, Registered, Reopened }
@@ -58,9 +58,9 @@ public enum Events {
 
   public record Registered(Forum.Name name, Forum.Description description, Member.ID by) implements Forum.Event {}
 
-  public record Reopened(Member.ID memberID) implements Forum.Event {}
+  public record Reopened(Member.ID by) implements Forum.Event {}
 
-  public sealed static interface Edited extends Forum.Event {
+  public sealed interface Edited extends Forum.Event {
     record Name(Forum.Name name) implements Edited {}
     record Description(Forum.Description description) implements Edited {}
   }

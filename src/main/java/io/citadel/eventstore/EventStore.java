@@ -1,31 +1,18 @@
 package io.citadel.eventstore;
 
-import io.citadel.shared.sql.Database;
-import io.citadel.shared.sql.Migration;
+import io.citadel.eventstore.Entries.Aggregate;
+import io.citadel.eventstore.Entries.Event;
+import io.citadel.eventstore.Entries.Entry;
+import io.citadel.eventstore.Operations.FoundEvents;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
-import io.vertx.core.Vertx;
-import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.SqlClient;
 
 import java.util.stream.Stream;
 
-public sealed interface EventStore permits Client, Service {
+public sealed interface EventStore permits Client, Forward, Service {
   Operations operations = Operations.Defaults;
-
-  static EventStore service(Vertx vertx, Database database) {
-    return new Service(
-      Migration.eventStore(vertx, database),
-      EventStore.client(
-        PgPool.pool(vertx, database.asPgOptions(), new PoolOptions().setMaxSize(10))
-      )
-    );
-  }
-
-  static EventStore client(SqlClient client) {
-    return new Client(client);
-  }
+  Defaults defaults = Defaults.Companions;
+  Entries entries = Entries.Defaults;
 
   default Verticle asVerticle() {
     return switch (this) {
@@ -33,7 +20,6 @@ public sealed interface EventStore permits Client, Service {
       default -> null;
     };
   }
-
-  Future<Stream<EventLog>> findBy(String aggregateId, String aggregateName);
-  Future<Void> persist(EventLog.AggregateInfo aggregate, EventLog.EventInfo... events);
+  Future<FoundEvents> findEventsBy(Aggregate aggregate);
+  Future<Stream<Entry>> persist(Aggregate aggregate, Stream<Event> events);
 }

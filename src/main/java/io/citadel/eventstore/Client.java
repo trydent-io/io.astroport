@@ -1,6 +1,10 @@
 package io.citadel.eventstore;
 
-import io.citadel.shared.lang.Array;
+import io.citadel.eventstore.Entries.Aggregate;
+import io.citadel.eventstore.Entries.Event;
+import io.citadel.eventstore.Entries.Entry;
+import io.citadel.eventstore.Operations.FoundEvents;
+import io.citadel.shared.media.Json;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
@@ -13,12 +17,14 @@ import static java.util.stream.StreamSupport.stream;
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
 record Client(SqlClient client) implements EventStore {
   @Override
-  public Future<Stream<EventLog>> findBy(final String aggregateId, final String aggregateName) {
+  public Future<FoundEvents> findEventsBy(final Aggregate aggregate) {
     return SqlTemplate.forQuery(client, """
         with aggregate as (
           select  aggregate_version as version
           from    event_logs
-          where   aggregate_id = #{aggregateId} and aggregate_name = #{aggregateName}
+          where   aggregate_id = #{aggregateId}
+            and   aggregate_name = #{aggregateName}
+            and   aggregate_version <= #{aggregateVersion}
           order by aggregate_version desc
           limit 1
         )
@@ -26,19 +32,29 @@ record Client(SqlClient client) implements EventStore {
         from    event_logs
         where   aggregate_id = #{aggregateId} and aggregate_name = #{aggregateName}
         """)
-      .mapTo(EventLog::fromRow)
+      .mapTo(EventStore.entries::storedEvent)
       .execute(
         Map.of(
-          "aggregateId", aggregateId,
-          "aggregateName", aggregateName
+          "aggregateId", aggregate.id(),
+          "aggregateName", aggregate.name(),
+          "aggregateVersion", aggregate.version()
         )
       )
-      .map(rows -> stream(rows.spliterator(), false));
+      .map(rows -> stream(rows.spliterator(), false))
+      .map(entries -> entries
+        .findFirst()
+        .map(stored ->
+          new FoundEvents(
+            stored.aggregate().version(),
+            entries.map(Entry::event)
+          )
+        )
+        .orElseGet(() -> new FoundEvents(0, Stream.empty()))
+      );
   }
 
-  @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
   @Override
-  public Future<Void> persist(EventLog.AggregateInfo aggregate, EventLog.EventInfo... events) {
+  public Future<Stream<Entry>> persist(Aggregate aggregate, Stream<Event> events) {
     final var template = """
       with events as (
         select  es -> 'event' ->> 'name' event_name,
@@ -49,6 +65,7 @@ record Client(SqlClient client) implements EventStore {
         select  e.aggregate_version
         from    event_logs e
         where   aggregate_id = #{aggregateId}
+          and   aggregate_name = #{aggregateName}
         order by e.aggregate_version desc
         limit 1
       )
@@ -63,11 +80,15 @@ record Client(SqlClient client) implements EventStore {
       returning *
       """;
     return SqlTemplate.forUpdate(client, template)
+      .mapTo(EventStore.entries::storedEvent)
       .execute(
         Map.of(
-          "events", Array.of(events).asJsonArray()
+          "aggregateId", aggregate.id(),
+          "aggregateName", aggregate.name(),
+          "aggregateVersion", aggregate.version(),
+          "events", Json.array(events)
         )
       )
-      .mapEmpty();
+      .map(it -> stream(it.spliterator(), false));
   }
 }

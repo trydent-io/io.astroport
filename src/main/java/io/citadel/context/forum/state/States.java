@@ -2,8 +2,7 @@ package io.citadel.context.forum.state;
 
 import io.citadel.context.forum.Forum;
 import io.citadel.context.forum.Events;
-import io.citadel.context.forum.model.Model;
-import io.citadel.shared.domain.Domain;
+import io.citadel.shared.context.Domain;
 import io.citadel.shared.lang.Array;
 import io.vertx.core.eventbus.EventBus;
 
@@ -12,12 +11,16 @@ import java.util.stream.Stream;
 public enum States {
   Defaults;
 
-  public Forum registered(final Forum.ID id, final Domain.Version version, final Model model, final Array<Forum.Event> events) {
+  public Forum registered(final Forum.ID id, final Domain.Version version, final Forum.Model model, final Array<Forum.Event> events) {
     return new Aggregate(id, version, model, Forum.State.Registered, events);
   }
 
-  public Forum open(final Forum.ID id, final Domain.Version version, final Model model, final Array<Forum.Event> events) {
+  public Forum open(final Forum.ID id, final Domain.Version version, final Forum.Model model, final Array<Forum.Event> events) {
     return new Aggregate(id, version, model, Forum.State.Open, events);
+  }
+
+  public Forum close(final Forum.ID id, final Domain.Version version, final Forum.Model model, final Array<Forum.Event> events) {
+    return  new Aggregate(id, version, model, Forum.State.Closed, events);
   }
 
   public Forum from(Forum.ID id, EventBus eventBus) {
@@ -37,7 +40,7 @@ public enum States {
           case Events.Closed closed -> forum.close(closed.by());
           case Events.Edited.Name edit -> forum.edit(edit.name());
           case Events.Edited.Description edit -> forum.edit(edit.description());
-          case Events.Reopened reopened -> forum.reopen();
+          case Events.Reopened reopened -> forum.reopen(reopened.by());
         },
         (f, __) -> f);
   }

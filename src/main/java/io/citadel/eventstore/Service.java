@@ -1,12 +1,19 @@
 package io.citadel.eventstore;
 
+import io.citadel.eventstore.Entries.Aggregate;
+import io.citadel.eventstore.Entries.Event;
+import io.citadel.eventstore.Entries.Entry;
+import io.citadel.eventstore.Operations.FindBy;
+import io.citadel.eventstore.Operations.Persist;
 import io.citadel.shared.sql.Migration;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.json.JsonObject;
 
 import java.util.stream.Stream;
+
+import static io.citadel.eventstore.Operations.FIND_BY_AGGREGATE;
+import static io.citadel.eventstore.Operations.PERSIST_AGGREGATE_EVENTS;
 
 final class Service extends AbstractVerticle implements EventStore {
   private final Migration migration;
@@ -26,32 +33,27 @@ final class Service extends AbstractVerticle implements EventStore {
   }
 
   private Void operations(Void unused) {
-    vertx.eventBus().<String>localConsumer(operations.FIND_BY, message ->
-      findBy(message.body(), message.headers().get("aggregateName"))
+    vertx.eventBus().<FindBy>localConsumer(FIND_BY_AGGREGATE, message ->
+      findEventsBy(message.body().aggregate())
         .onSuccess(message::reply)
         .onFailure(it -> message.fail(500, it.getMessage()))
     );
 
-    vertx.eventBus().<JsonObject>localConsumer(operations.PERSIST, message ->
-      persist(
-        message.body().getJsonObject("aggregate").mapTo(EventLog.AggregateInfo.class),
-        message.body().getJsonArray("events")
-          .stream()
-          .map(it -> (JsonObject) it)
-          .map(it -> it.mapTo(EventLog.EventInfo.class))
-          .toArray(EventLog.EventInfo[]::new)
-      )
+    vertx.eventBus().<Persist>localConsumer(PERSIST_AGGREGATE_EVENTS, message ->
+      persist(message.body().aggregate(), message.body().events())
+        .onSuccess(message::reply)
+        .onFailure(it -> message.fail(500, it.getMessage()))
     );
     return null;
   }
 
   @Override
-  public Future<Stream<EventLog>> findBy(final String aggregateId, final String aggregateName) {
-    return eventStore.findBy(aggregateId, aggregateName);
+  public Future<Operations.FoundEvents> findEventsBy(final Aggregate aggregate) {
+    return eventStore.findEventsBy(aggregate);
   }
 
   @Override
-  public Future<Void> persist(final EventLog.AggregateInfo aggregate, final EventLog.EventInfo... events) {
+  public Future<Stream<Entry>> persist(final Aggregate aggregate, final Stream<Event> events) {
     return eventStore.persist(aggregate, events);
   }
 }

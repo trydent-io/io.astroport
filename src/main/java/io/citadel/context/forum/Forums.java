@@ -1,40 +1,42 @@
 package io.citadel.context.forum;
 
-import io.citadel.eventstore.EventLog;
+import io.citadel.eventstore.Entries;
 import io.citadel.eventstore.EventStore;
-import io.citadel.shared.domain.Domain;
-import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.eventbus.Message;
+import io.citadel.eventstore.Operations;
+import io.citadel.shared.context.Domain;
+import io.vertx.core.Future;
 
-import java.util.stream.Stream;
-
-import static io.citadel.context.forum.Forums.Type.Grouped.grouped;
-
-
-public sealed interface Forums extends Domain.Repository<Forum.ID, Forum> {
-  static Forums from(EventBus eventBus) {
-    return new Type.EventSourced(eventBus);
+public sealed interface Forums extends Domain.Repository<Forum, Forum.ID, Forum.Model> {
+  static Forums stored(EventStore eventStore) {
+    return new Type.Stored(eventStore);
   }
 
-  enum Type {;
+  enum Type {
+    ;
 
-    private record Grouped(Domain.Version version, Stream<Forum.Event> events) {
-      static Grouped grouped(EventLog.AggregateInfo aggregate, Stream<EventLog.EventInfo> events) {
-        return new Grouped(aggregate.version(), events.map(Forum.events::fromInfo));
-      }
-    }
-
-    private record EventSourced(EventBus eventBus) implements Forums {
+    private record Stored(EventStore eventStore) implements Forums {
       @Override
-      public Forum load(Forum.ID id) {
-        return eventBus.<Stream<EventLog>>request(EventStore.operations.FIND_BY, id.value().toString())
-          .map(Message::body)
-          .map(eventLogs -> eventLogs
-            .findFirst()
-            .map(it -> grouped(it.aggregate(), eventLogs.map(EventLog::event)))
-            .orElseThrow()
-          )
-          .map(it -> Forum.states.from());
+      public Future<Forum> load(final Forum.ID id) {
+        return eventStore.findEventsBy(new Entries.Aggregate(id.value().toString(), "forum"))
+          .map(found -> Forum.states. hydrate(found)
+          ;
+      }
+
+      private Forum.Model hydrate(final Operations.FoundEvents found) {
+        return found.events()
+          .map(Forum.events::fromFound)
+          .reduce(
+            new Forum.Model(),
+            (model, event) -> switch (event) {
+              case Events.Registered registered -> model.registered(registered.by());
+              case Events.Reopened reopened -> model.reopened(reopened.by());
+              case Events.Closed closed -> model.closed(closed.by());
+              case Events.Edited.Name name -> model.name(name.name());
+              case Events.Edited.Description description -> model.description(description.description());
+              case Events.Opened opened -> model.opened(opened.by());
+            },
+            (f, f2) -> f
+          );
       }
     }
   }

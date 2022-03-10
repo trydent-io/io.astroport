@@ -11,7 +11,18 @@ import static io.vertx.core.Vertx.vertx;
 public sealed interface Citadel permits Service {
   static Citadel service(Vertx vertx) {
     return new Service(
-      EventStore.service(vertx, Database.connection("jdbc:postgresql", "localhost", 5433, "citadel", "citadel", "docker", org.postgresql.Driver.class)),
+      EventStore.service(
+        vertx,
+        Database.connection(
+          "jdbc:postgresql",
+          "localhost",
+          5433,
+          "citadel",
+          "citadel",
+          "docker",
+          org.postgresql.Driver.class
+        )
+      ),
       Context.service()
     );
   }

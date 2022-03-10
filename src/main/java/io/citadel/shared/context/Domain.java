@@ -1,6 +1,8 @@
-package io.citadel.shared.domain;
+package io.citadel.shared.context;
 
-import io.citadel.shared.domain.attribute.Serial;
+import io.citadel.eventstore.Entries;
+import io.citadel.shared.context.attribute.Serial;
+import io.citadel.shared.func.ThrowableBiFunction;
 import io.vertx.core.Future;
 
 import java.util.Optional;
@@ -9,6 +11,9 @@ import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import static java.lang.Long.MAX_VALUE;
 
 public sealed interface Domain {
   enum Namespace implements Domain {}
@@ -16,13 +21,16 @@ public sealed interface Domain {
   interface State<E extends Enum<E>> {}
   interface Command {}
   interface Event {}
+  interface Model {}
 
   interface Aggregate<S extends State<?>> {
     boolean is(S state);
   }
-  interface Repository<I extends ID<?>, A extends Aggregate<?>> {
-    A load(I id);
+  interface Repository<A extends Aggregate<?>, I extends ID<?>, M extends Model> {
+    Future<A> load(I id);
   }
+
+  interface Hydration<M extends Model> extends ThrowableBiFunction<Version, Stream<Entries.Event>, M> {}
 
   interface Attribute<T> extends Supplier<T> {
 
@@ -32,7 +40,8 @@ public sealed interface Domain {
   }
 
   interface Version extends LongAttribute {
-    static Domain.Version zero() {return new Serial(0);}
+    static Domain.Version zero() {return Versions.Defaults.Zero;}
+    static Domain.Version last() {return Versions.Defaults.Last;}
     static Optional<Domain.Version> of(long value) {
       return Optional.of(value).filter(it -> it >= 0).map(Serial::new);
     }
@@ -61,3 +70,19 @@ public sealed interface Domain {
   }
 }
 
+enum Versions {;
+  enum Defaults implements Domain.Version {
+    Zero {
+      @Override
+      public long value() {
+        return 0;
+      }
+    },
+    Last {
+      @Override
+      public long value() {
+        return MAX_VALUE;
+      }
+    }
+  }
+}

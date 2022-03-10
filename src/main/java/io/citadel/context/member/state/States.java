@@ -1,7 +1,7 @@
 package io.citadel.context.member.state;
 
 import io.citadel.context.member.Member;
-import io.citadel.shared.domain.Domain;
+import io.citadel.shared.context.Domain;
 
 import java.util.stream.Stream;
 

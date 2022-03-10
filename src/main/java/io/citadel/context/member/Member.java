@@ -2,7 +2,7 @@ package io.citadel.context.member;
 
 import io.citadel.context.member.state.States;
 import io.citadel.context.member.state.States.Initial;
-import io.citadel.shared.domain.Domain;
+import io.citadel.shared.context.Domain;
 
 import java.util.UUID;
 

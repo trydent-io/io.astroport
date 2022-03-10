@@ -1,6 +1,6 @@
-package io.citadel.shared.domain.attribute;
+package io.citadel.shared.context.attribute;
 
-import io.citadel.shared.domain.Domain;
+import io.citadel.shared.context.Domain;
 
 public record Serial(long value) implements Domain.Version {
   public Serial {

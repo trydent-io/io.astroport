@@ -1,7 +1,6 @@
 package io.citadel.context.forum.state;
 
 import io.citadel.context.forum.Forum;
-import io.citadel.shared.domain.Domain;
 
 import static io.citadel.context.forum.Forum.State.Open;
 import static io.citadel.context.forum.Forum.State.Registered;
@@ -27,13 +26,13 @@ public sealed interface Editable permits Forum {
 
   default Forum edit(Forum.Description description) {
     return switch (this) {
-      case States.Registered it -> new States.Registered(
+      case States.Aggregate it && it.is(Registered) -> Forum.states.registered(
         it.id(),
         it.version(),
         it.model().description(description),
         it.events().push(Forum.events.edited(description))
       );
-      case States.Open it -> new States.Open(
+      case States.Aggregate it && it.is(Open) -> Forum.states.open(
         it.id(),
         it.version(),
         it.model().description(description),
