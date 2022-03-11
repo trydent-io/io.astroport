@@ -1,6 +1,5 @@
 package io.citadel.shared.func;
 
-import java.util.Optional;
 import java.util.function.BiFunction;
 
 @SuppressWarnings({"unchecked"})
@@ -47,7 +46,7 @@ public sealed interface Maybe<T> {
     };
   }
 
-  default T or(String message, BiFunction<? super String, ? super Throwable, ? extends RuntimeException> function) {
+  default T otherwise(String message, BiFunction<? super String, ? super Throwable, ? extends RuntimeException> function) {
     return switch (this) {
       case Type.Empty ignored -> throw function.apply(message, new IllegalStateException("Can't retrieve value, state is empty"));
       case Type.Right<T> right -> right.value;
@@ -55,10 +54,17 @@ public sealed interface Maybe<T> {
     };
   }
 
-  default T or(ThrowableSupplier<? extends T> supplier) {
+  default Maybe<T> or(ThrowableSupplier<? extends T> supplier) {
+    return switch (this) {
+      case Type.Right<T> right -> this;
+      default -> supplier.get().map(it -> it);
+    };
+  }
+
+  default T otherwise(ThrowableSupplier<? extends T> supplier) {
     return switch (this) {
       case Type.Right<T> right -> right.value;
-      default -> supplier.get().or("Can't retrieve value", IllegalStateException::new);
+      default -> supplier.get().otherwise("Can't retrieve value", IllegalStateException::new);
     };
   }
 

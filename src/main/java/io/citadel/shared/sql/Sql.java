@@ -28,7 +28,7 @@ final class Sql implements Migration {
       final var migrated = flyway
         .apply(database.asDataSource(), new Location(migration))
         .map(Flyway::migrate)
-        .or("Can't migrate for migration/%s".formatted(migration), CitadelException::new);
+        .otherwise("Can't migrate for migration/%s".formatted(migration), CitadelException::new);
 
       if (migrated.success) {
         migrate.complete();

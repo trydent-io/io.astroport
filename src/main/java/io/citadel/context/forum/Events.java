@@ -33,7 +33,7 @@ public enum Events {
     return new Reopened(by);
   }
 
-  public Forum.Event fromFound(Entries.Event event) {
+  public Forum.Event from(Entries.Event event) {
     return from(event.name(), event.data()).orElseThrow();
   }
 

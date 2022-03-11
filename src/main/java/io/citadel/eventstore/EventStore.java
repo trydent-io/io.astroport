@@ -2,7 +2,7 @@ package io.citadel.eventstore;
 
 import io.citadel.eventstore.Entries.Aggregate;
 import io.citadel.eventstore.Entries.Event;
-import io.citadel.eventstore.Entries.Entry;
+import io.citadel.eventstore.Entries.EventLog;
 import io.citadel.eventstore.Operations.FoundEvents;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
@@ -20,6 +20,6 @@ public sealed interface EventStore permits Client, Forward, Service {
       default -> null;
     };
   }
-  Future<FoundEvents> findEventsBy(Aggregate aggregate);
-  Future<Stream<Entry>> persist(Aggregate aggregate, Stream<Event> events);
+  Future<Stream<EventLog>> findEventsBy(Aggregate aggregate);
+  Future<Stream<EventLog>> persist(Aggregate aggregate, Stream<Event> events);
 }

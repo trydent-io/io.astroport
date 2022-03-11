@@ -25,8 +25,8 @@ public enum Entries {
     );
   }
 
-  public Entry storedEvent(Row row) {
-    return new Entry(
+  public EventLog storedEvent(Row row) {
+    return new EventLog(
       row.getUUID("id"),
       aggregate(row),
       event(row),
@@ -39,5 +39,5 @@ public enum Entries {
     public Aggregate(String id, String name) { this(id, name, Long.MAX_VALUE); }
   }
   public record Event(String name, JsonObject data) {}
-  public record Entry(UUID id, Aggregate aggregate, Event event, LocalDateTime persistedAt, String persistedBy) {}
+  public record EventLog(UUID id, Aggregate aggregate, Event event, LocalDateTime persistedAt, String persistedBy) {}
 }

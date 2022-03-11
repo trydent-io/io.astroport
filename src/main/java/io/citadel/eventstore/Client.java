@@ -2,7 +2,7 @@ package io.citadel.eventstore;
 
 import io.citadel.eventstore.Entries.Aggregate;
 import io.citadel.eventstore.Entries.Event;
-import io.citadel.eventstore.Entries.Entry;
+import io.citadel.eventstore.Entries.EventLog;
 import io.citadel.eventstore.Operations.FoundEvents;
 import io.citadel.shared.media.Json;
 import io.vertx.core.Future;
@@ -46,7 +46,7 @@ record Client(SqlClient client) implements EventStore {
         .map(stored ->
           new FoundEvents(
             stored.aggregate().version(),
-            entries.map(Entry::event)
+            entries.map(EventLog::event)
           )
         )
         .orElseGet(() -> new FoundEvents(0, Stream.empty()))
@@ -54,7 +54,7 @@ record Client(SqlClient client) implements EventStore {
   }
 
   @Override
-  public Future<Stream<Entry>> persist(Aggregate aggregate, Stream<Event> events) {
+  public Future<Stream<EventLog>> persist(Aggregate aggregate, Stream<Event> events) {
     final var template = """
       with events as (
         select  es -> 'event' ->> 'name' event_name,

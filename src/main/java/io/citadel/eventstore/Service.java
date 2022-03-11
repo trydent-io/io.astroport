@@ -2,7 +2,7 @@ package io.citadel.eventstore;
 
 import io.citadel.eventstore.Entries.Aggregate;
 import io.citadel.eventstore.Entries.Event;
-import io.citadel.eventstore.Entries.Entry;
+import io.citadel.eventstore.Entries.EventLog;
 import io.citadel.eventstore.Operations.FindBy;
 import io.citadel.eventstore.Operations.Persist;
 import io.citadel.shared.sql.Migration;
@@ -53,7 +53,7 @@ final class Service extends AbstractVerticle implements EventStore {
   }
 
   @Override
-  public Future<Stream<Entry>> persist(final Aggregate aggregate, final Stream<Event> events) {
+  public Future<Stream<EventLog>> persist(final Aggregate aggregate, final Stream<Event> events) {
     return eventStore.persist(aggregate, events);
   }
 }
