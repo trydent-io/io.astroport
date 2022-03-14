@@ -9,7 +9,7 @@ public enum States {
   Defaults;
 
   public Member of(Member.ID identity) {
-    return new Initial(identity, Domain.Version.zero());
+    return new Initial(identity, Domain.Version.first());
   }
 
   public Member from(Member.ID identity, Domain.Version version, Member.Event... events) {

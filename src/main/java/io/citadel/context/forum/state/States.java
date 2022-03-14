@@ -34,7 +34,7 @@ public enum States {
 
   public Forum from(Forum.ID identity, Domain.Version version, Forum.Event... events) {
     return Stream.of(events).reduce(
-        Forum.states.versioned(identity, version),
+        Forum.states.identity(identity, version),
         (forum, event) -> switch (event) {
           case Events.Registered registered -> forum.register(registered.name(), registered.description(), registered.by());
           case Events.Opened opened -> forum.open(opened.by());
@@ -46,13 +46,13 @@ public enum States {
         (f, __) -> f);
   }
 
-  public Forum versioned(Forum.ID identity, Domain.Version version) {
-    return new Aggregate(identity, version);
+  public Forum identity(Forum.ID id, Domain.Version version) {
+    return new Aggregate(id, version);
   }
 
-  public record Aggregate(Forum.ID id, Domain.Version version, Model model, Forum.State state, Array<Forum.Event> events) implements Forum {
-    Aggregate(Forum.ID id) { this(id, Domain.Version.zero()); }
-    Aggregate(Forum.ID id, Domain.Version version) { this(id, version, new Model(), State.Initial, Array.empty()); }
+  public record Aggregate(Forum.ID id, Domain.Version version, Model model, Forum.State state, Stream<Forum.Event> events) implements Forum {
+    Aggregate(Forum.ID id) { this(id, Domain.Version.first()); }
+    Aggregate(Forum.ID id, Domain.Version version) { this(id, version, new Model(), State.Initial, Stream.empty()); }
 
     @Override
     public boolean is(final State state) {

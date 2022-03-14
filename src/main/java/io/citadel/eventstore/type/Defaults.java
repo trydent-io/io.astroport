@@ -1,5 +1,6 @@
-package io.citadel.eventstore;
+package io.citadel.eventstore.type;
 
+import io.citadel.eventstore.EventStore;
 import io.citadel.shared.sql.Database;
 import io.citadel.shared.sql.Migration;
 import io.vertx.core.Vertx;
@@ -9,22 +10,22 @@ import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
 
 public enum Defaults {
-  Companions;
+  Defaults;
 
   public EventStore service(Vertx vertx, Database database) {
     return new Service(
       Migration.eventStore(vertx, database),
-      EventStore.defaults.client(
+      EventStore.defaults.sql(
         PgPool.pool(vertx, database.asPgOptions(), new PoolOptions().setMaxSize(10))
       )
     );
   }
 
-  public EventStore client(SqlClient client) {
-    return new Client(client);
+  public EventStore sql(EventBus eventBus, SqlClient client) {
+    return new Sql(eventBus, client);
   }
 
   public EventStore requestor(EventBus eventBus) {
-    return new Forward(eventBus);
+    return new Local(eventBus);
   }
 }

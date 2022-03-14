@@ -1,6 +1,7 @@
 package io.citadel.context.forum;
 
 import io.citadel.context.forum.model.Attributes;
+import io.citadel.context.forum.repository.Sourcing;
 import io.citadel.context.forum.state.Closeable;
 import io.citadel.context.forum.state.Editable;
 import io.citadel.context.forum.state.Openable;
@@ -23,7 +24,7 @@ public sealed interface Forum extends Registerable, Openable, Editable, Closeabl
 
   sealed interface Event extends Domain.Event permits Events.Closed, Events.Edited, Events.Opened, Events.Registered, Events.Reopened {}
 
-  sealed interface Hydration extends Domain.Hydration<Forum> {}
+  sealed interface Hydration extends Domain.Hydration<Forum> permits Sourcing {}
 
   record ID(UUID value) implements Domain.ID<UUID> {}
   record Name(String value) implements Domain.Attribute<String> {}

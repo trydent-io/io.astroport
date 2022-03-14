@@ -1,10 +1,11 @@
 package io.citadel.context.forum;
 
 import io.citadel.context.member.Member;
-import io.citadel.eventstore.Entries;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;
+
+import static io.citadel.eventstore.EventStore.EventInfo;
 
 public enum Events {
   Defaults;
@@ -33,7 +34,7 @@ public enum Events {
     return new Reopened(by);
   }
 
-  public Forum.Event from(Entries.Event event) {
+  public Forum.Event from(EventInfo event) {
     return from(event.name(), event.data()).orElseThrow();
   }
 

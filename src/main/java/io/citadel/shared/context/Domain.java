@@ -1,12 +1,10 @@
 package io.citadel.shared.context;
 
-import io.citadel.eventstore.Entries;
 import io.citadel.shared.context.attribute.Serial;
 import io.citadel.shared.func.Maybe;
 import io.citadel.shared.func.ThrowableBiFunction;
 import io.vertx.core.Future;
 
-import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
@@ -14,6 +12,7 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static io.citadel.eventstore.EventStore.EventInfo;
 import static java.lang.Long.MAX_VALUE;
 
 public sealed interface Domain {
@@ -31,7 +30,7 @@ public sealed interface Domain {
     Future<A> load(I id);
   }
 
-  interface Hydration<A extends Aggregate<?>> extends ThrowableBiFunction<Version, Stream<Entries.Event>, A> {}
+  interface Hydration<A extends Aggregate<?>> extends ThrowableBiFunction<Version, Stream<EventInfo>, A> {}
 
   interface Attribute<T> extends Supplier<T> {
 
@@ -41,7 +40,7 @@ public sealed interface Domain {
   }
 
   interface Version extends LongAttribute {
-    static Domain.Version zero() {return Versions.Defaults.Zero;}
+    static Domain.Version first() {return Versions.Defaults.Zero;}
     static Domain.Version last() {return Versions.Defaults.Last;}
     static Maybe<Version> of(long value) {
       return Maybe.of(value).filter(it -> it >= 0).map(Serial::new);
