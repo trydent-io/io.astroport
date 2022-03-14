@@ -1,6 +1,5 @@
 package io.citadel.eventstore;
 
-import io.citadel.eventstore.Entries.Aggregate;
 import io.citadel.eventstore.Entries.Event;
 import io.citadel.eventstore.Entries.EventLog;
 import io.citadel.eventstore.Operations.FindBy;

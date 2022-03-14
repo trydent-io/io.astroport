@@ -4,8 +4,6 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.List;
-import java.util.function.IntFunction;
-import java.util.function.IntSupplier;
 import java.util.stream.Stream;
 
 public sealed interface Json {
@@ -23,7 +21,7 @@ public sealed interface Json {
     return new JsonObject(value);
   }
 
-  static <T> JsonObject from(T any) {
+  static <T> JsonObject fromAny(T any) {
     return JsonObject.mapFrom(any);
   }
 
@@ -32,6 +30,6 @@ public sealed interface Json {
   }
 
   static <T> JsonArray array(Stream<T> items) {
-    return Json.array(items.map(Json::from).toArray(JsonObject[]::new));
+    return Json.array(items.map(Json::fromAny).toArray(JsonObject[]::new));
   }
 }

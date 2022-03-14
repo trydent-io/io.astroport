@@ -1,6 +1,7 @@
 package io.citadel.context.forum.state;
 
 import io.citadel.context.forum.Forum;
+import io.citadel.context.forum.Model;
 import io.citadel.context.member.Member;
 import io.citadel.shared.context.Domain;
 import io.citadel.shared.lang.Array;
@@ -13,7 +14,7 @@ public sealed interface Registerable extends Domain.Aggregate<Forum.State> permi
       case States.Aggregate it && it.is(Initial) -> Forum.states.registered(
         it.id(),
         it.version(),
-        new Forum.Model()
+        new Model()
           .name(name)
           .description(description),
         Array.of(Forum.events.registered(name, description, by))

@@ -2,8 +2,7 @@ package io.citadel.eventstore;
 
 import io.citadel.eventstore.Entries.Aggregate;
 import io.citadel.eventstore.Entries.Event;
-import io.citadel.eventstore.Entries.EventLog;
-import io.citadel.eventstore.Operations.FoundEvents;
+import io.citadel.eventstore.Entries.Entry;
 import io.citadel.shared.media.Json;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.SqlClient;
@@ -17,7 +16,7 @@ import static java.util.stream.StreamSupport.stream;
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
 record Client(SqlClient client) implements EventStore {
   @Override
-  public Future<FoundEvents> findEventsBy(final Aggregate aggregate) {
+  public Future<Events> findEventsBy(String id, String name, long version) {
     return SqlTemplate.forQuery(client, """
         with aggregate as (
           select  aggregate_version as version
@@ -35,26 +34,26 @@ record Client(SqlClient client) implements EventStore {
       .mapTo(EventStore.entries::storedEvent)
       .execute(
         Map.of(
-          "aggregateId", aggregate.id(),
-          "aggregateName", aggregate.name(),
-          "aggregateVersion", aggregate.version()
+          "aggregateId", id,
+          "aggregateName", name,
+          "aggregateVersion", version
         )
       )
       .map(rows -> stream(rows.spliterator(), false))
       .map(entries -> entries
         .findFirst()
         .map(stored ->
-          new FoundEvents(
+          Events.found(
             stored.aggregate().version(),
-            entries.map(EventLog::event)
+            entries.map(Entry::event)
           )
         )
-        .orElseGet(() -> new FoundEvents(0, Stream.empty()))
+        .orElseGet(Events::empty)
       );
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(Aggregate aggregate, Stream<Event> events) {
+  public Future<Stream<Entry>> persist(Aggregate aggregate, Stream<Event> events) {
     final var template = """
       with events as (
         select  es -> 'event' ->> 'name' event_name,

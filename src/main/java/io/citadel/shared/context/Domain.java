@@ -2,6 +2,7 @@ package io.citadel.shared.context;
 
 import io.citadel.eventstore.Entries;
 import io.citadel.shared.context.attribute.Serial;
+import io.citadel.shared.func.Maybe;
 import io.citadel.shared.func.ThrowableBiFunction;
 import io.vertx.core.Future;
 
@@ -30,7 +31,7 @@ public sealed interface Domain {
     Future<A> load(I id);
   }
 
-  interface Hydration<M extends Model> extends ThrowableBiFunction<Version, Stream<Entries.Event>, M> {}
+  interface Hydration<A extends Aggregate<?>> extends ThrowableBiFunction<Version, Stream<Entries.Event>, A> {}
 
   interface Attribute<T> extends Supplier<T> {
 
@@ -42,8 +43,8 @@ public sealed interface Domain {
   interface Version extends LongAttribute {
     static Domain.Version zero() {return Versions.Defaults.Zero;}
     static Domain.Version last() {return Versions.Defaults.Last;}
-    static Optional<Domain.Version> of(long value) {
-      return Optional.of(value).filter(it -> it >= 0).map(Serial::new);
+    static Maybe<Version> of(long value) {
+      return Maybe.of(value).filter(it -> it >= 0).map(Serial::new);
     }
   }
   interface ID<T> extends Attribute<T> {}

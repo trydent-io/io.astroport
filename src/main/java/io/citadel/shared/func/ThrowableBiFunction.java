@@ -3,15 +3,15 @@ package io.citadel.shared.func;
 import java.util.function.BiFunction;
 
 @FunctionalInterface
-public interface ThrowableBiFunction<A, B, R> extends BiFunction<A, B, Maybe<R>> {
+public interface ThrowableBiFunction<A, B, R> extends BiFunction<A, B, R> {
   R tryApply(A a, B b) throws Throwable;
 
   @Override
-  default Maybe<R> apply(A a, B b) {
+  default R apply(A a, B b) {
     try {
-      return Maybe.of(tryApply(a, b));
+      return tryApply(a, b);
     } catch (Throwable e) {
-      return Maybe.failure(e);
+      throw new FunctionalException("Can't apply function", e);
     }
   }
 }

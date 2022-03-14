@@ -3,13 +3,13 @@ package io.citadel.shared.func;
 import java.util.function.Supplier;
 
 @FunctionalInterface
-public interface ThrowableSupplier<A> extends Supplier<Maybe<A>> {
+public interface ThrowableSupplier<A> extends Supplier<A> {
   @Override
-  default Maybe<A> get() {
+  default A get() {
     try {
-      return Maybe.of(tryGet());
+      return tryGet();
     } catch (Throwable e) {
-      return Maybe.failure(e);
+      throw new FunctionalException("Can't get from supplier", e);
     }
   }
 
