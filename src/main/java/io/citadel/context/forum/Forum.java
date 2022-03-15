@@ -13,8 +13,9 @@ import io.citadel.shared.context.Domain;
 import io.citadel.shared.context.attribute.Attribute;
 
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 
-public sealed interface Forum extends Registerable, Openable, Editable, Closeable permits States.Aggregate, States.EventSourced {
+public sealed interface Forum extends Registerable, Openable, Editable, Closeable permits States.Aggregate {
   Commands commands = Commands.Defaults;
   Events event = Events.Defaults;
   Attributes attributes = Attributes.Defaults;
@@ -30,5 +31,20 @@ public sealed interface Forum extends Registerable, Openable, Editable, Closeabl
   record Name(String value) implements Attribute<String> {}
   record Description(String value) implements Attribute<String> {}
 
+  record Model(Name name, Description description) implements Domain.Model {
+    public Model() { this(null, null); }
+  }
+
+  @Override
+  default boolean is(State state) {
+    return switch (this) {
+      case States.Aggregate aggregate -> aggregate.root().is(state);
+    };
+  }
+
+  @Override
+  default Domain.Aggregate<Forum, Model, State> nextIf(State state, State next, UnaryOperator<Model> model) {
+    return switch (this) { case States.Aggregate aggregate -> aggregate.root().nextIf(state, next, model); };
+  }
 }
 

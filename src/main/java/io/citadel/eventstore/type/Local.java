@@ -36,7 +36,7 @@ public record Local(EventBus eventBus) implements EventStore {
       .<JsonArray>request(
         PERSIST_EVENTS,
         Json.of(
-          "aggregate", Json.fromAny(aggregate),
+          "root", Json.fromAny(aggregate),
           "events", Json.array(events)
         )
       )

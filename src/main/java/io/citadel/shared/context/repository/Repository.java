@@ -27,7 +27,7 @@ public final class Repository<A extends Domain.Aggregate<?>, I extends Domain.ID
       .map(events -> events.aggregateFrom(hydration))
       .compose(aggregate -> aggregate
         .map(Future::succeededFuture)
-        .orElse(failedFuture("Can't hydrate aggregate %s with id %s".formatted(name, id)))
+        .orElse(failedFuture("Can't hydrate root %s with id %s".formatted(name, id)))
       );
   }
 

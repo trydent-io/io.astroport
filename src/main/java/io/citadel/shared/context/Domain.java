@@ -6,14 +6,15 @@ import io.citadel.shared.context.attribute.Attribute;
 import io.citadel.shared.context.attribute.LongAttribute;
 import io.citadel.shared.context.attribute.Serial;
 import io.citadel.shared.context.repository.Repository;
+import io.citadel.shared.context.repository.Root;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import static java.lang.Long.MAX_VALUE;
-import static java.lang.Long.remainderUnsigned;
 
 public sealed interface Domain {
   enum Namespace implements Domain {}
@@ -26,16 +27,21 @@ public sealed interface Domain {
   }
   interface Model {}
 
-  interface Aggregate<A extends Aggregate<?, S>, S extends State<?>> {
-    boolean is(S state);
+  interface Aggregate<A extends Aggregate<A, M, S>, M extends Record & Model, S extends State<?>> {
+    default boolean is(S state) {
+      return switch (this) {
+        case Root<?, ?, ?, S> root -> root.state().equals(state);
+        default -> false;
+      };
+    }
 
-
+    Aggregate<A, M, S> nextIf(S state, S next, UnaryOperator<M> model);
   }
-  interface Aggregates<A extends Aggregate<?>, I extends ID<?>, E extends Domain.Event> {
+  interface Aggregates<A extends Aggregate<?, ?, ?>, I extends ID<?>, E extends Domain.Event> {
     Future<A> load(I id);
     Future<Void> save(I id, long version, Stream<E> events);
 
-    static <A extends Aggregate<?>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
+    static <A extends Aggregate<?, ?, ?>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
       return new Repository<>(eventStore, hydration, name);
     }
   }
