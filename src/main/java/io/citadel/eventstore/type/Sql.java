@@ -1,6 +1,9 @@
 package io.citadel.eventstore.type;
 
 import io.citadel.eventstore.EventStore;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.event.Events;
 import io.citadel.shared.media.Json;
 import io.vertx.core.Future;
@@ -33,7 +36,7 @@ record Sql(EventBus eventBus, SqlClient client) implements EventStore {
         from    event_logs
         where   aggregate_id = #{aggregateId} and aggregate_name = #{aggregateName}
         """)
-      .mapTo(EventStore.types::eventLog)
+      .mapTo(EventStore.data::eventLog)
       .execute(
         Map.of(
           "aggregateId", id,
@@ -55,7 +58,7 @@ record Sql(EventBus eventBus, SqlClient client) implements EventStore {
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(Raw aggregate, Stream<EventInfo> events) {
+  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
     final var template = """
       with events as (
         select  es -> 'event' ->> 'name' event_name,
@@ -81,7 +84,7 @@ record Sql(EventBus eventBus, SqlClient client) implements EventStore {
       returning *
       """;
     return SqlTemplate.forUpdate(client, template)
-      .mapTo(EventStore.types::eventLog)
+      .mapTo(EventStore.data::eventLog)
       .execute(
         Map.of(
           "aggregateId", aggregate.id(),

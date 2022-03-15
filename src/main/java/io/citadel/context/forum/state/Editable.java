@@ -12,13 +12,13 @@ public sealed interface Editable permits Forum {
         it.id(),
         it.version(),
         it.model().name(name),
-        it.events().push(Forum.events.edited(name))
+        it.events().push(Forum.event.edited(name))
       );
       case States.Aggregate it && it.is(Open) -> Forum.states.open(
         it.id(),
         it.version(),
         it.model().name(name),
-        it.events().push(Forum.events.edited(name))
+        it.events().push(Forum.event.edited(name))
       );
       default -> throw new IllegalStateException("Unexpected value: " + this);
     };
@@ -30,13 +30,13 @@ public sealed interface Editable permits Forum {
         it.id(),
         it.version(),
         it.model().description(description),
-        it.events().push(Forum.events.edited(description))
+        it.events().push(Forum.event.edited(description))
       );
       case States.Aggregate it && it.is(Open) -> Forum.states.open(
         it.id(),
         it.version(),
         it.model().description(description),
-        it.events().push(Forum.events.edited(description))
+        it.events().push(Forum.event.edited(description))
       );
       default -> throw new IllegalStateException("Unexpected value: " + this);
     };

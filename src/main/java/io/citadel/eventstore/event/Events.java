@@ -1,13 +1,12 @@
 package io.citadel.eventstore.event;
 
+import io.citadel.eventstore.data.EventInfo;
 import io.citadel.shared.context.Domain;
-import io.citadel.shared.func.Maybe;
 import io.citadel.shared.media.Json;
 import io.vertx.core.json.JsonObject;
 
+import java.util.Optional;
 import java.util.stream.Stream;
-
-import static io.citadel.eventstore.EventStore.*;
 
 public sealed interface Events permits Empty, Found {
   static Events found(long version, Stream<EventInfo> events) {
@@ -18,8 +17,8 @@ public sealed interface Events permits Empty, Found {
     return Empty.Default;
   }
 
-  default <A extends Domain.Aggregate<?>> Maybe<A> aggregate(Domain.Hydration<A> hydration) {
-    return Maybe.empty();
+  default <A extends Domain.Aggregate<?>> Optional<A> aggregateFrom(Domain.Hydration<A> hydration) {
+    return Optional.empty();
   }
 
   static Events fromJson(JsonObject json) {
@@ -28,12 +27,7 @@ public sealed interface Events permits Empty, Found {
       json.getJsonArray("events")
         .stream()
         .map(Json::fromAny)
-        .map(it ->
-          new EventInfo(
-            it.getString("name"),
-            it.getJsonObject("data")
-          )
-        )
+        .map(EventInfo::fromJson)
     );
   }
 }

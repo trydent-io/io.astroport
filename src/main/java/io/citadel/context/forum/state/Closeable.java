@@ -12,7 +12,7 @@ public sealed interface Closeable permits Forum {
         it.id(),
         it.version(),
         it.model().closed(by),
-        it.events().push(Forum.events.closed(by))
+        it.events().push(Forum.event.closed(by))
       );
       default -> throw new IllegalStateException("Unexpected value: " + this);
     };

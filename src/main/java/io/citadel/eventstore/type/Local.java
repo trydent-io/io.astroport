@@ -1,7 +1,9 @@
 package io.citadel.eventstore.type;
 
-import io.citadel.eventstore.EventLogs;
 import io.citadel.eventstore.EventStore;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.event.Events;
 import io.citadel.shared.media.Json;
 import io.vertx.core.Future;
@@ -29,7 +31,7 @@ public record Local(EventBus eventBus) implements EventStore {
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(Raw aggregate, Stream<EventInfo> events) {
+  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
     return eventBus
       .<JsonArray>request(
         PERSIST_EVENTS,
@@ -39,6 +41,6 @@ public record Local(EventBus eventBus) implements EventStore {
         )
       )
       .map(Message::body)
-      .map(EventLogs::fromJsonArray);
+      .map(EventLog::fromJsonArray);
   }
 }

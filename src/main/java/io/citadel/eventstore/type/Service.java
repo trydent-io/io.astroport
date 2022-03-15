@@ -1,12 +1,15 @@
 package io.citadel.eventstore.type;
 
-import io.citadel.eventstore.EventLogs;
 import io.citadel.eventstore.EventStore;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.event.Events;
 import io.citadel.shared.sql.Migration;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.stream.Stream;
@@ -30,29 +33,25 @@ public final class Service extends AbstractVerticle implements EventStore {
 
   private Void operations(Void unused) {
     vertx.eventBus().<JsonObject>localConsumer(FIND_EVENTS_BY,
-      message -> findEventsBy(
-        message.body().getString("id"),
-        message.body().getString("name"),
-        message.body().getLong("version")
-      )
+      message -> findEventsBy(message.body())
         .onSuccess(message::reply)
         .onFailure(it -> message.fail(500, it.getMessage()))
     );
 
     vertx.eventBus().<JsonObject>localConsumer(PERSIST_EVENTS,
-      message ->
-        persist(
-          new Raw(
-            message.body().getString("id"),
-            message.body().getString("name"),
-            message.body().getLong("version")
-          ),
-          EventLogs.asEventInfos(message.body().getJsonArray("events"))
-        )
+      message -> persistEvents(message.body(), message.body().getJsonArray("events"))
           .onSuccess(message::reply)
           .onFailure(it -> message.fail(500, it.getMessage()))
     );
     return null;
+  }
+
+  private Future<Stream<EventLog>> persistEvents(final JsonObject aggregate, final JsonArray events) {
+    return persist(AggregateInfo.from(aggregate), EventInfo.fromJsonArray(events));
+  }
+
+  private Future<Events> findEventsBy(final JsonObject aggregate) {
+    return findEventsBy(aggregate.getString("id"), aggregate.getString("name"), aggregate.getLong("version"));
   }
 
   @Override
@@ -61,7 +60,7 @@ public final class Service extends AbstractVerticle implements EventStore {
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(Raw aggregate, Stream<EventInfo> events) {
+  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
     return eventStore.persist(aggregate, events);
   }
 }

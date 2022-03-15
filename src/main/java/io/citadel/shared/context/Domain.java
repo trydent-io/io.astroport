@@ -1,78 +1,62 @@
 package io.citadel.shared.context;
 
+import io.citadel.eventstore.EventStore;
+import io.citadel.eventstore.data.EventInfo;
+import io.citadel.shared.context.attribute.Attribute;
+import io.citadel.shared.context.attribute.LongAttribute;
 import io.citadel.shared.context.attribute.Serial;
-import io.citadel.shared.func.Maybe;
-import io.citadel.shared.func.ThrowableBiFunction;
+import io.citadel.shared.context.repository.Repository;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 
-import java.util.function.BooleanSupplier;
-import java.util.function.DoubleSupplier;
-import java.util.function.IntSupplier;
-import java.util.function.LongSupplier;
-import java.util.function.Supplier;
+import java.util.Optional;
 import java.util.stream.Stream;
 
-import static io.citadel.eventstore.EventStore.EventInfo;
 import static java.lang.Long.MAX_VALUE;
+import static java.lang.Long.remainderUnsigned;
 
 public sealed interface Domain {
   enum Namespace implements Domain {}
 
   interface State<E extends Enum<E>> {}
   interface Command {}
-  interface Event {}
+  interface Event {
+    default String $name() { return this.getClass().getSimpleName(); }
+    default JsonObject $asJson() { return JsonObject.mapFrom(this); }
+  }
   interface Model {}
 
-  interface Aggregate<S extends State<?>> {
+  interface Aggregate<A extends Aggregate<?, S>, S extends State<?>> {
     boolean is(S state);
+
+
   }
-  interface Repository<A extends Aggregate<?>, I extends ID<?>, M extends Model> {
+  interface Aggregates<A extends Aggregate<?>, I extends ID<?>, E extends Domain.Event> {
     Future<A> load(I id);
+    Future<Void> save(I id, long version, Stream<E> events);
+
+    static <A extends Aggregate<?>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
+      return new Repository<>(eventStore, hydration, name);
+    }
   }
 
-  interface Hydration<A extends Aggregate<?>> extends ThrowableBiFunction<Version, Stream<EventInfo>, A> {}
-
-  interface Attribute<T> extends Supplier<T> {
-
-    default T get() {return value();}
-
-    T value();
+  interface Hydration<A extends Aggregate<?>> {
+    A apply(long version, Stream<EventInfo> events) throws Throwable;
   }
 
   interface Version extends LongAttribute {
-    static Domain.Version first() {return Versions.Defaults.Zero;}
+    static Domain.Version first() {return Versions.Defaults.First;}
     static Domain.Version last() {return Versions.Defaults.Last;}
-    static Maybe<Version> of(long value) {
-      return Maybe.of(value).filter(it -> it >= 0).map(Serial::new);
+    static Optional<Version> of(long value) {
+      return Optional.of(value).filter(it -> it >= 0).map(Serial::new);
     }
   }
   interface ID<T> extends Attribute<T> {}
-
-  interface IntAttribute extends IntSupplier {
-    default int getAsInt() {return value();}
-    int value();
-
-  }
-  interface DoubleAttribute extends DoubleSupplier {
-    default double getAsDouble() {return value();}
-    double value();
-
-  }
-  interface BooleanAttribute extends BooleanSupplier {
-    default boolean getAsBoolean() {return value();}
-    boolean value();
-
-  }
-  interface LongAttribute extends LongSupplier {
-    default long getAsLong() {return value();}
-    long value();
-
-  }
 }
 
 enum Versions {;
   enum Defaults implements Domain.Version {
-    Zero {
+    First {
       @Override
       public long value() {
         return 0;

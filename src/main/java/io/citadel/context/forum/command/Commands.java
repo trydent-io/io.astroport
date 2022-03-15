@@ -1,5 +1,6 @@
-package io.citadel.context.forum;
+package io.citadel.context.forum.command;
 
+import io.citadel.context.forum.Forum;
 import io.citadel.context.member.Member;
 
 import java.time.LocalDateTime;

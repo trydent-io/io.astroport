@@ -3,9 +3,10 @@ package io.citadel.eventstore.event;
 import io.citadel.shared.context.Domain;
 import io.citadel.shared.func.Maybe;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
-import static io.citadel.eventstore.EventStore.EventInfo;
+import io.citadel.eventstore.data.EventInfo;
 
 public final class Found implements Events {
   private final long version;
@@ -17,7 +18,11 @@ public final class Found implements Events {
   }
 
   @Override
-  public <A extends Domain.Aggregate<?>> Maybe<A> aggregate(Domain.Hydration<A> hydration) {
-    return Domain.Version.of(version).map(it -> hydration.apply(it, stream));
+  public <A extends Domain.Aggregate<?>> Optional<A> aggregateFrom(Domain.Hydration<A> hydration) {
+    try {
+      return Optional.of(hydration.apply(version, stream));
+    } catch (Throwable e) {
+      return Optional.empty();
+    }
   }
 }

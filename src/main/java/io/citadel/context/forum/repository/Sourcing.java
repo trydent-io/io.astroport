@@ -1,16 +1,18 @@
 package io.citadel.context.forum.repository;
 
-import io.citadel.context.forum.Events;
 import io.citadel.context.forum.Forum;
-import io.citadel.eventstore.Types;
+import io.citadel.context.forum.event.Events;
+import io.citadel.eventstore.Data;
+import io.citadel.eventstore.data.EventInfo;
 import io.citadel.shared.context.Domain;
 
 import java.util.stream.Stream;
 
 public record Sourcing(Forum.ID id) implements Forum.Hydration {
   @Override
-  public Forum tryApply(Domain.Version version, Stream<Types.EventInfo> events) {
+  public Forum apply(final long version, final Stream<EventInfo> events) throws Throwable {
     return events
+      .map(Forum.event::fromEventInfo)
       .reduce(
         Forum.states.identity(id, version),
         (forum, event) -> switch (event) {
@@ -21,6 +23,7 @@ public record Sourcing(Forum.ID id) implements Forum.Hydration {
           case Events.Edited.Description edit -> forum.edit(edit.description());
           case Events.Reopened reopened -> forum.reopen(reopened.by());
         },
-        (f, __) -> f);
+        (f, __) -> f
+      );
   }
 }
