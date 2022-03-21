@@ -1,8 +1,8 @@
 package io.citadel;
 
-import io.citadel.context.Context;
+import io.citadel.domain.Context;
 import io.citadel.eventstore.EventStore;
-import io.citadel.shared.sql.Database;
+import io.citadel.kernel.sql.Database;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 

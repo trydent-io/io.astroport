@@ -5,7 +5,7 @@ import io.citadel.eventstore.data.AggregateInfo;
 import io.citadel.eventstore.data.EventInfo;
 import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.event.Events;
-import io.citadel.shared.sql.Migration;
+import io.citadel.kernel.sql.Migration;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;

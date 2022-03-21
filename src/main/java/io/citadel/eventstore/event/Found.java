@@ -1,7 +1,6 @@
 package io.citadel.eventstore.event;
 
-import io.citadel.shared.context.Domain;
-import io.citadel.shared.func.Maybe;
+import io.citadel.kernel.domain.Domain;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -18,7 +17,7 @@ public final class Found implements Events {
   }
 
   @Override
-  public <A extends Domain.Aggregate<?>> Optional<A> aggregateFrom(Domain.Hydration<A> hydration) {
+  public <A extends Domain.Aggregate<?, ?, ?>> Optional<A> aggregateFrom(Domain.Hydration<A> hydration) {
     try {
       return Optional.of(hydration.apply(version, stream));
     } catch (Throwable e) {

@@ -1,8 +1,8 @@
 package io.citadel.eventstore.type;
 
 import io.citadel.eventstore.EventStore;
-import io.citadel.shared.sql.Database;
-import io.citadel.shared.sql.Migration;
+import io.citadel.kernel.sql.Database;
+import io.citadel.kernel.sql.Migration;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.pgclient.PgPool;

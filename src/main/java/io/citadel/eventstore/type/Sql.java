@@ -5,7 +5,7 @@ import io.citadel.eventstore.data.AggregateInfo;
 import io.citadel.eventstore.data.EventInfo;
 import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.event.Events;
-import io.citadel.shared.media.Json;
+import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;

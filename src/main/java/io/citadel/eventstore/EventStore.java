@@ -8,7 +8,6 @@ import io.citadel.eventstore.type.Sql;
 import io.citadel.eventstore.type.Defaults;
 import io.citadel.eventstore.type.Local;
 import io.citadel.eventstore.type.Service;
-import io.citadel.shared.context.Domain.Version;
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 
