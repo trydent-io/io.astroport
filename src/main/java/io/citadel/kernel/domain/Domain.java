@@ -1,10 +1,10 @@
 package io.citadel.kernel.domain;
 
 import io.citadel.eventstore.EventStore;
+import io.citadel.eventstore.data.AggregateInfo;
 import io.citadel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.repository.Repository;
-import io.citadel.kernel.func.ThrowableQuadFunction;
 import io.citadel.kernel.func.ThrowableSupplier;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
@@ -28,15 +28,12 @@ public sealed interface Domain {
     default JsonObject $asJson() {return JsonObject.mapFrom(this);}
   }
 
-  interface Aggregate<A extends Aggregate<A, S, M, E>, S extends State<?>, M extends Record, E extends Domain.Event> {
-    A whenDefault(S next, ThrowableSupplier<M> modelling);
-    A when(S state, S next, UnaryOperator<M> modelling);
-
-    Future<A> commit(Transaction<A, ?, E> transaction);
+  interface Aggregate<A extends Aggregate<A>> {
+    Future<A> commit(Transaction<A> transaction);
   }
 
-  interface Aggregates<A extends Aggregate<A, ?, ?, E>, I extends ID<?>, E extends Domain.Event> {
-    static <A extends Aggregate<A, ?, ?, E>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
+  interface Aggregates<A extends Aggregate<A>, I extends ID<?>, E extends Domain.Event> {
+    static <A extends Aggregate<A>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
       return new Repository<>(eventStore, hydration, name);
     }
 
@@ -47,8 +44,8 @@ public sealed interface Domain {
   interface Hydration<A extends Aggregate<A, ?, ?, ?>> {
     A apply(long version, Stream<EventInfo> events) throws Throwable;
   }
-  interface Transaction<A extends Aggregate<A, ?, ?, E>, I extends Domain.ID<?>, E extends Domain.Event> {
-    Future<A> apply(I id, String name, long version, Stream<E> events);
+  interface Transaction<A extends Aggregate<A>> {
+    Future<A> apply(AggregateInfo aggregate, Stream<EventInfo> events);
   }
 
   interface ID<T> extends Attribute<T> {}

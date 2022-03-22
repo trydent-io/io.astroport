@@ -14,7 +14,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.stream.Stream;
 
-public final class Service extends AbstractVerticle implements EventStore {
+public final class Service extends AbstractVerticle implements EventStore.Verticle {
   private final Migration migration;
   private final EventStore eventStore;
 

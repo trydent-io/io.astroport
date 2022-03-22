@@ -12,10 +12,11 @@ import io.vertx.sqlclient.SqlClient;
 public enum Defaults {
   Defaults;
 
-  public EventStore service(Vertx vertx, Database database) {
+  public EventStore.Verticle service(Vertx vertx, Database database) {
     return new Service(
       Migration.eventStore(vertx, database),
       EventStore.defaults.sql(
+        vertx.eventBus(),
         PgPool.pool(vertx, database.asPgOptions(), new PoolOptions().setMaxSize(10))
       )
     );

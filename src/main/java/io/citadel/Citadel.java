@@ -1,6 +1,6 @@
 package io.citadel;
 
-import io.citadel.domain.Context;
+import io.citadel.domain.Domain;
 import io.citadel.eventstore.EventStore;
 import io.citadel.kernel.sql.Database;
 import io.vertx.core.Verticle;
@@ -11,7 +11,7 @@ import static io.vertx.core.Vertx.vertx;
 public sealed interface Citadel permits Service {
   static Citadel service(Vertx vertx) {
     return new Service(
-      EventStore.service(
+      EventStore.defaults.service(
         vertx,
         Database.connection(
           "jdbc:postgresql",
@@ -23,7 +23,7 @@ public sealed interface Citadel permits Service {
           org.postgresql.Driver.class
         )
       ),
-      Context.service()
+      Domain.service()
     );
   }
 

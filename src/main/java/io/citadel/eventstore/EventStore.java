@@ -13,21 +13,22 @@ import io.vertx.core.Verticle;
 
 import java.util.stream.Stream;
 
-public sealed interface EventStore permits Sql, Local, Service {
+public sealed interface EventStore permits EventStore.Verticle, Local, Sql {
   String FIND_EVENTS_BY = "eventStore.findEventsBy";
   String PERSIST_EVENTS = "eventStore.persistEvents";
 
   Defaults defaults = Defaults.Defaults;
   Data data = Data.Defaults;
 
-  default Verticle asVerticle() {
+  default EventStore.Verticle asVerticle() {
     return switch (this) {
-      case Service service -> service;
+      case EventStore.Verticle verticle -> verticle;
       default -> null;
     };
   }
 
-  default Future<Events> findEventsBy(String id, String name) {return findEventsBy(id, name, Version.last().value()); }
-  Future<Events> findEventsBy(String id, String name, long version);
+  sealed interface Verticle extends EventStore, io.vertx.core.Verticle permits Service {}
+
+  Future<Events> findEventsBy(String id, String name);
   Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events);
 }
