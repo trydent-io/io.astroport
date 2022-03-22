@@ -6,9 +6,10 @@ import io.citadel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.repository.Repository;
 import io.citadel.kernel.func.ThrowableSupplier;
+import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
 
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -23,9 +24,14 @@ public sealed interface Domain {
   interface Command {}
 
   interface Event {
-    default String $name() {return this.getClass().getSimpleName();}
+    default EventInfo asInfo() {
+      return new EventInfo(getClass().getSimpleName(), Json.with(this));
+    }
+  }
 
-    default JsonObject $asJson() {return JsonObject.mapFrom(this);}
+  interface Entity<S extends State<?>, E extends Entity<S, E>> {
+    E onDefault(S next, Supplier<? extends E> supplier);
+    E on(S state, S next, UnaryOperator<E> operator);
   }
 
   interface Aggregate<A extends Aggregate<A>> {
@@ -41,7 +47,7 @@ public sealed interface Domain {
     Future<Void> save(I id, long version, Stream<E> events);
   }
 
-  interface Hydration<A extends Aggregate<A, ?, ?, ?>> {
+  interface Hydration<A extends Aggregate<A>> {
     A apply(long version, Stream<EventInfo> events) throws Throwable;
   }
   interface Transaction<A extends Aggregate<A>> {

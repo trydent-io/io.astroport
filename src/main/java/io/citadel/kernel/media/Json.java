@@ -25,6 +25,10 @@ public sealed interface Json {
     return JsonObject.mapFrom(any);
   }
 
+  static <T> JsonObject with(T any) {
+    return fromAny(any);
+  }
+
   static JsonArray array(JsonObject... jsons) {
     return new JsonArray(List.of(jsons));
   }

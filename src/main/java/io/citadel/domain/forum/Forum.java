@@ -27,6 +27,8 @@ public sealed interface Forum extends Operations permits States.Aggregate {
   record Name(String value) implements Attribute<String> {}
   record Description(String value) implements Attribute<String> {}
 
+  sealed interface Entity extends Domain.Entity<State, Entity> {}
+
   record Model(Name name, Description description) {
     public Model() { this(null, null); }
   }
