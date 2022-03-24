@@ -9,6 +9,7 @@ import io.citadel.kernel.func.ThrowableSupplier;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -30,16 +31,19 @@ public sealed interface Domain {
   }
 
   interface Entity<S extends State<?>, E extends Entity<S, E>> {
-    E onDefault(S next, Supplier<? extends E> supplier);
-    E on(S state, S next, UnaryOperator<E> operator);
+    Domain.Entity<S, E> onDefault(S next, Supplier<E> supplier);
+    Domain.Entity<S, E> on(S state, S next, UnaryOperator<E> operator);
   }
 
-  interface Aggregate<A extends Aggregate<A>> {
+  interface Aggregate<A extends Aggregate<A, S, M>, S extends Domain.State<?>, M extends Record> {
+    Optional<A> whenDefault(S next, Supplier<M> supplier);
+    Optional<A> when(S state, S next, UnaryOperator<M> operator);
+
     Future<A> commit(Transaction<A> transaction);
   }
 
-  interface Aggregates<A extends Aggregate<A>, I extends ID<?>, E extends Domain.Event> {
-    static <A extends Aggregate<A>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
+  interface Aggregates<A extends Aggregate<A, ?, ?>, I extends ID<?>, E extends Domain.Event> {
+    static <A extends Aggregate<A, ?, ?>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
       return new Repository<>(eventStore, hydration, name);
     }
 
@@ -47,10 +51,10 @@ public sealed interface Domain {
     Future<Void> save(I id, long version, Stream<E> events);
   }
 
-  interface Hydration<A extends Aggregate<A>> {
+  interface Hydration<A extends Aggregate<A, ?, ?>> {
     A apply(long version, Stream<EventInfo> events) throws Throwable;
   }
-  interface Transaction<A extends Aggregate<A>> {
+  interface Transaction<A extends Aggregate<A, ?, ?>> {
     Future<A> apply(AggregateInfo aggregate, Stream<EventInfo> events);
   }
 

@@ -1,38 +1,63 @@
 package io.citadel.kernel.domain.model;
 
+import io.citadel.CitadelException;
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.func.ThrowableFunction;
+import io.vertx.core.Future;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-public final class Default<S extends Domain.State<?>, E extends Domain.Entity<S, E>> implements Domain.Entity<S, E> {
+public final class Default<A extends Domain.Aggregate<A, S, M>, S extends Domain.State<?>, M extends Record> implements Domain.Aggregate<A, S, M> {
+  private final ThrowableFunction<? super Domain.Aggregate<A, S, M>, ? extends A> function;
+
+  public Default(final ThrowableFunction<? super Domain.Aggregate<A, S, M>, ? extends A> function) {this.function = function;}
+
   @Override
-  public E onDefault(final S next, final Supplier<? extends E> supplier) {
-    return new Next<>(next, supplier.get());
+  public Optional<A> whenDefault(final S next, final Supplier<M> supplier) {
+    return Optional.of(function.apply(new Next<>(function, next, supplier.get())));
   }
 
   @Override
-  public E on(final S state, final S next, final UnaryOperator<E> operator) {
-    return null;
+  public Optional<A> when(final S state, final S next, final UnaryOperator<M> operator) {
+    return Optional.empty();
+  }
+
+  @Override
+  public Future<A> commit(final Domain.Transaction<A> transaction) {
+    return Future.failedFuture(new CitadelException("Can't commit transaction, aggregate state is on default"));
   }
 }
 
-final class Next<S extends Domain.State<?>, E extends Domain.Entity<S, E>> implements Domain.Entity<S, E> {
+final class Next<A extends Domain.Aggregate<A, S, M>, S extends Domain.State<?>, M extends Record> implements Domain.Aggregate<A, S, M> {
+  private final ThrowableFunction<? super Domain.Aggregate<A, S, M>, ? extends A> function;
   private final S state;
-  private final E entity;
+  private final M model;
 
-  Next(final S state, final E entity) {
+  Next(final ThrowableFunction<? super Domain.Aggregate<A, S, M>, ? extends A> function, final S state, final M model) {
+    this.function = function;
     this.state = state;
-    this.entity = entity;
+    this.model = model;
   }
 
   @Override
-  public E onDefault(final S next, final Supplier<? extends E> supplier) {
-    return null;
+  public Optional<A> whenDefault(final S next, final Supplier<M> supplier) {
+    return Optional.empty();
   }
 
   @Override
-  public E on(final S state, final S next, final UnaryOperator<E> operator) {
-    return null;
+  public Optional<A> when(final S state, final S next, final UnaryOperator<M> operator) {
+    return Optional.of(this.state)
+      .filter(it -> it.equals(state))
+      .map(it -> operator.apply(model))
+      .map(it -> new Next<>(function, next, it))
+      .map(function);
+  }
+
+  @Override
+  public Future<A> commit(final Domain.Transaction<A> transaction) {
+    return Future.failedFuture(new CitadelException("Can't commit transaction, aggregate state is not committable yet"));
   }
 }
+

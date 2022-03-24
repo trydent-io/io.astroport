@@ -10,6 +10,8 @@ import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.domain.attribute.Attribute;
 
 import java.util.UUID;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public sealed interface Forum extends Operations permits States.Aggregate {
   Commands commands = Commands.Defaults;
@@ -26,11 +28,5 @@ public sealed interface Forum extends Operations permits States.Aggregate {
   record ID(UUID value) implements Domain.ID<UUID> {}
   record Name(String value) implements Attribute<String> {}
   record Description(String value) implements Attribute<String> {}
-
-  sealed interface Entity extends Domain.Entity<State, Entity> {}
-
-  record Model(Name name, Description description) {
-    public Model() { this(null, null); }
-  }
 }
 
