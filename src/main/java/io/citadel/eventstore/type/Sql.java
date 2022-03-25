@@ -1,8 +1,8 @@
 package io.citadel.eventstore.type;
 
 import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.MetaAggregate;
+import io.citadel.eventstore.data.MetaEvent;
 import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.event.Events;
 import io.citadel.kernel.media.Json;
@@ -50,7 +50,7 @@ record Sql(EventBus eventBus, SqlClient client) implements EventStore {
         .map(eventLog ->
           Events.found(
             eventLog.aggregate().version(),
-            eventLogs.<EventInfo>map(EventLog::event)
+            eventLogs.<MetaEvent>map(EventLog::event)
           )
         )
         .orElseGet(Events::empty)
@@ -58,7 +58,7 @@ record Sql(EventBus eventBus, SqlClient client) implements EventStore {
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
+  public Future<Stream<EventLog>> persist(MetaAggregate aggregate, Stream<MetaEvent> events) {
     final var template = """
       with events as (
         select  es -> 'event' ->> 'name' event_name,

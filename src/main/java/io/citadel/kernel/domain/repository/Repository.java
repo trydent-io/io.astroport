@@ -1,8 +1,6 @@
 package io.citadel.kernel.domain.repository;
 
 import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.Future;
 
@@ -34,7 +32,7 @@ public final class Repository<A extends Domain.Aggregate<A, ?, ?>, I extends Dom
   @Override
   public Future<Void> save(final I id, final long version, final Stream<E> events) {
     return eventStore
-      .persist(id.value().toString(), name, version, events.map(Domain.Event::asInfo))
+      .persist(id.value().toString(), name, version, events.map(Domain.Event::asMeta))
       .mapEmpty();
   }
 }

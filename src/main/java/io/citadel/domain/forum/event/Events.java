@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;
 
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.MetaEvent;
 
 public enum Events {
   Defaults;
@@ -35,7 +35,7 @@ public enum Events {
     return new Reopened(by);
   }
 
-  public Forum.Event fromEventInfo(EventInfo event) {
+  public Forum.Event fromMeta(MetaEvent event) {
     return from(event.name(), event.data()).orElseThrow();
   }
 
@@ -45,7 +45,7 @@ public enum Events {
     try {
       return Optional.of(switch (Names.valueOf(name)) {
         case Opened -> json.mapTo(Opened.class);
-        case Closed -> json.mapTo(Closed.class);
+        case Closed -> Closed.from(json);
         case Registered -> json.mapTo(Registered.class);
         case Reopened -> json.mapTo(Reopened.class);
       });
@@ -54,7 +54,9 @@ public enum Events {
     }
   }
 
-  public record Closed(Member.ID by) implements Forum.Event {}
+  public record Closed(Member.ID by) implements Forum.Event {
+    public static Closed from(JsonObject json) { return new Closed(Member.ID.from(json)); }
+  }
 
   public record Opened(Member.ID by) implements Forum.Event {}
 

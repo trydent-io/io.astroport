@@ -1,14 +1,15 @@
 package io.citadel.kernel.domain;
 
+import io.citadel.domain.forum.Forum;
 import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
-import io.citadel.kernel.domain.attribute.Attribute;
+import io.citadel.eventstore.data.MetaAggregate;
+import io.citadel.eventstore.data.MetaEvent;
 import io.citadel.kernel.domain.repository.Repository;
 import io.citadel.kernel.func.ThrowableSupplier;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -20,19 +21,22 @@ public sealed interface Domain {
   @SuppressWarnings("unchecked")
   interface State<S extends Enum<S>> {
     default Stream<S> or(S... states) {return Stream.concat(Stream.of((S) this), Stream.of(states));}
+
+    default boolean is(S... states) {
+      return List.of(states).contains((S) this);
+    }
   }
 
   interface Command {}
 
   interface Event {
-    default EventInfo asInfo() {
-      return new EventInfo(getClass().getSimpleName(), Json.with(this));
+    default MetaEvent asMeta() {
+      return new MetaEvent(getClass().getSimpleName(), Json.with(this));
     }
   }
 
-  interface Entity<S extends State<?>, E extends Entity<S, E>> {
-    Domain.Entity<S, E> onDefault(S next, Supplier<E> supplier);
-    Domain.Entity<S, E> on(S state, S next, UnaryOperator<E> operator);
+  interface Entity<S extends State<?>> {
+    default boolean is(Forum.State state) { return false; }
   }
 
   interface Aggregate<A extends Aggregate<A, S, M>, S extends Domain.State<?>, M extends Record> {
@@ -52,13 +56,16 @@ public sealed interface Domain {
   }
 
   interface Hydration<A extends Aggregate<A, ?, ?>> {
-    A apply(long version, Stream<EventInfo> events) throws Throwable;
+    A apply(long version, Stream<MetaEvent> events) throws Throwable;
   }
   interface Transaction<A extends Aggregate<A, ?, ?>> {
-    Future<A> apply(AggregateInfo aggregate, Stream<EventInfo> events);
+    Future<A> apply(MetaAggregate aggregate, Stream<MetaEvent> events);
   }
 
-  interface ID<T> extends Attribute<T> {}
+  interface ValueObject<R extends Record & ValueObject<R>> {
+    default boolean is(R valueObject) { return this.equals(valueObject); }
+  }
+  interface ID<R extends Record & ID<R>> extends ValueObject<R> {}
 
   interface Model {
     static <M> Identity<M> identity(Domain.ID<?> id, long version, Domain.State<?> initial) {

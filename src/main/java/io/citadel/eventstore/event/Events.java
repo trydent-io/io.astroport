@@ -1,6 +1,6 @@
 package io.citadel.eventstore.event;
 
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.MetaEvent;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.json.JsonObject;
@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public sealed interface Events permits Empty, Found {
-  static Events found(long version, Stream<EventInfo> events) {
+  static Events found(long version, Stream<MetaEvent> events) {
     return new Found(version, events);
   }
 
@@ -27,7 +27,7 @@ public sealed interface Events permits Empty, Found {
       json.getJsonArray("events")
         .stream()
         .map(Json::fromAny)
-        .map(EventInfo::fromJson)
+        .map(MetaEvent::fromJson)
     );
   }
 }

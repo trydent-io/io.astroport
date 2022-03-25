@@ -5,13 +5,13 @@ import io.citadel.kernel.domain.Domain;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.MetaEvent;
 
 public final class Found implements Events {
   private final long version;
-  private final Stream<EventInfo> stream;
+  private final Stream<MetaEvent> stream;
 
-  public Found(long version, Stream<EventInfo> stream) {
+  public Found(long version, Stream<MetaEvent> stream) {
     this.version = version;
     this.stream = stream;
   }

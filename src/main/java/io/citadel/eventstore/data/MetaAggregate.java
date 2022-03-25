@@ -3,25 +3,25 @@ package io.citadel.eventstore.data;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 
-public record AggregateInfo(String id, String name, long version) {
-  public static AggregateInfo from(JsonObject json) {
+public record MetaAggregate(String id, String name, long version) {
+  public static MetaAggregate from(JsonObject json) {
     return fromJson(json);
   }
 
-  public static AggregateInfo from(Row row) {
+  public static MetaAggregate from(Row row) {
     return fromRow(row);
   }
 
-  public static AggregateInfo fromJson(JsonObject json) {
-    return new AggregateInfo(
+  public static MetaAggregate fromJson(JsonObject json) {
+    return new MetaAggregate(
       json.getString("id"),
       json.getString("name"),
       json.getLong("version")
     );
   }
 
-  public static AggregateInfo fromRow(Row row) {
-    return new AggregateInfo(
+  public static MetaAggregate fromRow(Row row) {
+    return new MetaAggregate(
       row.getString("aggregate_id"),
       row.getString("aggregate_name"),
       row.getLong("aggregate_version")

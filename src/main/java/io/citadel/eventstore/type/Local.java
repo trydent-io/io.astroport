@@ -1,8 +1,8 @@
 package io.citadel.eventstore.type;
 
 import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.MetaAggregate;
+import io.citadel.eventstore.data.MetaEvent;
 import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.event.Events;
 import io.citadel.kernel.media.Json;
@@ -31,7 +31,7 @@ public record Local(EventBus eventBus) implements EventStore {
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
+  public Future<Stream<EventLog>> persist(MetaAggregate aggregate, Stream<MetaEvent> events) {
     return eventBus
       .<JsonArray>request(
         PERSIST_EVENTS,

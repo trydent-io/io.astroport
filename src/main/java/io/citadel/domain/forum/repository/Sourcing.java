@@ -2,15 +2,15 @@ package io.citadel.domain.forum.repository;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.event.Events;
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.MetaEvent;
 
 import java.util.stream.Stream;
 
 public record Sourcing(Forum.ID id) implements Forum.Hydration {
   @Override
-  public Forum apply(final long version, final Stream<EventInfo> events) throws Throwable {
+  public Forum apply(final long version, final Stream<MetaEvent> events) throws Throwable {
     return events
-      .map(Forum.event::fromEventInfo)
+      .map(Forum.event::fromMeta)
       .reduce(
         Forum.states.identity(id, version),
         (forum, event) -> switch (event) {

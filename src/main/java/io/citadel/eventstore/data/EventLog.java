@@ -9,15 +9,15 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-public record EventLog(UUID id, AggregateInfo aggregate, EventInfo event, LocalDateTime persistedAt, String persistedBy) {
+public record EventLog(UUID id, MetaAggregate aggregate, MetaEvent event, LocalDateTime persistedAt, String persistedBy) {
   public static Stream<EventLog> fromJsonArray(JsonArray array) {
     return array.stream()
       .map(Json::fromAny)
       .map(json ->
         new EventLog(
           UUID.fromString(json.getString("id")),
-          AggregateInfo.from(json),
-          EventInfo.from(json),
+          MetaAggregate.from(json),
+          MetaEvent.from(json),
           LocalDateTime.from(json.getInstant("persistedAt")),
           "none"
         )
@@ -27,8 +27,8 @@ public record EventLog(UUID id, AggregateInfo aggregate, EventInfo event, LocalD
   public EventLog eventLog(Row row) {
     return new EventLog(
       row.getUUID("id"),
-      AggregateInfo.from(row),
-      EventInfo.from(row),
+      MetaAggregate.from(row),
+      MetaEvent.from(row),
       row.getLocalDateTime("persisted_at"),
       Maybe.of(row.getString("persisted_by")).or("none")
     );

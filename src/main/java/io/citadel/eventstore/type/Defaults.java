@@ -10,7 +10,7 @@ import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
 
 public enum Defaults {
-  Defaults;
+  Companion;
 
   public EventStore.Verticle service(Vertx vertx, Database database) {
     return new Service(
