@@ -4,22 +4,6 @@ import io.citadel.domain.forum.Forum;
 
 import java.time.LocalDateTime;
 
-record Model(Forum.Name name, Forum.Description description, LocalDateTime openAt) {
-  Model() { this(null, null, null); }
-
-  public Model name(final Forum.Name name) {
-    return new Model(name, description, openAt);
-  }
-
-  public Model description(final Forum.Description description) {
-    return new Model(name, description, openAt);
-  }
-
-  public Model openAt(final LocalDateTime openAt) {
-    return new Model(name, description, this.openAt);
-  }
-}
-
 public final class Aggregate {
   private final Forum.ID id;
   private final long version;

@@ -1,6 +1,5 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.domain.forum.Forum;
 import io.citadel.eventstore.EventStore;
 import io.citadel.eventstore.data.MetaAggregate;
 import io.citadel.eventstore.data.MetaEvent;
@@ -11,7 +10,6 @@ import io.vertx.core.Future;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -35,19 +33,16 @@ public sealed interface Domain {
     }
   }
 
-  interface Entity<S extends State<?>> {
-    default boolean is(Forum.State state) { return false; }
+  interface Entity<A extends Aggregate<A>, I extends Domain.ID<?>> {
+    A aggregate(I id, long version);
   }
 
-  interface Aggregate<A extends Aggregate<A, S, M>, S extends Domain.State<?>, M extends Record> {
-    Optional<A> whenDefault(S next, Supplier<M> supplier);
-    Optional<A> when(S state, S next, UnaryOperator<M> operator);
-
+  interface Aggregate<A extends Aggregate<A>> {
     Future<A> commit(Transaction<A> transaction);
   }
 
-  interface Aggregates<A extends Aggregate<A, ?, ?>, I extends ID<?>, E extends Domain.Event> {
-    static <A extends Aggregate<A, ?, ?>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
+  interface Aggregates<A extends Aggregate<A>, I extends ID<?>, E extends Domain.Event> {
+    static <A extends Aggregate<A>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
       return new Repository<>(eventStore, hydration, name);
     }
 
@@ -55,8 +50,9 @@ public sealed interface Domain {
     Future<Void> save(I id, long version, Stream<E> events);
   }
 
-  interface Hydration<A extends Aggregate<A, ?, ?>> {
-    A apply(long version, Stream<MetaEvent> events) throws Throwable;
+  interface Hydration<A extends Aggregate<A>, E extends Domain.Entity<E>> {
+    E entity(long version, Stream<MetaEvent> events) throws Throwable;
+    A aggregate(long version, Stream<MetaEvent> events) throws Throwable;
   }
   interface Transaction<A extends Aggregate<A, ?, ?>> {
     Future<A> apply(MetaAggregate aggregate, Stream<MetaEvent> events);

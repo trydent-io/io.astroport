@@ -10,7 +10,7 @@ import static io.citadel.domain.forum.Forum.State.Open;
 import static io.citadel.domain.forum.Forum.State.Registered;
 import static io.citadel.domain.forum.state.States.*;
 
-public sealed interface Operations extends Domain.Aggregate permits Forum {
+public sealed interface Operation extends Domain.Aggregate permits Forum {
   default Forum register(Forum.Name name, Forum.Description description, Member.ID by) {
     return switch (this) {
       case Aggregate aggregate -> aggregate.model().nextIf(

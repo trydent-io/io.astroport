@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import static io.vertx.core.Future.failedFuture;
 
-public final class Repository<A extends Domain.Aggregate<A, ?, ?>, I extends Domain.ID<?>, E extends Domain.Event> implements Domain.Aggregates<A, I, E> {
+public final class Repository<A extends Domain.Aggregate<A>, I extends Domain.ID<?>, E extends Domain.Event> implements Domain.Aggregates<A, I, E> {
   private final EventStore eventStore;
   private final Domain.Hydration<A> hydration;
   private final String name;
@@ -21,7 +21,7 @@ public final class Repository<A extends Domain.Aggregate<A, ?, ?>, I extends Dom
 
   @Override
   public Future<A> load(final I id) {
-    return eventStore.findEventsBy(id.value().toString(), name)
+    return eventStore.findEventsBy(id.toString(), name)
       .map(events -> events.aggregateFrom(hydration))
       .compose(aggregate -> aggregate
         .map(Future::succeededFuture)
@@ -32,7 +32,7 @@ public final class Repository<A extends Domain.Aggregate<A, ?, ?>, I extends Dom
   @Override
   public Future<Void> save(final I id, final long version, final Stream<E> events) {
     return eventStore
-      .persist(id.value().toString(), name, version, events.map(Domain.Event::asMeta))
+      .persist(id.toString(), name, version, events.map(Domain.Event::asMeta))
       .mapEmpty();
   }
 }

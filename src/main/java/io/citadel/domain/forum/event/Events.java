@@ -64,6 +64,8 @@ public enum Events {
 
   public record Reopened(Member.ID by) implements Forum.Event {}
 
+  public record Archived(Member.ID by) implements Forum.Event {}
+
   public sealed interface Edited extends Forum.Event {
     record Name(Forum.Name name) implements Edited {}
     record Description(Forum.Description description) implements Edited {}
