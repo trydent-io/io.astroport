@@ -1,6 +1,5 @@
 package io.citadel.domain.forum;
 
-import io.citadel.domain.forum.aggregate.Model;
 import io.citadel.domain.forum.command.Commands;
 import io.citadel.domain.forum.event.Events;
 import io.citadel.domain.forum.model.Attributes;
@@ -8,19 +7,17 @@ import io.citadel.domain.forum.repository.Sourcing;
 import io.citadel.domain.forum.state.States;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.domain.attribute.Attribute;
-import io.citadel.kernel.func.ThrowableFunction;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
-import static java.util.Objects.isNull;
-
-public sealed interface Forum extends Domain.Aggregate<Forum>, Operations<Forum> permits States.Aggregate {
+public sealed interface Forum extends Domain.Aggregate<Forum> permits States.Aggregate {
   Commands commands = Commands.Defaults;
   Events event = Events.Defaults;
   Attributes attributes = Attributes.Defaults;
   States states = States.Defaults;
+
+  static Forum with(Forum.ID id) { return new States.Aggregate(id); }
 
   enum State implements Domain.State<State> {Registered, Open, Closed, Archived}
 
@@ -31,12 +28,20 @@ public sealed interface Forum extends Domain.Aggregate<Forum>, Operations<Forum>
   record ID(UUID value) implements Domain.ID<Forum.ID> {}
   record Name(String value) implements Attribute<String> {}
   record Description(String value) implements Attribute<String> {}
+  record Details(Name name, Description description) implements Domain.ValueObject<Details>
 
-  record Entity(Forum.Name name, Forum.Description description) implements Domain.Entity<Forum.Entity, Forum.Event> {
-    @Override
-    public Optional<Entity> apply(final Event event) {
-      return Optional.empty();
-    }
+  Registered register(Forum.Name name, Forum.Description description);
+  interface Registered {
+    Open open();
   }
+  interface Open {
+    Closed close();
+  }
+  interface Closed {
+    Open reopen();
+    Archived archive();
+  }
+
+  interface Archived {}
 }
 

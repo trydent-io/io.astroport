@@ -9,10 +9,10 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-public final class Default<A extends Domain.Aggregate<A, S, M>, S extends Domain.State<?>, M extends Record> implements Domain.Aggregate<A, S, M> {
-  private final ThrowableFunction<? super Domain.Aggregate<A, S, M>, ? extends A> function;
+public final class Default<A extends Domain.Aggregate<A>, S extends Domain.State<?>, M extends Record> implements Domain.Aggregate<A> {
+  private final ThrowableFunction<? super Domain.Aggregate<A>, ? extends A> function;
 
-  public Default(final ThrowableFunction<? super Domain.Aggregate<A, S, M>, ? extends A> function) {this.function = function;}
+  public Default(final ThrowableFunction<? super Domain.Aggregate<A>, ? extends A> function) {this.function = function;}
 
   @Override
   public Optional<A> whenDefault(final S next, final Supplier<M> supplier) {

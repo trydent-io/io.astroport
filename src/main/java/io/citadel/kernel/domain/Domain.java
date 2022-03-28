@@ -50,11 +50,10 @@ public sealed interface Domain {
     Future<Void> save(I id, long version, Stream<E> events);
   }
 
-  interface Hydration<A extends Aggregate<A>, E extends Domain.Entity<E>> {
-    E entity(long version, Stream<MetaEvent> events) throws Throwable;
+  interface Hydration<A extends Aggregate<A>> {
     A aggregate(long version, Stream<MetaEvent> events) throws Throwable;
   }
-  interface Transaction<A extends Aggregate<A, ?, ?>> {
+  interface Transaction<A extends Aggregate<A>> {
     Future<A> apply(MetaAggregate aggregate, Stream<MetaEvent> events);
   }
 
