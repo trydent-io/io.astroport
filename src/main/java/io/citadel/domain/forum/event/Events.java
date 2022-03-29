@@ -11,7 +11,7 @@ import io.citadel.eventstore.data.MetaEvent;
 public enum Events {
   Defaults;
 
-  public Forum.Event edited(final Forum.Description description) {
+  public Forum.Event edited(final Forum.Name name, final Forum.Description description) {
     return new Edited.Description(description);
   }
 
@@ -33,6 +33,10 @@ public enum Events {
 
   public Forum.Event reopened(Member.ID by) {
     return new Reopened(by);
+  }
+
+  public Forum.Event archived(Member.ID by) {
+    return new Archived(by);
   }
 
   public Forum.Event fromMeta(MetaEvent event) {
@@ -66,8 +70,5 @@ public enum Events {
 
   public record Archived(Member.ID by) implements Forum.Event {}
 
-  public sealed interface Edited extends Forum.Event {
-    record Name(Forum.Name name) implements Edited {}
-    record Description(Forum.Description description) implements Edited {}
-  }
+  public record Edited(Forum.Name name, Forum.Description description) implements Forum.Event {}
 }

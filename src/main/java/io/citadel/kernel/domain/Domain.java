@@ -49,70 +49,19 @@ public sealed interface Domain {
     Future<Void> save(I id, long version, Stream<E> events);
   }
 
-  interface Hydration<A extends Aggregate<A>> {
-    A aggregate(long version, Stream<MetaEvent> events) throws Throwable;
-  }
-  interface Transaction<A extends Aggregate<A>> {
-    Future<Void> commit(ThrowableBiFunction<? super MetaAggregate, ? super Stream<MetaEvent>, ? extends Future<Void>> commit);
+  interface Snapshot<T extends Transaction> {
+    T transaction(long version);
   }
 
-  interface ValueObject<R extends Record & ValueObject<R>> {
-    default boolean is(R valueObject) { return this.equals(valueObject); }
+  interface Hydration<S extends Snapshot<?>> {
+    S snapshot(long version, Stream<MetaEvent> events) throws Throwable;
   }
+  interface Transaction {
+    Future<Void> commit(ThrowableBiFunction<? super MetaAggregate, ? super Stream<MetaEvent>, ? extends Future<Void>> transaction);
+  }
+
+  interface ValueObject<R extends Record & ValueObject<R>> {}
+
   interface ID<R extends Record & ID<R>> extends ValueObject<R> {}
-
-  interface Model {
-    static <M> Identity<M> identity(Domain.ID<?> id, long version, Domain.State<?> initial) {
-      return new Identity.Root<>(id, version, initial);
-    }
-
-    interface Identity<M> extends Model {
-      Next<M> nextIf(Domain.State<?> state, Domain.State<?> next, ThrowableSupplier<M> modelling);
-
-      Next<M> stayIf(Stream<Domain.State<?>> states, ThrowableSupplier<M> modelling);
-
-      record Root<M>(Domain.ID<?> id, long version, Domain.State<?> initial) implements Identity<M> {
-        @Override
-        public Next<M> nextIf(final Domain.State<?> state, final Domain.State<?> next, final ThrowableSupplier<M> modelling) {
-          return this.initial.equals(state)
-            ? new Next.Modelled<>(new Root<>(id, version, next), modelling.get())
-            : throwIllegalState();
-        }
-
-        @Override
-        public Next<M> stayIf(final Stream<Domain.State<?>> states, final ThrowableSupplier<M> modelling) {
-          return states.anyMatch(initial::equals)
-            ? new Next.Modelled<>(new Root<>(id, version, initial), modelling.get())
-            : throwIllegalState();
-        }
-
-        private Next<M> throwIllegalState() {
-          throw new IllegalStateException("Can't to do something");
-        }
-      }
-    }
-
-    interface Next<M> extends Model {
-      Next<M> nextIf(Domain.State<?> state, Domain.State<?> next, UnaryOperator<M> modelling);
-
-      Next<M> stayIf(Stream<Domain.State<?>> states, UnaryOperator<M> modelling);
-
-      record Modelled<M>(Identity<M> identity, M model) implements Next<M> {
-        @Override
-        public Next<M> nextIf(final Domain.State<?> state, final Domain.State<?> next, final UnaryOperator<M> modelling) {
-          return this.identity.nextIf(state, next, () -> modelling.apply(model));
-        }
-
-        @Override
-        public Next<M> stayIf(final Stream<Domain.State<?>> states, final UnaryOperator<M> modelling) {
-          return this.identity.stayIf(states, () -> modelling.apply(model));
-        }
-      }
-    }
-  }
-
-  interface Snapshot<A extends Domain.Aggregate<A>> {
-    A freeze(long version);
-  }
 }
 
