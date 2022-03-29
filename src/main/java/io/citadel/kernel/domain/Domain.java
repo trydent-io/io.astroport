@@ -4,6 +4,7 @@ import io.citadel.eventstore.EventStore;
 import io.citadel.eventstore.data.MetaAggregate;
 import io.citadel.eventstore.data.MetaEvent;
 import io.citadel.kernel.domain.repository.Repository;
+import io.citadel.kernel.func.ThrowableBiFunction;
 import io.citadel.kernel.func.ThrowableSupplier;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
@@ -37,9 +38,7 @@ public sealed interface Domain {
     A aggregate(I id, long version);
   }
 
-  interface Aggregate<A extends Aggregate<A>> {
-    Future<A> commit(Transaction<A> transaction);
-  }
+  interface Aggregate<A extends Aggregate<A>> {}
 
   interface Aggregates<A extends Aggregate<A>, I extends ID<?>, E extends Domain.Event> {
     static <A extends Aggregate<A>, I extends ID<?>, E extends Domain.Event> Aggregates<A, I, E> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
@@ -54,7 +53,7 @@ public sealed interface Domain {
     A aggregate(long version, Stream<MetaEvent> events) throws Throwable;
   }
   interface Transaction<A extends Aggregate<A>> {
-    Future<A> apply(MetaAggregate aggregate, Stream<MetaEvent> events);
+    Future<Void> commit(ThrowableBiFunction<? super MetaAggregate, ? super Stream<MetaEvent>, ? extends Future<Void>> commit);
   }
 
   interface ValueObject<R extends Record & ValueObject<R>> {
@@ -110,6 +109,10 @@ public sealed interface Domain {
         }
       }
     }
+  }
+
+  interface Snapshot<A extends Domain.Aggregate<A>> {
+    A freeze(long version);
   }
 }
 
