@@ -1,7 +1,7 @@
 package io.citadel.eventstore;
 
-import io.citadel.eventstore.data.MetaAggregate;
-import io.citadel.eventstore.data.MetaEvent;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
 import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.event.Events;
 import io.citadel.eventstore.type.Defaults;
@@ -28,8 +28,8 @@ public sealed interface EventStore permits EventStore.Verticle, Local, Sql {
   sealed interface Verticle extends EventStore, io.vertx.core.Verticle permits Service {}
 
   Future<Events> findEventsBy(String id, String name);
-  default Future<Stream<EventLog>> persist(String id, String name, long version, Stream<MetaEvent> events) {
-    return persist(new MetaAggregate(id, name, version), events);
+  default Future<Stream<EventLog>> persist(String id, String name, long version, Stream<EventInfo> events) {
+    return persist(new AggregateInfo(id, name, version), events);
   }
-  Future<Stream<EventLog>> persist(MetaAggregate aggregate, Stream<MetaEvent> events);
+  Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events);
 }

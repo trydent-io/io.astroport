@@ -1,8 +1,8 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.eventstore.data.MetaAggregate;
-import io.citadel.eventstore.data.MetaEvent;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
 import io.citadel.kernel.func.ThrowableBiFunction;
 import io.vertx.core.Future;
 
@@ -12,11 +12,11 @@ import static io.citadel.domain.forum.Forum.State.Open;
 import static io.citadel.domain.forum.Forum.State.Registered;
 import static io.vertx.core.Future.failedFuture;
 
-public record Staging(State state, Forum forum) implements Forum.Snapshot, Forum.Transaction {
+public record Lifecycle(State state, Forum forum) implements Forum.Aggregate, Forum.Service {
   @Override
   public Forum register(final Name name, Description description) {
     return switch (state) {
-      case null -> new Staging(Registered, forum.register(name, description));
+      case null -> new Lifecycle(Registered, forum.register(name, description));
       default -> null;
     };
   }
@@ -24,7 +24,7 @@ public record Staging(State state, Forum forum) implements Forum.Snapshot, Forum
   @Override
   public Forum edit(final Name name, Description description) {
     return switch (state) {
-      case Registered, Open -> new Staging(state, forum.edit(name, description));
+      case Registered, Open -> new Lifecycle(state, forum.edit(name, description));
       default -> null;
     };
   }
@@ -32,7 +32,7 @@ public record Staging(State state, Forum forum) implements Forum.Snapshot, Forum
   @Override
   public Forum open() {
     return switch (state) {
-      case Registered -> new Staging(State.Open, forum.open());
+      case Registered -> new Lifecycle(State.Open, forum.open());
       default -> null;
     };
   }
@@ -40,7 +40,7 @@ public record Staging(State state, Forum forum) implements Forum.Snapshot, Forum
   @Override
   public Forum close() {
     return switch (state) {
-      case Open -> new Staging(State.Closed, forum.close());
+      case Open -> new Lifecycle(State.Closed, forum.close());
       default -> null;
     };
   }
@@ -48,7 +48,7 @@ public record Staging(State state, Forum forum) implements Forum.Snapshot, Forum
   @Override
   public Forum archive() {
     return switch (state) {
-      case Closed -> new Staging(State.Archived, forum.archive());
+      case Closed -> new Lifecycle(State.Archived, forum.archive());
       default -> null;
     };
   }
@@ -56,23 +56,23 @@ public record Staging(State state, Forum forum) implements Forum.Snapshot, Forum
   @Override
   public Forum reopen() {
     return switch (state) {
-      case Closed -> new Staging(Open, forum.reopen());
+      case Closed -> new Lifecycle(Open, forum.reopen());
       default -> null;
     };
   }
 
   @Override
-  public Transaction transaction(final long version) {
-    return new Staging(state, switch (forum) {
-      case Snapshot snapshot -> snapshot.transaction(version);
-      default -> null;
+  public Service service(final long version) {
+    return new Lifecycle(state, switch (forum) {
+      case Aggregate snapshot -> snapshot.service(version);
+      default -> throw new IllegalStateException("Can't provide service for aggregate Forum");
     });
   }
 
   @Override
-  public Future<Void> commit(final ThrowableBiFunction<? super MetaAggregate, ? super Stream<MetaEvent>, ? extends Future<Void>> transaction) {
+  public Future<Void> commit(final ThrowableBiFunction<? super AggregateInfo, ? super Stream<EventInfo>, ? extends Future<Void>> transaction) {
     return switch (forum) {
-      case Transaction service -> service.commit(transaction);
+      case Service service -> service.commit(transaction);
       default -> failedFuture("Can't commit");
     };
   }

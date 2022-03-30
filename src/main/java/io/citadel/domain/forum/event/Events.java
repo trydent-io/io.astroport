@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;
 
-import io.citadel.eventstore.data.MetaEvent;
+import io.citadel.eventstore.data.EventInfo;
 
 public enum Events {
   Defaults;
@@ -39,7 +39,7 @@ public enum Events {
     return new Archived(by);
   }
 
-  public Forum.Event fromMeta(MetaEvent event) {
+  public Forum.Event fromMeta(EventInfo event) {
     return from(event.name(), event.data()).orElseThrow();
   }
 

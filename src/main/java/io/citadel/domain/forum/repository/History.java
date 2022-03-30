@@ -2,14 +2,13 @@ package io.citadel.domain.forum.repository;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.event.Events;
-import io.citadel.eventstore.data.MetaEvent;
+import io.citadel.eventstore.data.EventInfo;
 
-import java.util.Optional;
 import java.util.stream.Stream;
 
 public record History(Forum.ID id) implements Forum.Hydration {
   @Override
-  public Forum.Snapshot snapshot(final long version, final Stream<MetaEvent> events) {
+  public Forum.Aggregate aggregate(final long version, final Stream<EventInfo> events) {
     return events
       .map(Forum.event::fromMeta)
       .reduce(
@@ -24,6 +23,6 @@ public record History(Forum.ID id) implements Forum.Hydration {
         },
         (f, __) -> f
       )
-      .asSnapshot();
+      .aggregate();
   }
 }

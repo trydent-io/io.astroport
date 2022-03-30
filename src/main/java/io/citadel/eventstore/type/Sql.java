@@ -1,8 +1,8 @@
 package io.citadel.eventstore.type;
 
 import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.MetaAggregate;
-import io.citadel.eventstore.data.MetaEvent;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
 import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.event.Events;
 import io.citadel.kernel.media.Json;
@@ -18,10 +18,9 @@ import java.util.stream.Stream;
 import static java.util.stream.StreamSupport.stream;
 
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
-public
-record Sql(EventBus eventBus, SqlClient client) implements EventStore {
+public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
   @Override
-  public Future<Events> findEventsBy(String id, String name, long version) {
+  public Future<Events> findEventsBy(String id, String name) {
     return SqlTemplate.forQuery(client, """
         with aggregate as (
           select  aggregate_version as version
@@ -36,12 +35,11 @@ record Sql(EventBus eventBus, SqlClient client) implements EventStore {
         from    event_logs
         where   aggregate_id = #{aggregateId} and aggregate_name = #{aggregateName}
         """)
-      .mapTo(EventStore.data::eventLog)
+      .mapTo(EventLog::fromRow)
       .execute(
         Map.of(
           "aggregateId", id,
-          "aggregateName", name,
-          "aggregateVersion", version
+          "aggregateName", name
         )
       )
       .map(rows -> stream(rows.spliterator(), false))
@@ -50,7 +48,7 @@ record Sql(EventBus eventBus, SqlClient client) implements EventStore {
         .map(eventLog ->
           Events.found(
             eventLog.aggregate().version(),
-            eventLogs.<MetaEvent>map(EventLog::event)
+            eventLogs.<EventInfo>map(EventLog::event)
           )
         )
         .orElseGet(Events::empty)
@@ -58,7 +56,7 @@ record Sql(EventBus eventBus, SqlClient client) implements EventStore {
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(MetaAggregate aggregate, Stream<MetaEvent> events) {
+  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
     final var template = """
       with events as (
         select  es -> 'event' ->> 'name' event_name,
@@ -84,7 +82,7 @@ record Sql(EventBus eventBus, SqlClient client) implements EventStore {
       returning *
       """;
     return SqlTemplate.forUpdate(client, template)
-      .mapTo(EventStore.data::eventLog)
+      .mapTo(EventLog::fromRow)
       .execute(
         Map.of(
           "aggregateId", aggregate.id(),

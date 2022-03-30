@@ -4,10 +4,10 @@ import io.citadel.domain.forum.Forum;
 
 import java.util.stream.Stream;
 
-public record Sourcing(Model model) implements Forum.Snapshot {
+public record Snapshot(Model model) implements Forum.Aggregate {
   @Override
   public Forum register(final Name name, Description description) {
-    return new Sourcing(new Model(model.id(), new Details(name, description)));
+    return new Snapshot(new Model(model.id(), new Details(name, description)));
   }
 
   @Override
@@ -32,11 +32,11 @@ public record Sourcing(Model model) implements Forum.Snapshot {
 
   @Override
   public Forum edit(final Name name, Description description) {
-    return new Sourcing(new Model(model.id(), new Details(name, description)));
+    return new Snapshot(new Model(model.id(), new Details(name, description)));
   }
 
   @Override
-  public Forum.Transaction transaction(final long version) {
+  public Service service(long version) {
     return new Providing(model, version, Stream.empty());
   }
 }
