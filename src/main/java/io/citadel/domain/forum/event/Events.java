@@ -9,7 +9,7 @@ import java.util.Optional;
 import io.citadel.eventstore.data.EventInfo;
 
 public enum Events {
-  Defaults;
+  Companion;
 
   public Forum.Event edited(final Forum.Name name, final Forum.Description description) {
     return new Edited.Description(description);
@@ -39,7 +39,7 @@ public enum Events {
     return new Archived(by);
   }
 
-  public Forum.Event fromMeta(EventInfo event) {
+  public Forum.Event fromInfo(EventInfo event) {
     return from(event.name(), event.data()).orElseThrow();
   }
 

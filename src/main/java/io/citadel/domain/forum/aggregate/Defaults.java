@@ -3,9 +3,9 @@ package io.citadel.domain.forum.aggregate;
 import io.citadel.domain.forum.Forum;
 
 public enum Defaults {
-  Defaults;
+  Companion;
 
-  public Forum.Aggregate snapshot(Forum.ID identity) {
-    return new Snapshot(new Forum.Model(identity, null));
+  public Snap snapshot(Forum.ID id) {
+    return Snap.shot(id);
   }
 }

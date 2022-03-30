@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public enum Attributes {
-  Defaults;
+  Companion;
 
   public Optional<Forum.ID> ID(String value) {
     try {

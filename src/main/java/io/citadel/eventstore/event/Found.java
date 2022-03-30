@@ -17,9 +17,9 @@ public final class Found implements Events {
   }
 
   @Override
-  public <A extends Domain.Aggregate<?>> Optional<A> aggregateFrom(Domain.Hydration<A> hydration) {
+  public <A extends Domain.Aggregate> Optional<A> aggregateFrom(Domain.Hydration<A> hydration) {
     try {
-      return Optional.of(hydration.aggregate(version, stream));
+      return Optional.of(hydration.snapshot(version, stream));
     } catch (Throwable e) {
       return Optional.empty();
     }

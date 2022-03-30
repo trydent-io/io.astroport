@@ -17,7 +17,7 @@ public sealed interface Events permits Empty, Found {
     return Empty.Default;
   }
 
-  default <A extends Domain.Aggregate<?>> Optional<A> aggregateFrom(Domain.Hydration<A> hydration) {
+  default <A extends Domain.Aggregate> Optional<A> aggregateFrom(Domain.Hydration<A> hydration) {
     return Optional.empty();
   }
 

@@ -6,7 +6,7 @@ import io.citadel.domain.member.Member;
 import java.time.LocalDateTime;
 
 public enum Commands {
-  Defaults;
+  Companion;
 
   public Open open(LocalDateTime at, Member.ID by) { return new Open(at, by); }
 

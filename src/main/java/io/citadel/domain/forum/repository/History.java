@@ -1,6 +1,7 @@
 package io.citadel.domain.forum.repository;
 
 import io.citadel.domain.forum.Forum;
+import io.citadel.domain.forum.aggregate.Aggregate;
 import io.citadel.domain.forum.event.Events;
 import io.citadel.eventstore.data.EventInfo;
 
@@ -8,11 +9,11 @@ import java.util.stream.Stream;
 
 public record History(Forum.ID id) implements Forum.Hydration {
   @Override
-  public Forum.Aggregate aggregate(final long version, final Stream<EventInfo> events) {
+  public Aggregate snapshot(final long version, final Stream<EventInfo> events) {
     return events
-      .map(Forum.event::fromMeta)
+      .map(Forum.event::fromInfo)
       .reduce(
-        Forum.defaults.snapshot(id),
+        Forum.with(id),
         (forum, event) -> switch (event) {
           case Events.Registered registered -> forum.register(registered.name(), registered.description());
           case Events.Opened opened -> forum.open();
@@ -23,6 +24,6 @@ public record History(Forum.ID id) implements Forum.Hydration {
         },
         (f, __) -> f
       )
-      .aggregate();
+      .aggregate(version);
   }
 }
