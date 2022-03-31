@@ -12,8 +12,8 @@ import java.util.stream.Stream;
 import static io.citadel.domain.forum.aggregate.Aggregate.Type.*;
 
 public sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate {
-  static Aggregate root(Model model, long version) {
-    return new Lifecycle(Life.span(new Root(model, version, Stream.empty())));
+  static Service<Aggregate> root(Model model, long version) {
+    return Service.lifecycle(new Root(model, version, Stream.empty()));
   }
 
   enum Type {
@@ -56,41 +56,5 @@ public sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate {
       }
     }
 
-    private record Lifecycle(Life<Aggregate> life) implements Aggregate {
-      @Override
-      public Aggregate register(final Name name, final Description description) {
-        return new Lifecycle(life.register(name, description));
-      }
-
-      @Override
-      public Aggregate edit(final Name name, final Description description) {
-        return new Lifecycle(life.edit(name, description));
-      }
-
-      @Override
-      public Aggregate open() {
-        return new Lifecycle(life.open());
-      }
-
-      @Override
-      public Aggregate close() {
-        return new Lifecycle(life.close());
-      }
-
-      @Override
-      public Aggregate archive() {
-        return new Lifecycle(life.archive());
-      }
-
-      @Override
-      public Aggregate reopen() {
-        return new Lifecycle(life.reopen());
-      }
-
-      @Override
-      public <T> T commit(final ThrowableBiFunction<? super AggregateInfo, ? super Stream<EventInfo>, ? extends T> transaction) {
-        return life.eventually(aggregate -> aggregate.commit(transaction));
-      }
-    }
   }
 }

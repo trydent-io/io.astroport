@@ -6,7 +6,7 @@ import io.citadel.eventstore.EventStore;
 import io.citadel.kernel.domain.Domain;
 
 public sealed interface Forums extends Domain.Aggregates<Aggregate, Forum.ID> permits Repository {
-  static Forums repository(EventStore eventStore, Forum.Hydration hydration) {
+  static Forums repository(EventStore eventStore, Forum.Snapshot hydration) {
     return new Repository(Domain.Aggregates.repository(eventStore, hydration, Forum.AGGREGATE_NAME));
   }
 }

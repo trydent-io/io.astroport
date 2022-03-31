@@ -5,7 +5,7 @@ import io.citadel.domain.forum.Forum;
 public enum Defaults {
   Companion;
 
-  public Snap snapshot(Forum.ID id) {
-    return Snap.shot(id);
+  public Service<Model> with(Forum.ID id) {
+    return Service.lifecycle(new Model(id));
   }
 }

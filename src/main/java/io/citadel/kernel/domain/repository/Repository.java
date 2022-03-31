@@ -12,19 +12,19 @@ import static io.vertx.core.Future.failedFuture;
 
 public final class Repository<A extends Domain.Aggregate, I extends Domain.ID<?>> implements Domain.Aggregates<A, I> {
   private final EventStore eventStore;
-  private final Domain.Hydration<A> hydration;
+  private final Domain.Snapshot<A> snapshot;
   private final String name;
 
-  public Repository(final EventStore eventStore, final Domain.Hydration<A> hydration, final String name) {
+  public Repository(final EventStore eventStore, final Domain.Snapshot<A> snapshot, final String name) {
     this.eventStore = eventStore;
-    this.hydration = hydration;
+    this.snapshot = snapshot;
     this.name = name;
   }
 
   @Override
   public Future<A> load(final I id) {
     return eventStore.findEventsBy(id.toString(), name)
-      .map(events -> events.aggregateFrom(hydration))
+      .map(events -> events.aggregateFrom(snapshot))
       .compose(aggregate -> aggregate
         .map(Future::succeededFuture)
         .orElse(failedFuture("Can't hydrate root %s with id %s".formatted(name, id)))

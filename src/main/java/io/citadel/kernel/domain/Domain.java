@@ -10,7 +10,6 @@ import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 
-import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 public sealed interface Domain {
@@ -26,8 +25,8 @@ public sealed interface Domain {
   }
 
   interface Aggregates<A extends Aggregate, I extends ID<?>> {
-    static <A extends Aggregate, I extends ID<?>> Aggregates<A, I> repository(EventStore eventStore, Domain.Hydration<A> hydration, String name) {
-      return new Repository<>(eventStore, hydration, name);
+    static <A extends Aggregate, I extends ID<?>> Aggregates<A, I> repository(EventStore eventStore, Snapshot<A> snapshot, String name) {
+      return new Repository<>(eventStore, snapshot, name);
     }
 
     Future<A> load(I id);
@@ -35,16 +34,16 @@ public sealed interface Domain {
   }
 
   interface Snapshot<A extends Aggregate> {
-    A aggregate(long version);
+    Service<A> aggregate(long version, Stream<EventInfo> events) throws Throwable;
   }
-  interface Hydration<A extends Aggregate> {
-    A snapshot(long version, Stream<EventInfo> events) throws Throwable;
-  }
-  interface Aggregate {
+  interface Aggregate extends Model {
     <T> T commit(ThrowableBiFunction<? super AggregateInfo, ? super Stream<EventInfo>, ? extends T> transaction);
   }
-  interface Life<M extends Domain.Model> {
+  interface Service<M extends Domain.Model> {
     <R> R eventually(ThrowableFunction<? super M, ? extends R> then);
+    default M eventually() {
+      return eventually(it -> it);
+    }
   }
 
   interface ID<R> extends Attribute<R> {}

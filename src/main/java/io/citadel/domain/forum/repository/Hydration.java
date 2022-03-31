@@ -2,14 +2,15 @@ package io.citadel.domain.forum.repository;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.aggregate.Aggregate;
+import io.citadel.domain.forum.aggregate.Service;
 import io.citadel.domain.forum.event.Events;
 import io.citadel.eventstore.data.EventInfo;
 
 import java.util.stream.Stream;
 
-public record History(Forum.ID id) implements Forum.Hydration {
+public record Hydration(Forum.ID id) implements Forum.Snapshot {
   @Override
-  public Aggregate snapshot(final long version, final Stream<EventInfo> events) {
+  public Service<Aggregate> aggregate(final long version, final Stream<EventInfo> events) {
     return events
       .map(Forum.event::fromInfo)
       .reduce(
@@ -24,6 +25,6 @@ public record History(Forum.ID id) implements Forum.Hydration {
         },
         (f, __) -> f
       )
-      .aggregate(version);
+      .eventually(model -> Aggregate.root(model, version));
   }
 }
