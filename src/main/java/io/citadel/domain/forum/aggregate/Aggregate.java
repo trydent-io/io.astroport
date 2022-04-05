@@ -14,6 +14,6 @@ public sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate per
     return new Root(model, version, Stream.empty());
   }
 
-  static Aggregate transaction(Service<Aggregate> service) { return new Transaction(service); }
+  static Aggregate transaction(Lifecycle<Aggregate> service) { return new Transaction(service); }
 }
 

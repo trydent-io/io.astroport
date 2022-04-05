@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 public sealed interface Domain {
   enum Namespace implements Domain {}
 
-  interface Model {}
   interface State<S extends Enum<S>> {}
   interface Command {}
   interface Event {
@@ -36,10 +35,10 @@ public sealed interface Domain {
   interface Snapshot<A extends Aggregate> {
     A aggregate(long version, Stream<EventInfo> events) throws Throwable;
   }
-  interface Aggregate extends Model {
+  interface Aggregate {
     <T> T commit(ThrowableBiFunction<? super AggregateInfo, ? super Stream<EventInfo>, ? extends T> transaction);
   }
-  interface Service<M extends Domain.Model> {
+  interface Lifecycle<M> {
     <R> R eventually(ThrowableFunction<? super M, ? extends R> then);
     default M eventually() {
       return eventually(it -> it);

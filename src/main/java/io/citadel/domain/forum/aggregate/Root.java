@@ -15,8 +15,8 @@ record Root(Model model, long version, Stream<Event> events) implements Aggregat
   }
 
   @Override
-  public Aggregate edit(final Name name, final Description description) {
-    return new Root(model, version, append(events, Forum.event.edited(name, description)));
+  public Aggregate change(final Name name, final Description description) {
+    return new Root(model, version, append(events, Forum.event.changed(name, description)));
   }
 
   @Override
@@ -46,8 +46,8 @@ record Root(Model model, long version, Stream<Event> events) implements Aggregat
 }
 
 final class Transaction extends Lifespan<Aggregate> implements Aggregate {
-  Transaction(Service<Aggregate> service) {
-    super(service, Transaction::new);
+  Transaction(Lifecycle<Aggregate> lifecycle) {
+    super(lifecycle, Transaction::new);
   }
 
   @Override

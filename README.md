@@ -1,2 +1,2 @@
 # Citadel
-A simple CQRS+Event Sourcing service in Vert.x
+A simple CQRS+Event Sourcing lifecycle in Vert.x

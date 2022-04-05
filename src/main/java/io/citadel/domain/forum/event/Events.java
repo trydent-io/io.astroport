@@ -11,33 +11,17 @@ import io.citadel.eventstore.data.EventInfo;
 public enum Events {
   Companion;
 
-  public Forum.Event edited(final Forum.Name name, final Forum.Description description) {
-    return new Edited.Description(description);
-  }
+  public Forum.Event changed(final Forum.Name name, final Forum.Description description) { return new Changed(name, description); }
 
-  public Forum.Event edited(final Forum.Name name) {
-    return new Edited.Name(name);
-  }
+  public Forum.Event registered(Forum.Name name, Forum.Description description, Member.ID by) { return new Registered(name, description, by); }
 
-  public Forum.Event registered(Forum.Name name, Forum.Description description, Member.ID by) {
-    return new Registered(name, description, by);
-  }
+  public Forum.Event opened(Member.ID by) { return new Opened(by); }
 
-  public Forum.Event opened(Member.ID by) {
-    return new Opened(by);
-  }
+  public Forum.Event closed(Member.ID by) { return new Closed(by); }
 
-  public Forum.Event closed(Member.ID by) {
-    return new Closed(by);
-  }
+  public Forum.Event reopened(Member.ID by) { return new Reopened(by); }
 
-  public Forum.Event reopened(Member.ID by) {
-    return new Reopened(by);
-  }
-
-  public Forum.Event archived(Member.ID by) {
-    return new Archived(by);
-  }
+  public Forum.Event archived(Member.ID by) { return new Archived(by); }
 
   public Forum.Event fromInfo(EventInfo event) {
     return from(event.name(), event.data()).orElseThrow();
@@ -70,5 +54,5 @@ public enum Events {
 
   public record Archived(Member.ID by) implements Forum.Event {}
 
-  public record Edited(Forum.Name name, Forum.Description description) implements Forum.Event {}
+  public record Changed(Forum.Name name, Forum.Description description) implements Forum.Event {}
 }
