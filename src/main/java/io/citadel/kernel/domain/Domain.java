@@ -34,7 +34,7 @@ public sealed interface Domain {
   }
 
   interface Snapshot<A extends Aggregate> {
-    Service<A> aggregate(long version, Stream<EventInfo> events) throws Throwable;
+    A aggregate(long version, Stream<EventInfo> events) throws Throwable;
   }
   interface Aggregate extends Model {
     <T> T commit(ThrowableBiFunction<? super AggregateInfo, ? super Stream<EventInfo>, ? extends T> transaction);

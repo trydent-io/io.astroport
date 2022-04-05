@@ -1,4 +1,4 @@
-package io.citadel.domain.forum.repository;
+package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.Forums;
@@ -10,7 +10,7 @@ import io.vertx.core.Future;
 
 import java.util.stream.Stream;
 
-public record Repository(Domain.Aggregates<Aggregate, Forum.ID> aggregates) implements Forums {
+record Repository(Domain.Aggregates<Aggregate, Forum.ID> aggregates) implements Forums {
   @Override
   public Future<Aggregate> load(final Forum.ID id) {
     return aggregates.load(id);

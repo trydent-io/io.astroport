@@ -1,20 +1,21 @@
-package io.citadel.domain.forum.repository;
+package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.aggregate.Aggregate;
 import io.citadel.domain.forum.aggregate.Service;
 import io.citadel.domain.forum.event.Events;
 import io.citadel.eventstore.data.EventInfo;
+import io.citadel.kernel.domain.Domain;
 
 import java.util.stream.Stream;
 
-public record Hydration(Forum.ID id) implements Forum.Snapshot {
+record Snapshot(Forum.ID id) implements Domain.Snapshot<Aggregate> {
   @Override
-  public Service<Aggregate> aggregate(final long version, final Stream<EventInfo> events) {
+  public Aggregate aggregate(final long version, final Stream<EventInfo> events) {
     return events
       .map(Forum.event::fromInfo)
       .reduce(
-        Forum.with(id),
+        Forum.defaults.model(id),
         (forum, event) -> switch (event) {
           case Events.Registered registered -> forum.register(registered.name(), registered.description());
           case Events.Opened opened -> forum.open();
@@ -25,6 +26,6 @@ public record Hydration(Forum.ID id) implements Forum.Snapshot {
         },
         (f, __) -> f
       )
-      .eventually(model -> Aggregate.root(model, version));
+      .eventually(model -> Forum.defaults.aggregate(model, version));
   }
 }
