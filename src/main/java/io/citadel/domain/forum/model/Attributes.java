@@ -11,7 +11,7 @@ public enum Attributes {
   public Optional<Forum.ID> ID(String value) {
     try {
       return Optional.of(new Forum.ID(UUID.fromString(value)));
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       return Optional.empty();
     }
   }

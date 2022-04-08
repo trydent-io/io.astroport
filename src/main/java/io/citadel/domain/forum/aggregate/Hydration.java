@@ -1,19 +1,27 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.domain.forum.event.Events;
+import io.citadel.domain.forum.message.Events;
 import io.citadel.eventstore.data.EventInfo;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-record Hydration(Model model) implements Snapshot {
+interface
+
+final class Hydration implements Snapshot {
+  private Model model;
+
+  Hydration(Model model) {this.model = model;}
+
   @Override
-  public Aggregate aggregate(final long version, final Stream<EventInfo> events) {
+  public Aggregate aggregate(final String id, final long version, final Stream<EventInfo> events) {
     return Optional.ofNullable(events)
       .map(stream -> stream.map(Forum.event::fromInfo))
-      .map(stream -> stream.reduce(this, applyEvent(), (f, __) -> f))
+      .map(stream -> stream.reduce(identity(id), applyEvent(), (f, __) -> f))
       .map(snapshot -> snapshot instanceof Hydration hydration ? hydration.model : null)
       .map(model -> Forum.defaults.aggregate(model, version))
       .orElseThrow();
@@ -24,20 +32,27 @@ record Hydration(Model model) implements Snapshot {
       case Events.Registered registered -> forum.register(registered.name(), registered.description());
       case Events.Opened opened -> forum.open();
       case Events.Closed closed -> forum.close();
-      case Events.Changed changed -> forum.change(changed.name(), changed.description());
+      case Events.Altered altered -> forum.change(altered.name(), altered.description());
       case Events.Reopened reopened -> forum.reopen();
       case Events.Archived archived -> forum.archive();
     };
   }
 
+  private Snapshot identity(String id) {
+    this.model = Forum.defaults.model(id);
+    return this;
+  }
+
   @Override
   public Snapshot register(final Name name, final Description description) {
-    return new Hydration(new Model(model.id(), new Details(name, description)));
+    this.model = new Model(model.id(), new Details(name, description));
+    return this;
   }
 
   @Override
   public Snapshot change(final Name name, final Description description) {
-    return new Hydration(new Model(model.id(), new Details(name, description)));
+    this.model = new Model(model.id(), new Details(name, description));
+    return this;
   }
 
   @Override
@@ -67,7 +82,7 @@ final class Timepoint extends Lifespan<Snapshot> implements Snapshot {
   }
 
   @Override
-  public Aggregate aggregate(final long version, final Stream<EventInfo> events) throws Throwable {
-    return service.eventually(snapshot -> snapshot.aggregate(version, events));
+  public Aggregate aggregate(final String id, final long version, final Stream<EventInfo> events) throws Throwable {
+    return service.eventually(snapshot -> snapshot.aggregate(id, version, events));
   }
 }

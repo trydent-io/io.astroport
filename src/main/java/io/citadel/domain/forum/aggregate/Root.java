@@ -1,6 +1,7 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
+import io.citadel.domain.forum.message.Events;
 import io.citadel.eventstore.data.AggregateInfo;
 import io.citadel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Eventable;
@@ -11,7 +12,7 @@ import java.util.stream.Stream;
 record Root(Model model, long version, Stream<Event> events) implements Aggregate, Eventable<Forum.Event> {
   @Override
   public Aggregate register(final Name name, final Description description) {
-    return new Root(model, version, append(events, Forum.event.registered(name, description, null)));
+    return new Root(model, version, append(events, new Events.Registered(name, description)));
   }
 
   @Override
@@ -21,22 +22,22 @@ record Root(Model model, long version, Stream<Event> events) implements Aggregat
 
   @Override
   public Aggregate open() {
-    return new Root(model, version, append(events, Forum.event.opened(null)));
+    return new Root(model, version, append(events, Forum.event.opened()));
   }
 
   @Override
   public Aggregate close() {
-    return new Root(model, version, append(events, Forum.event.closed(null)));
+    return new Root(model, version, append(events, Forum.event.closed()));
   }
 
   @Override
   public Aggregate archive() {
-    return new Root(model, version, append(events, Forum.event.archived(null)));
+    return new Root(model, version, append(events, Forum.event.archived()));
   }
 
   @Override
   public Aggregate reopen() {
-    return new Root(model, version, append(events, Forum.event.reopened(null)));
+    return new Root(model, version, append(events, Forum.event.reopened()));
   }
 
   @Override

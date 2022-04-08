@@ -4,8 +4,8 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
 
 public sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Aggregate> permits Hydration, Timepoint {
-  static Snapshot hydration(Forum.ID id) {
-    return new Hydration(new Model(id));
+  static Snapshot hydration() {
+    return new Hydration(null);
   }
 
   static Snapshot timepoint(Lifecycle<Snapshot> lifecycle) {

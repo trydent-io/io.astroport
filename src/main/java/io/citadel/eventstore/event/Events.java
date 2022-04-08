@@ -9,8 +9,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public sealed interface Events permits Empty, Found {
-  static Events found(long version, Stream<EventInfo> events) {
-    return new Found(version, events);
+  static Events found(String id, long version, Stream<EventInfo> events) {
+    return new Found(id, version, events);
   }
 
   static Events empty() {
@@ -23,6 +23,7 @@ public sealed interface Events permits Empty, Found {
 
   static Events fromJson(JsonObject json) {
     return new Found(
+      json.getString("id"),
       json.getLong("version"),
       json.getJsonArray("events")
         .stream()

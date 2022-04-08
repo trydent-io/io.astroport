@@ -1,4 +1,5 @@
 module io.citadel {
+  requires com.google.guice;
   requires io.vertx.core;
   requires io.vertx.client.sql;
   requires io.vertx.client.sql.templates;

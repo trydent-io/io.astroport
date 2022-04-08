@@ -12,7 +12,7 @@ import io.vertx.sqlclient.SqlClient;
 public enum Defaults {
   Companion;
 
-  public EventStore.Verticle service(Vertx vertx, Database database) {
+  public EventStore.Verticle verticle(Vertx vertx, Database database) {
     return new Service(
       Migration.eventStore(vertx, database),
       EventStore.defaults.sql(
@@ -26,7 +26,7 @@ public enum Defaults {
     return new Sql(eventBus, client);
   }
 
-  public EventStore requestor(EventBus eventBus) {
+  public EventStore local(EventBus eventBus) {
     return new Local(eventBus);
   }
 }

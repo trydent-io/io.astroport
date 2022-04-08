@@ -1,12 +1,21 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
+import io.citadel.eventstore.EventStore;
 
 public enum Defaults {
   Companion;
 
-  public Snapshot snapshot(Forum.ID id) {
-    return Snapshot.timepoint(Lifecycle.service(Snapshot.hydration(id)));
+  public Forums forums(EventStore eventStore) {
+    return Forums.repository(eventStore, snapshot());
+  }
+
+  public Forum.Model model(String id) {
+    return Forum.attributes.ID(id).map(Forum.Model::new).orElseThrow();
+  }
+
+  public Snapshot snapshot() {
+    return Snapshot.timepoint(Lifecycle.service(Snapshot.hydration()));
   }
 
   public Aggregate aggregate(Forum.ID id, long version) {

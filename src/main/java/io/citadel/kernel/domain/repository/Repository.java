@@ -4,6 +4,7 @@ import io.citadel.eventstore.EventStore;
 import io.citadel.eventstore.data.AggregateInfo;
 import io.citadel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.func.ThrowableFunction;
 import io.vertx.core.Future;
 
 import java.util.stream.Stream;
@@ -12,10 +13,10 @@ import static io.vertx.core.Future.failedFuture;
 
 public final class Repository<A extends Domain.Aggregate, I extends Domain.ID<?>> implements Domain.Aggregates<A, I> {
   private final EventStore eventStore;
-  private final Domain.Snapshot<A> snapshot;
+  private final Domain.Snapshot<A, I> snapshot;
   private final String name;
 
-  public Repository(final EventStore eventStore, final Domain.Snapshot<A> snapshot, final String name) {
+  public Repository(final EventStore eventStore, final Domain.Snapshot<A, I> snapshot, final String name) {
     this.eventStore = eventStore;
     this.snapshot = snapshot;
     this.name = name;

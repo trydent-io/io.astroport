@@ -47,8 +47,9 @@ public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
         .findFirst()
         .map(eventLog ->
           Events.found(
+            eventLog.aggregate().id(),
             eventLog.aggregate().version(),
-            eventLogs.<EventInfo>map(EventLog::event)
+            eventLogs.map(EventLog::event)
           )
         )
         .orElseGet(Events::empty)

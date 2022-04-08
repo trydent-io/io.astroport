@@ -18,13 +18,6 @@ public sealed interface EventStore permits EventStore.Verticle, Local, Sql {
 
   Defaults defaults = Defaults.Companion;
 
-  default EventStore.Verticle asVerticle() {
-    return switch (this) {
-      case EventStore.Verticle verticle -> verticle;
-      default -> null;
-    };
-  }
-
   sealed interface Verticle extends EventStore, io.vertx.core.Verticle permits Service {}
 
   Future<Events> findEventsBy(String id, String name);

@@ -13,7 +13,7 @@ public sealed interface Main {
   static void main(String[] args) {
     final var vertx = vertx();
     vertx
-      .deployVerticle(Citadel.service(vertx).asVerticle())
+      .deployVerticle(Citadel.verticle(vertx))
       .onSuccess(it -> Namespace.log.info("Main service has been deployed with id %s".formatted(it)))
       .onFailure(it -> Namespace.log.error("Can't deploy main service", it))
       .onFailure(it -> vertx.close());

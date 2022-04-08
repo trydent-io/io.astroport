@@ -25,8 +25,7 @@ final class Sql implements Migration {
   @Override
   public Future<Void> apply() {
     return vertx.executeBlocking(migrate -> {
-      final Flyway applied = flyway.apply(database.asDataSource(), new Location(migration));
-      final var migrated = applied.migrate();
+      final var migrated = flyway.apply(database.asDataSource(), new Location(migration)).migrate();
       if (migrated.success) {
         migrate.complete();
       } else {

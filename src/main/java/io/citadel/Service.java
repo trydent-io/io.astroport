@@ -15,13 +15,13 @@ import java.util.TimeZone;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 
-public final class Service extends AbstractVerticle implements Citadel {
+public final class Service extends AbstractVerticle implements Citadel.Verticle {
   private static final Logger log = LoggerFactory.getLogger(Citadel.class);
 
-  private final Domain domain;
-  private final EventStore eventStore;
+  private final Domain.Verticle domain;
+  private final EventStore.Verticle eventStore;
 
-  Service(EventStore eventStore, Domain domain) {
+  Service(EventStore.Verticle eventStore, Domain.Verticle domain) {
     this.domain = domain;
     this.eventStore = eventStore;
   }
@@ -36,8 +36,8 @@ public final class Service extends AbstractVerticle implements Citadel {
       .disable(WRITE_DATES_AS_TIMESTAMPS);
 
     vertx
-      .deployVerticle(eventStore.asVerticle())
-      .compose(it -> vertx.deployVerticle(domain.asVerticle()))
+      .deployVerticle(eventStore)
+      .compose(it -> vertx.deployVerticle(domain))
       .<Void>mapEmpty()
       .onSuccess(start::complete)
       .onFailure(start::fail);

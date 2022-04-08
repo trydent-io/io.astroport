@@ -24,7 +24,7 @@ public sealed interface Domain {
   }
 
   interface Aggregates<A extends Aggregate, I extends ID<?>> {
-    static <A extends Aggregate, I extends ID<?>> Aggregates<A, I> repository(EventStore eventStore, Snapshot<A> snapshot, String name) {
+    static <A extends Aggregate, I extends ID<?>> Aggregates<A, I> repository(EventStore eventStore, Domain.Snapshot<A> snapshot, String name) {
       return new Repository<>(eventStore, snapshot, name);
     }
 
@@ -33,7 +33,7 @@ public sealed interface Domain {
   }
 
   interface Snapshot<A extends Aggregate> {
-    A aggregate(long version, Stream<EventInfo> events) throws Throwable;
+    A aggregate(String id, long version, Stream<EventInfo> events) throws Throwable;
   }
   interface Aggregate {
     <T> T commit(ThrowableBiFunction<? super AggregateInfo, ? super Stream<EventInfo>, ? extends T> transaction);

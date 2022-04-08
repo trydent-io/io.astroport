@@ -3,15 +3,14 @@ package io.citadel;
 import io.citadel.domain.Domain;
 import io.citadel.eventstore.EventStore;
 import io.citadel.kernel.sql.Database;
-import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 
 import static io.vertx.core.Vertx.vertx;
 
-public sealed interface Citadel permits Service {
-  static Citadel service(Vertx vertx) {
+public sealed interface Citadel permits Citadel.Verticle {
+  static Citadel.Verticle verticle(Vertx vertx) {
     return new Service(
-      EventStore.defaults.service(
+      EventStore.defaults.verticle(
         vertx,
         Database.connection(
           "jdbc:postgresql",
@@ -23,11 +22,9 @@ public sealed interface Citadel permits Service {
           org.postgresql.Driver.class
         )
       ),
-      Domain.service()
+      Domain.verticle()
     );
   }
 
-  default Verticle asVerticle() {
-    return switch (this) { case Service service -> service; };
-  }
+  sealed interface Verticle extends Citadel, io.vertx.core.Verticle permits Service {}
 }
