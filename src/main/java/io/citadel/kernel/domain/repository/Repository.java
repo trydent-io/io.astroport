@@ -11,12 +11,12 @@ import java.util.stream.Stream;
 
 import static io.vertx.core.Future.failedFuture;
 
-public final class Repository<A extends Domain.Aggregate, I extends Domain.ID<?>> implements Domain.Aggregates<A, I> {
+public final class Repository<A extends Domain.Aggregate, I extends Domain.ID> implements Domain.Aggregates<A, I> {
   private final EventStore eventStore;
-  private final Domain.Snapshot<A, I> snapshot;
+  private final Domain.Snapshot<A> snapshot;
   private final String name;
 
-  public Repository(final EventStore eventStore, final Domain.Snapshot<A, I> snapshot, final String name) {
+  public Repository(final EventStore eventStore, final Domain.Snapshot<A> snapshot, final String name) {
     this.eventStore = eventStore;
     this.snapshot = snapshot;
     this.name = name;
@@ -33,9 +33,9 @@ public final class Repository<A extends Domain.Aggregate, I extends Domain.ID<?>
   }
 
   @Override
-  public Future<Void> save(AggregateInfo aggregate, Stream<EventInfo> events) {
+  public Future<Void> save(final AggregateInfo aggregate, final Stream<EventInfo> events, final String by) {
     return eventStore
-      .persist(aggregate.id(), aggregate.name(), aggregate.version(), events)
+      .persist(aggregate, events, by)
       .mapEmpty();
   }
 }

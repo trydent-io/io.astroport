@@ -4,13 +4,9 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.message.Events;
 import io.citadel.eventstore.data.EventInfo;
 
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
-
-interface
 
 final class Hydration implements Snapshot {
   private Model model;
@@ -76,7 +72,7 @@ final class Hydration implements Snapshot {
   }
 }
 
-final class Timepoint extends Lifespan<Snapshot> implements Snapshot {
+final class Timepoint extends Span<Snapshot> implements Snapshot {
   Timepoint(Lifecycle<Snapshot> lifecycle) {
     super(lifecycle, Timepoint::new);
   }

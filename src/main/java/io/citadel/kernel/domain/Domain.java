@@ -23,13 +23,16 @@ public sealed interface Domain {
     }
   }
 
-  interface Aggregates<A extends Aggregate, I extends ID<?>> {
-    static <A extends Aggregate, I extends ID<?>> Aggregates<A, I> repository(EventStore eventStore, Domain.Snapshot<A> snapshot, String name) {
+  interface Aggregates<A extends Aggregate, I extends Domain.ID> {
+    static <A extends Aggregate, I extends Domain.ID> Aggregates<A, I> repository(EventStore eventStore, Domain.Snapshot<A> snapshot, String name) {
       return new Repository<>(eventStore, snapshot, name);
     }
 
     Future<A> load(I id);
-    Future<Void> save(AggregateInfo aggregate, Stream<EventInfo> events);
+    default Future<Void> save(AggregateInfo aggregate, Stream<EventInfo> events) {
+      return save(aggregate, events, null);
+    }
+    Future<Void> save(AggregateInfo aggregate, Stream<EventInfo> events, String by);
   }
 
   interface Snapshot<A extends Aggregate> {
@@ -45,6 +48,6 @@ public sealed interface Domain {
     }
   }
 
-  interface ID<R> extends Attribute<R> {}
+  interface ID extends Attribute<String> {}
 }
 

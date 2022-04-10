@@ -18,8 +18,8 @@ public sealed interface Migration permits Sql {
     return new Sql(vertx, database, migration, (dataSource, location) ->
       Flyway
         .configure()
-        .dataSource(database.asDataSource())
-        .locations("migration/%s".formatted(migration))
+        .dataSource(dataSource)
+        .locations("migration/%s".formatted(location))
         .outOfOrder(true)
         .load()
     );

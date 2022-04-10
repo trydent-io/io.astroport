@@ -2,7 +2,7 @@ package io.citadel.domain.forum;
 
 import io.citadel.domain.forum.aggregate.Aggregate;
 import io.citadel.domain.forum.aggregate.Defaults;
-import io.citadel.domain.forum.aggregate.Lifespan;
+import io.citadel.domain.forum.aggregate.Span;
 import io.citadel.domain.forum.aggregate.Lifecycle;
 import io.citadel.domain.forum.aggregate.Snapshot;
 import io.citadel.domain.forum.message.Commands;
@@ -13,7 +13,7 @@ import io.citadel.kernel.domain.attribute.Attribute;
 
 import java.util.UUID;
 
-public sealed interface Forum<F extends Forum<F>> permits Aggregate, Lifespan, Lifecycle, Snapshot {
+public sealed interface Forum<F extends Forum<F>> permits Aggregate, Span, Lifecycle, Snapshot {
   String AGGREGATE_NAME = "FORUM";
 
   Commands commands = Commands.Companion;
@@ -26,7 +26,7 @@ public sealed interface Forum<F extends Forum<F>> permits Aggregate, Lifespan, L
   sealed interface Command extends Domain.Command permits Commands.Alter, Commands.Archive, Commands.Close, Commands.Open, Commands.Register, Commands.Reopen {}
   sealed interface Event extends Domain.Event permits Events.Archived, Events.Closed, Events.Altered, Events.Opened, Events.Registered, Events.Reopened {}
 
-  record ID(UUID value) implements Domain.ID<UUID> {} // ID
+  record ID(String value) implements Domain.ID {} // ID
   record Name(String value) implements Attribute<String> {} // part of Details
   record Description(String value) implements Attribute<String> {} // part of Details
   record Details(Name name, Description description) {} // ValueObject for Details

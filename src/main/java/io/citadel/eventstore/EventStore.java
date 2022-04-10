@@ -14,15 +14,12 @@ import java.util.stream.Stream;
 
 public sealed interface EventStore permits EventStore.Verticle, Local, Sql {
   String FIND_EVENTS_BY = "eventStore.findEventsBy";
-  String PERSIST_EVENTS = "eventStore.persistEvents";
+  String PERSIST = "eventStore.persist";
 
   Defaults defaults = Defaults.Companion;
 
   sealed interface Verticle extends EventStore, io.vertx.core.Verticle permits Service {}
 
   Future<Events> findEventsBy(String id, String name);
-  default Future<Stream<EventLog>> persist(String id, String name, long version, Stream<EventInfo> events) {
-    return persist(new AggregateInfo(id, name, version), events);
-  }
-  Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events);
+  Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events, String by);
 }

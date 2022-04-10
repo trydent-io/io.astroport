@@ -46,7 +46,7 @@ record Root(Model model, long version, Stream<Event> events) implements Aggregat
   }
 }
 
-final class Transaction extends Lifespan<Aggregate> implements Aggregate {
+final class Transaction extends Span<Aggregate> implements Aggregate {
   Transaction(Lifecycle<Aggregate> lifecycle) {
     super(lifecycle, Transaction::new);
   }

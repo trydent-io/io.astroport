@@ -11,7 +11,7 @@ public enum Defaults {
   }
 
   public Forum.Model model(String id) {
-    return Forum.attributes.ID(id).map(Forum.Model::new).orElseThrow();
+    return new Forum.Model(new Forum.ID(id));
   }
 
   public Snapshot snapshot() {

@@ -30,13 +30,14 @@ public record Local(EventBus eventBus) implements EventStore {
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
+  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events, String user) {
     return eventBus
       .<JsonArray>request(
-        PERSIST_EVENTS,
+        PERSIST,
         Json.of(
           "root", Json.fromAny(aggregate),
-          "events", Json.array(events)
+          "events", Json.array(events),
+          "user", user
         )
       )
       .map(Message::body)

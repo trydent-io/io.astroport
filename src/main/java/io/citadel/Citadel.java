@@ -10,18 +10,7 @@ import static io.vertx.core.Vertx.vertx;
 public sealed interface Citadel permits Citadel.Verticle {
   static Citadel.Verticle verticle(Vertx vertx) {
     return new Service(
-      EventStore.defaults.verticle(
-        vertx,
-        Database.connection(
-          "jdbc:postgresql",
-          "localhost",
-          5433,
-          "citadel",
-          "citadel",
-          "docker",
-          org.postgresql.Driver.class
-        )
-      ),
+      EventStore.defaults.verticle(vertx, Database.postgresql("localhost", 5433, "citadel", "citadel", "docker")),
       Domain.verticle()
     );
   }

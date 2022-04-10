@@ -3,20 +3,9 @@ package io.citadel.domain.forum.model;
 import io.citadel.domain.forum.Forum;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public enum Attributes {
   Companion;
-
-  public Optional<Forum.ID> ID(String value) {
-    try {
-      return Optional.of(new Forum.ID(UUID.fromString(value)));
-    } catch (IllegalArgumentException e) {
-      return Optional.empty();
-    }
-  }
-
-  public Forum.ID ID() { return new Forum.ID(UUID.randomUUID()); }
 
   public Optional<Forum.Name> name(String value) {
     return Optional.ofNullable(value)

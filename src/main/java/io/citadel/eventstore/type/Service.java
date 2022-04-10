@@ -38,16 +38,16 @@ public final class Service extends AbstractVerticle implements EventStore.Vertic
         .onFailure(it -> message.fail(500, it.getMessage()))
     );
 
-    vertx.eventBus().<JsonObject>localConsumer(PERSIST_EVENTS,
-      message -> persistEvents(message.body(), message.body().getJsonArray("events"))
+    vertx.eventBus().<JsonObject>localConsumer(PERSIST,
+      message -> persist(message.body().getJsonObject("aggregate"), message.body().getJsonArray("events"), message.body().getString("user"))
           .onSuccess(message::reply)
           .onFailure(it -> message.fail(500, it.getMessage()))
     );
     return null;
   }
 
-  private Future<Stream<EventLog>> persistEvents(final JsonObject aggregate, final JsonArray events) {
-    return persist(AggregateInfo.from(aggregate), EventInfo.fromJsonArray(events));
+  private Future<Stream<EventLog>> persist(final JsonObject aggregate, final JsonArray events, String user) {
+    return persist(AggregateInfo.from(aggregate), EventInfo.fromJsonArray(events), user);
   }
 
   private Future<Events> findEventsBy(final JsonObject aggregate) {
@@ -60,7 +60,7 @@ public final class Service extends AbstractVerticle implements EventStore.Vertic
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
-    return eventStore.persist(aggregate, events);
+  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events, String user) {
+    return eventStore.persist(aggregate, events, user);
   }
 }

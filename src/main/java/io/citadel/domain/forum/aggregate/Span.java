@@ -3,11 +3,11 @@ package io.citadel.domain.forum.aggregate;
 import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.func.ThrowableFunction;
 
-public sealed abstract class Lifespan<F extends Forum<F>> implements Forum<F> permits Timepoint, Transaction {
+public sealed abstract class Span<F extends Forum<F>> implements Forum<F> permits Timepoint, Transaction {
   protected final Lifecycle<F> service;
   private final ThrowableFunction<? super Lifecycle<F>, ? extends F> next;
 
-  protected Lifespan(Lifecycle<F> service, ThrowableFunction<? super Lifecycle<F>, ? extends F> next) {
+  protected Span(Lifecycle<F> service, ThrowableFunction<? super Lifecycle<F>, ? extends F> next) {
     this.service = service;
     this.next = next;
   }

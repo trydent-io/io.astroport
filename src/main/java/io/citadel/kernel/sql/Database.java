@@ -19,6 +19,10 @@ public sealed interface Database permits Connection {
     );
   }
 
+  static Database postgresql(final String host, final int port, final String database, final String username, final String password) {
+    return connection("jdbc:postgresql", host, port, database, username, password, org.postgresql.Driver.class);
+  }
+
   DataSource asDataSource();
   JDBCConnectOptions asJdbcOptions();
   PgConnectOptions asPgOptions();
