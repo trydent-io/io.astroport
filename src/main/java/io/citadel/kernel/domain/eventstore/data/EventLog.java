@@ -1,4 +1,4 @@
-package io.citadel.eventstore.data;
+package io.citadel.kernel.domain.eventstore.data;
 
 import io.citadel.kernel.func.Maybe;
 import io.citadel.kernel.media.Json;

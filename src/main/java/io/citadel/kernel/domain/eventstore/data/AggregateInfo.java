@@ -1,4 +1,4 @@
-package io.citadel.eventstore.data;
+package io.citadel.kernel.domain.eventstore.data;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;

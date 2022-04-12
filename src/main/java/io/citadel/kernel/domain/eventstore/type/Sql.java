@@ -1,10 +1,10 @@
-package io.citadel.eventstore.type;
+package io.citadel.kernel.domain.eventstore.type;
 
-import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
-import io.citadel.eventstore.data.EventLog;
-import io.citadel.eventstore.event.Events;
+import io.citadel.kernel.domain.eventstore.EventStore;
+import io.citadel.kernel.domain.eventstore.data.AggregateInfo;
+import io.citadel.kernel.domain.eventstore.data.EventInfo;
+import io.citadel.kernel.domain.eventstore.data.EventLog;
+import io.citadel.kernel.domain.eventstore.event.Events;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -57,7 +57,7 @@ public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
+  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events, String by) {
     final var template = """
       with events as (
         select  es -> 'event' ->> 'name' event_name,

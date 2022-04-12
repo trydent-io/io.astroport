@@ -1,17 +1,15 @@
 package io.citadel;
 
-import io.citadel.domain.Domain;
-import io.citadel.eventstore.EventStore;
+import io.citadel.kernel.domain.eventstore.EventStore;
+import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.sql.Database;
 import io.vertx.core.Vertx;
-
-import static io.vertx.core.Vertx.vertx;
 
 public sealed interface Citadel permits Citadel.Verticle {
   static Citadel.Verticle verticle(Vertx vertx) {
     return new Service(
       EventStore.defaults.verticle(vertx, Database.postgresql("localhost", 5433, "citadel", "citadel", "docker")),
-      Domain.verticle()
+      Domain.defaults.verticle()
     );
   }
 

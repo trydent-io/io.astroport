@@ -1,8 +1,8 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.domain.forum.message.Events;
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.domain.forum.handler.Events;
+import io.citadel.kernel.domain.eventstore.data.EventInfo;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -16,7 +16,7 @@ final class Hydration implements Snapshot {
   @Override
   public Aggregate aggregate(final String id, final long version, final Stream<EventInfo> events) {
     return Optional.ofNullable(events)
-      .map(stream -> stream.map(Forum.event::fromInfo))
+      .map(stream -> stream.map(Forum.events::fromInfo))
       .map(stream -> stream.reduce(identity(id), applyEvent(), (f, __) -> f))
       .map(snapshot -> snapshot instanceof Hydration hydration ? hydration.model : null)
       .map(model -> Forum.defaults.aggregate(model, version))

@@ -5,7 +5,7 @@ import io.citadel.kernel.domain.Domain;
 
 import java.util.stream.Stream;
 
-public sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate permits Transaction, Root {
+public sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate<Forum.State> permits Transaction, Root {
   static Aggregate root(Forum.ID id, long version) {
     return new Root(new Model(id), version, Stream.empty());
   }

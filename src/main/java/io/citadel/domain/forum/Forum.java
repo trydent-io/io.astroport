@@ -5,19 +5,18 @@ import io.citadel.domain.forum.aggregate.Defaults;
 import io.citadel.domain.forum.aggregate.Span;
 import io.citadel.domain.forum.aggregate.Lifecycle;
 import io.citadel.domain.forum.aggregate.Snapshot;
-import io.citadel.domain.forum.message.Commands;
-import io.citadel.domain.forum.message.Events;
+import io.citadel.domain.forum.handler.Commands;
+import io.citadel.domain.forum.handler.Events;
 import io.citadel.domain.forum.model.Attributes;
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.domain.Headers;
 import io.citadel.kernel.domain.attribute.Attribute;
-
-import java.util.UUID;
 
 public sealed interface Forum<F extends Forum<F>> permits Aggregate, Span, Lifecycle, Snapshot {
   String AGGREGATE_NAME = "FORUM";
 
   Commands commands = Commands.Companion;
-  Events event = Events.Companion;
+  Events events = Events.Companion;
   Attributes attributes = Attributes.Companion;
   Defaults defaults = Defaults.Companion;
 

@@ -1,11 +1,11 @@
-package io.citadel.eventstore.event;
+package io.citadel.kernel.domain.eventstore.event;
 
 import io.citadel.kernel.domain.Domain;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.kernel.domain.eventstore.data.EventInfo;
 
 public final class Found implements Events {
   private final String id;

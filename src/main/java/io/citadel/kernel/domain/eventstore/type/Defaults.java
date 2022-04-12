@@ -1,6 +1,6 @@
-package io.citadel.eventstore.type;
+package io.citadel.kernel.domain.eventstore.type;
 
-import io.citadel.eventstore.EventStore;
+import io.citadel.kernel.domain.eventstore.EventStore;
 import io.citadel.kernel.sql.Database;
 import io.citadel.kernel.sql.Migration;
 import io.vertx.core.Vertx;

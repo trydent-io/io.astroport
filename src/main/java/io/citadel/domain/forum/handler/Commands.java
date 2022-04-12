@@ -1,4 +1,4 @@
-package io.citadel.domain.forum.message;
+package io.citadel.domain.forum.handler;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.aggregate.Forums;

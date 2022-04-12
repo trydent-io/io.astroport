@@ -1,13 +1,13 @@
-package io.citadel.eventstore;
+package io.citadel.kernel.domain.eventstore;
 
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
-import io.citadel.eventstore.data.EventLog;
-import io.citadel.eventstore.event.Events;
-import io.citadel.eventstore.type.Defaults;
-import io.citadel.eventstore.type.Local;
-import io.citadel.eventstore.type.Service;
-import io.citadel.eventstore.type.Sql;
+import io.citadel.kernel.domain.eventstore.data.AggregateInfo;
+import io.citadel.kernel.domain.eventstore.data.EventInfo;
+import io.citadel.kernel.domain.eventstore.data.EventLog;
+import io.citadel.kernel.domain.eventstore.event.Events;
+import io.citadel.kernel.domain.eventstore.type.Defaults;
+import io.citadel.kernel.domain.eventstore.type.Local;
+import io.citadel.kernel.domain.eventstore.type.Service;
+import io.citadel.kernel.domain.eventstore.type.Sql;
 import io.vertx.core.Future;
 
 import java.util.stream.Stream;

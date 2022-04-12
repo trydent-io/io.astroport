@@ -1,9 +1,9 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.domain.forum.message.Events;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.domain.forum.handler.Events;
+import io.citadel.kernel.domain.eventstore.data.AggregateInfo;
+import io.citadel.kernel.domain.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Eventable;
 import io.citadel.kernel.func.ThrowableBiFunction;
 
@@ -17,27 +17,32 @@ record Root(Model model, long version, Stream<Event> events) implements Aggregat
 
   @Override
   public Aggregate change(final Name name, final Description description) {
-    return new Root(model, version, append(events, Forum.event.changed(name, description)));
+    return new Root(model, version, append(events, Forum.events.changed(name, description)));
   }
 
   @Override
   public Aggregate open() {
-    return new Root(model, version, append(events, Forum.event.opened()));
+    return new Root(model, version, append(events, Forum.events.opened()));
   }
 
   @Override
   public Aggregate close() {
-    return new Root(model, version, append(events, Forum.event.closed()));
+    return new Root(model, version, append(events, Forum.events.closed()));
   }
 
   @Override
   public Aggregate archive() {
-    return new Root(model, version, append(events, Forum.event.archived()));
+    return new Root(model, version, append(events, Forum.events.archived()));
   }
 
   @Override
   public Aggregate reopen() {
-    return new Root(model, version, append(events, Forum.event.reopened()));
+    return new Root(model, version, append(events, Forum.events.reopened()));
+  }
+
+  @Override
+  public boolean is(final State state) {
+    return false;
   }
 
   @Override

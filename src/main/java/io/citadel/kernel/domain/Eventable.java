@@ -1,7 +1,7 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.kernel.domain.eventstore.data.AggregateInfo;
+import io.citadel.kernel.domain.eventstore.data.EventInfo;
 
 import java.util.stream.Stream;
 

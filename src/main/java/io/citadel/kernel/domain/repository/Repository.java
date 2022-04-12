@@ -1,10 +1,9 @@
 package io.citadel.kernel.domain.repository;
 
-import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.kernel.domain.eventstore.EventStore;
+import io.citadel.kernel.domain.eventstore.data.AggregateInfo;
+import io.citadel.kernel.domain.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.func.ThrowableFunction;
 import io.vertx.core.Future;
 
 import java.util.stream.Stream;
@@ -23,7 +22,7 @@ public final class Repository<A extends Domain.Aggregate, I extends Domain.ID> i
   }
 
   @Override
-  public Future<A> load(final I id) {
+  public Future<A> findBy(final I id) {
     return eventStore.findEventsBy(id.toString(), name)
       .map(events -> events.aggregateFrom(snapshot))
       .compose(aggregate -> aggregate
@@ -33,7 +32,7 @@ public final class Repository<A extends Domain.Aggregate, I extends Domain.ID> i
   }
 
   @Override
-  public Future<Void> save(final AggregateInfo aggregate, final Stream<EventInfo> events, final String by) {
+  public Future<Void> persist(final AggregateInfo aggregate, final Stream<EventInfo> events, final String by) {
     return eventStore
       .persist(aggregate, events, by)
       .mapEmpty();
