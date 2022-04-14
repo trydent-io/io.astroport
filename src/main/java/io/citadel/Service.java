@@ -2,7 +2,7 @@ package io.citadel;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.citadel.domain.Domain;
-import io.citadel.kernel.domain.eventstore.EventStore;
+import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;

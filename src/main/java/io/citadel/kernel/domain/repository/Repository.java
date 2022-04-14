@@ -1,8 +1,8 @@
 package io.citadel.kernel.domain.repository;
 
-import io.citadel.kernel.domain.eventstore.EventStore;
-import io.citadel.kernel.domain.eventstore.data.AggregateInfo;
-import io.citadel.kernel.domain.eventstore.data.EventInfo;
+import io.citadel.kernel.eventstore.EventStore;
+import io.citadel.kernel.eventstore.data.AggregateInfo;
+import io.citadel.kernel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.Future;
 

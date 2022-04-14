@@ -1,4 +1,4 @@
-package io.citadel.kernel.domain.eventstore.data;
+package io.citadel.kernel.eventstore.data;
 
 import io.citadel.kernel.media.Json;
 import io.vertx.core.json.JsonArray;

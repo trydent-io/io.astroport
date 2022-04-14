@@ -1,9 +1,8 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.kernel.domain.eventstore.EventStore;
+import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.domain.Domain;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 
 public sealed interface Forums extends Domain.Aggregates<Aggregate, Forum.ID> permits Repository {

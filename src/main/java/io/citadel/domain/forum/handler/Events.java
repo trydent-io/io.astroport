@@ -1,7 +1,7 @@
 package io.citadel.domain.forum.handler;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.kernel.domain.eventstore.data.EventInfo;
+import io.citadel.kernel.eventstore.data.EventInfo;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;

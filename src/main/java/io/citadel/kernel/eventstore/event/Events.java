@@ -1,6 +1,6 @@
-package io.citadel.kernel.domain.eventstore.event;
+package io.citadel.kernel.eventstore.event;
 
-import io.citadel.kernel.domain.eventstore.data.EventInfo;
+import io.citadel.kernel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.json.JsonObject;

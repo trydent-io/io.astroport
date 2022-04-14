@@ -1,10 +1,10 @@
-package io.citadel.kernel.domain.eventstore.type;
+package io.citadel.kernel.eventstore.type;
 
-import io.citadel.kernel.domain.eventstore.EventStore;
-import io.citadel.kernel.domain.eventstore.data.AggregateInfo;
-import io.citadel.kernel.domain.eventstore.data.EventInfo;
-import io.citadel.kernel.domain.eventstore.data.EventLog;
-import io.citadel.kernel.domain.eventstore.event.Events;
+import io.citadel.kernel.eventstore.EventStore;
+import io.citadel.kernel.eventstore.data.AggregateInfo;
+import io.citadel.kernel.eventstore.data.EventInfo;
+import io.citadel.kernel.eventstore.data.EventLog;
+import io.citadel.kernel.eventstore.event.Events;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.EventBus;

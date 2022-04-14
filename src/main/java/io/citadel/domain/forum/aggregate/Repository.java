@@ -1,8 +1,8 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.kernel.domain.eventstore.data.AggregateInfo;
-import io.citadel.kernel.domain.eventstore.data.EventInfo;
+import io.citadel.kernel.eventstore.data.AggregateInfo;
+import io.citadel.kernel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.Future;
 

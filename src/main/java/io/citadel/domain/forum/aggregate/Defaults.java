@@ -1,7 +1,7 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.kernel.domain.eventstore.EventStore;
+import io.citadel.kernel.eventstore.EventStore;
 
 public enum Defaults {
   Companion;

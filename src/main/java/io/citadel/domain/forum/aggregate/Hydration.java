@@ -2,7 +2,7 @@ package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Events;
-import io.citadel.kernel.domain.eventstore.data.EventInfo;
+import io.citadel.kernel.eventstore.data.EventInfo;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
