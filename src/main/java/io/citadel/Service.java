@@ -5,6 +5,8 @@ import io.citadel.domain.Domain;
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.message.Commands;
 import io.citadel.eventstore.EventStore;
+import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.eventstore.EventStore;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;

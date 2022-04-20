@@ -1,14 +1,15 @@
 package io.citadel.kernel.domain.repository;
 
-import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.Feed;
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.eventstore.EventStore;
 import io.vertx.core.Future;
 
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.vertx.core.Future.failedFuture;
+import static java.util.stream.Collectors.*;
 
 public final class Repository<A extends Domain.Aggregate, I extends Domain.ID> implements Domain.Aggregates<A, I> {
   private final EventStore eventStore;
@@ -23,8 +24,12 @@ public final class Repository<A extends Domain.Aggregate, I extends Domain.ID> i
 
   @Override
   public Future<A> lookup(final I id) {
-    return eventStore.seek(id.toString(), name)
-      .map(events -> events.aggregateFrom(snapshot))
+    return eventStore.seek(new Feed.Aggregate(id.value(), name))
+      .map(Feed::stream)
+      .map(entries -> entries
+        .findFirst()
+        .map(it -> ))
+      .map(it -> )
       .compose(aggregate -> aggregate
         .map(Future::succeededFuture)
         .orElse(failedFuture("Can't hydrate root %s with id %s".formatted(name, id)))

@@ -1,28 +1,23 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.repository.Repository;
+import io.citadel.kernel.domain.service.Defaults;
+import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.func.ThrowableBiFunction;
 import io.citadel.kernel.func.ThrowableFunction;
-import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 
 import java.util.stream.Stream;
 
 public sealed interface Domain {
-  enum Namespace implements Domain {}
+  Defaults defaults = Defaults.Companion;
+  sealed interface Verticle extends io.vertx.core.Verticle permits Defaults.Service {}
 
   interface State<S extends Enum<S>> {}
 
   interface Command {}
-  interface Event {
-    default EventInfo asInfo() {
-      return new EventInfo(getClass().getSimpleName(), Json.with(this));
-    }
-  }
+  interface Event {}
 
   interface Aggregates<A extends Aggregate, I extends Domain.ID> {
     static <A extends Aggregate, I extends Domain.ID> Aggregates<A, I> repository(EventStore eventStore, Domain.Snapshot<A> snapshot, String name) {

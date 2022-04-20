@@ -1,14 +1,10 @@
-package io.citadel.eventstore;
+package io.citadel.kernel.eventstore;
 
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
-import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.data.Feed;
-import io.citadel.eventstore.event.Events;
-import io.citadel.eventstore.type.Defaults;
-import io.citadel.eventstore.type.Local;
-import io.citadel.eventstore.type.Service;
-import io.citadel.eventstore.type.Sql;
+import io.citadel.kernel.eventstore.type.Defaults;
+import io.citadel.kernel.eventstore.type.Local;
+import io.citadel.kernel.eventstore.type.Service;
+import io.citadel.kernel.eventstore.type.Sql;
 import io.vertx.core.Future;
 
 import java.util.stream.Stream;
@@ -21,6 +17,10 @@ public sealed interface EventStore permits EventStore.Verticle, Local, Sql {
 
   sealed interface Verticle extends EventStore, io.vertx.core.Verticle permits Service {}
 
-  Future<Feed> seek(String id, String name);
-  Future<Feed> persist(Stream<Feed.Entry> entries);
+  Future<Feed> seek(Feed.Aggregate aggregate);
+
+  default Future<Feed> persist(Feed.Aggregate aggregate, Feed.Event event) {
+    return persist(aggregate, event, null);
+  }
+  Future<Feed> persist(Feed.Aggregate aggregate, Feed.Event event, Feed.Persisted persisted);
 }

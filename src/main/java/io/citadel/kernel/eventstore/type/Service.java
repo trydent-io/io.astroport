@@ -1,11 +1,8 @@
-package io.citadel.eventstore.type;
+package io.citadel.kernel.eventstore.type;
 
-import io.citadel.eventstore.EventStore;
-import io.citadel.eventstore.data.AggregateInfo;
-import io.citadel.eventstore.data.EventInfo;
-import io.citadel.eventstore.data.EventLog;
 import io.citadel.eventstore.data.Feed;
-import io.citadel.eventstore.event.Events;
+import io.citadel.kernel.eventstore.EventStore;
+import io.citadel.kernel.media.Json;
 import io.citadel.kernel.sql.Migration;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -39,29 +36,37 @@ public final class Service extends AbstractVerticle implements EventStore.Vertic
         .onFailure(it -> message.fail(500, it.getMessage()))
     );
 
-    vertx.eventBus().<JsonArray>localConsumer(PERSIST,
-      message -> persist(message.body())
-          .onSuccess(message::reply)
-          .onFailure(it -> message.fail(500, it.getMessage()))
+    vertx.eventBus().<JsonObject>localConsumer(PERSIST,
+      message -> persist(
+        message.body().getJsonObject("aggregate"),
+        message.body().getJsonObject("event"),
+        message.body().getJsonObject("persisted")
+      )
+        .onSuccess(message::reply)
+        .onFailure(it -> message.fail(500, it.getMessage()))
     );
     return null;
   }
 
-  private Future<Feed> persist(final JsonArray entries) {
-    return persist(Feed.from(entries).stream());
+  private Future<Feed> persist(final JsonObject aggregate, JsonObject event, JsonObject persisted) {
+    return persist(
+      aggregate.mapTo(Feed.Aggregate.class),
+      event.mapTo(Feed.Event.class),
+      persisted.mapTo(Feed.Persisted.class)
+    );
   }
 
   private Future<Feed> seek(final JsonObject aggregate) {
-    return seek(aggregate.getString("id"), aggregate.getString("name"));
+    return seek(aggregate.mapTo(Feed.Aggregate.class));
   }
 
   @Override
-  public Future<Feed> seek(String id, String name) {
-    return eventStore.seek(id, name);
+  public Future<Feed> seek(Feed.Aggregate aggregate) {
+    return eventStore.seek(aggregate);
   }
 
   @Override
-  public Future<Feed> persist(Stream<Feed.Entry> entries) {
-    return eventStore.persist(entries);
+  public Future<Feed> persist(Feed.Aggregate aggregate, Feed.Event event, Feed.Persisted persisted) {
+    return eventStore.persist(aggregate, event, persisted);
   }
 }

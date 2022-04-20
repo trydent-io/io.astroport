@@ -2,6 +2,7 @@ package io.citadel.eventstore.data;
 
 import io.citadel.kernel.media.Json;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 
@@ -13,13 +14,19 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public interface Feed extends Iterable<Feed.Entry> {
-  record Aggregate(String id, String name, long version) {}
+  record Aggregate(String id, String name, long version) {
+    public Aggregate(String id, String name) { this(id, name, -1); }
+  }
   record Event(String name, String data) {}
   record Persisted(LocalDateTime at, String by) {}
   record Entry(UUID id, Aggregate aggregate, Event event, Persisted persisted) {
     public Entry(Aggregate aggregate, Event event) {
       this(null, aggregate, event, null);
     }
+  }
+
+  static Feed fromJson(JsonObject json) {
+    return from(json.getJsonArray("entries"));
   }
 
   static Feed from(JsonArray array) {
