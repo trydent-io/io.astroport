@@ -1,9 +1,9 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.domain.forum.handler.Events;
-import io.citadel.kernel.eventstore.data.AggregateInfo;
-import io.citadel.kernel.eventstore.data.EventInfo;
+import io.citadel.domain.forum.message.Events;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Eventable;
 import io.citadel.kernel.func.ThrowableBiFunction;
 
@@ -16,8 +16,8 @@ record Root(Model model, long version, Stream<Event> events) implements Aggregat
   }
 
   @Override
-  public Aggregate change(final Name name, final Description description) {
-    return new Root(model, version, append(events, Forum.events.changed(name, description)));
+  public Aggregate replace(final Name name, final Description description) {
+    return new Root(model, version, append(events, Forum.events.replaced(name, description)));
   }
 
   @Override
@@ -38,11 +38,6 @@ record Root(Model model, long version, Stream<Event> events) implements Aggregat
   @Override
   public Aggregate reopen() {
     return new Root(model, version, append(events, Forum.events.reopened()));
-  }
-
-  @Override
-  public boolean is(final State state) {
-    return false;
   }
 
   @Override

@@ -30,7 +30,7 @@ public record EventLog(UUID id, AggregateInfo aggregate, EventInfo event, LocalD
       AggregateInfo.from(row),
       EventInfo.from(row),
       row.getLocalDateTime("persisted_at"),
-      Maybe.right(row.getString("persisted_by")).otherwise("none")
+      Maybe.of(row.getString("persisted_by")).otherwise("none")
     );
   }
 

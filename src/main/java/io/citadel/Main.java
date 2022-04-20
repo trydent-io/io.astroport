@@ -13,6 +13,7 @@ public sealed interface Main {
 
   static void main(String[] args) {
     final var vertx = vertx();
+    vertx.eventBus().consumer("").handler()
     vertx
       .deployVerticle(Citadel.verticle(vertx))
       .onSuccess(it -> log.info("Main service has been deployed with id %s".formatted(it)))

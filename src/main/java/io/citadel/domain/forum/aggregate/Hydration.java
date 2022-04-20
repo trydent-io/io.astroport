@@ -28,7 +28,7 @@ final class Hydration implements Snapshot {
       case Events.Registered registered -> forum.register(registered.name(), registered.description());
       case Events.Opened opened -> forum.open();
       case Events.Closed closed -> forum.close();
-      case Events.Altered altered -> forum.change(altered.name(), altered.description());
+      case Events.Replaced replaced -> forum.replace(replaced.name(), replaced.description());
       case Events.Reopened reopened -> forum.reopen();
       case Events.Archived archived -> forum.archive();
     };
@@ -46,7 +46,7 @@ final class Hydration implements Snapshot {
   }
 
   @Override
-  public Snapshot change(final Name name, final Description description) {
+  public Snapshot replace(final Name name, final Description description) {
     this.model = new Model(model.id(), new Details(name, description));
     return this;
   }

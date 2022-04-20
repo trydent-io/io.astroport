@@ -2,10 +2,16 @@ package io.citadel;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.citadel.domain.Domain;
-import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.domain.Domain;
+import io.citadel.domain.forum.Forum;
+import io.citadel.domain.forum.message.Commands;
+import io.citadel.eventstore.EventStore;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.DeliveryContext;
+import io.vertx.core.eventbus.MessageCodec;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +41,34 @@ public final class Service extends AbstractVerticle implements Citadel.Verticle 
       .registerModule(new JavaTimeModule())
       .disable(FAIL_ON_UNKNOWN_PROPERTIES)
       .disable(WRITE_DATES_AS_TIMESTAMPS);
+
+    vertx.eventBus()
+        .registerDefaultCodec(Commands.Register.class, new MessageCodec<Commands.Register, Commands.Register>() {
+          @Override
+          public void encodeToWire(Buffer buffer, Commands.Register register) {
+            buffer.appendBuffer(JsonObject.mapFrom(register).toBuffer());
+          }
+
+          @Override
+          public Commands.Register decodeFromWire(int i, Buffer buffer) {
+            return buffer.toJsonObject().mapTo(Commands.Register.class);
+          }
+
+          @Override
+          public Commands.Register transform(Commands.Register register) {
+            return register;
+          }
+
+          @Override
+          public String name() {
+            return "";
+          }
+
+          @Override
+          public byte systemCodecID() {
+            return 1;
+          }
+        });
 
     vertx
       .deployVerticle(eventStore)

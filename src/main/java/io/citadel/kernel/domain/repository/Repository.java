@@ -1,8 +1,8 @@
 package io.citadel.kernel.domain.repository;
 
-import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.eventstore.data.AggregateInfo;
-import io.citadel.kernel.eventstore.data.EventInfo;
+import io.citadel.eventstore.EventStore;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.Future;
 
@@ -22,8 +22,8 @@ public final class Repository<A extends Domain.Aggregate, I extends Domain.ID> i
   }
 
   @Override
-  public Future<A> findBy(final I id) {
-    return eventStore.findEventsBy(id.toString(), name)
+  public Future<A> lookup(final I id) {
+    return eventStore.seek(id.toString(), name)
       .map(events -> events.aggregateFrom(snapshot))
       .compose(aggregate -> aggregate
         .map(Future::succeededFuture)

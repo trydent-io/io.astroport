@@ -3,7 +3,7 @@ package io.citadel.domain.forum.aggregate;
 import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.func.ThrowableFunction;
 
-public sealed abstract class Span<F extends Forum<F>> implements Forum<F> permits Timepoint, Transaction {
+public record Span<F extends Forum<F>> implements Forum<F> permits Timepoint, Transaction {
   protected final Lifecycle<F> service;
   private final ThrowableFunction<? super Lifecycle<F>, ? extends F> next;
 
@@ -18,8 +18,8 @@ public sealed abstract class Span<F extends Forum<F>> implements Forum<F> permit
   }
 
   @Override
-  public final F change(Name name, Description description) {
-    return next.apply(service.change(name, description));
+  public final F replace(Name name, Description description) {
+    return next.apply(service.replace(name, description));
   }
 
   @Override

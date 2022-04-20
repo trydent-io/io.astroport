@@ -13,9 +13,9 @@ record Service<F extends Forum<F>>(State state, F forum) implements Lifecycle<F>
   }
 
   @Override
-  public Lifecycle<F> change(Name name, Description description) {
+  public Lifecycle<F> replace(Name name, Description description) {
     return switch (state) {
-      case Registered, Open -> new Service<>(state, forum.change(name, description));
+      case Registered, Open -> new Service<>(state, forum.replace(name, description));
       default -> null;
     };
   }

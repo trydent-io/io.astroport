@@ -10,7 +10,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <java.release>17</java.release>
+    <java.release>18</java.release>
     <maven.compiler.source>${java.release}</maven.compiler.source>
     <maven.compiler.target>${java.release}</maven.compiler.target>
 
@@ -147,6 +147,8 @@
             <arg>--enable-preview</arg>
           </compilerArgs>
           <forceJavacCompilerUse>true</forceJavacCompilerUse>
+          <source>18</source>
+          <target>18</target>
         </configuration>
       </plugin>
       <plugin>

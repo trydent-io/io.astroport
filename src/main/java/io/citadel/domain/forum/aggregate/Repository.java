@@ -1,31 +1,21 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.kernel.eventstore.data.AggregateInfo;
-import io.citadel.kernel.eventstore.data.EventInfo;
-import io.citadel.kernel.domain.Domain;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
+import io.citadel.kernel.domain.Domain.Aggregates;
 import io.vertx.core.Future;
 
 import java.util.stream.Stream;
 
-record Repository(Domain.Aggregates<Aggregate, Forum.ID> aggregates) implements Forums {
+record Repository(Aggregates<Aggregate, Forum.ID> aggregates) implements Forums {
   @Override
-  public Future<Aggregate> findBy(final Forum.ID id) {
-    return aggregates.findBy(id);
+  public Future<Aggregate> lookup(final Forum.ID id) {
+    return aggregates.lookup(id);
   }
 
   @Override
-  public Future<Void> persist(AggregateInfo aggregate, Stream<EventInfo> events) {
-    return aggregates.persist(aggregate, events);
-  }
-
-  @Override
-  public Future<Void> persist(final AggregateInfo aggregate, final Stream<EventInfo> events, final String by) {
-    return null;
-  }
-
-  @Override
-  public Future<Aggregate> findBy(final Forum.ID forumId, final Forum.State state) {
-    return findBy(forumId).;
+  public Future<Void> persist(AggregateInfo aggregate, Stream<EventInfo> events, String user) {
+    return aggregates.persist(aggregate, events, user);
   }
 }

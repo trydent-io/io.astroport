@@ -12,11 +12,11 @@ public sealed interface Maybe<T> {
     return (Maybe<T>) Empty.Default;
   }
 
-  static <T> Maybe<T> right(T value) {
+  static <T> Maybe<T> of(T value) {
     return value == null ? empty() : new Right<>(value);
   }
 
-  static <T> Maybe<T> left(Throwable throwable) {
+  static <T> Maybe<T> error(Throwable throwable) {
     return new Left<>(throwable);
   }
 
@@ -24,6 +24,14 @@ public sealed interface Maybe<T> {
     return switch (this) {
       case Empty ignored -> empty();
       case Right<T> right -> new Right<>(function.apply(right.value));
+      case Left<T> left -> new Left<>(left.throwable);
+    };
+  }
+
+  default <R> Maybe<R> map(ThrowableSupplier<? extends R> supplier) {
+    return switch (this) {
+      case Empty ignored -> empty();
+      case Right<T> ignored -> new Right<>(supplier.get());
       case Left<T> left -> new Left<>(left.throwable);
     };
   }
@@ -52,8 +60,8 @@ public sealed interface Maybe<T> {
 
   default Maybe<T> or(String message, BiFunction<? super String, ? super Throwable, ? extends RuntimeException> function) {
     return switch (this) {
-      case Empty ignored -> Maybe.left(function.apply(message, new IllegalStateException("Can't retrieve value, state is empty")));
-      case Left<T> left -> Maybe.left(function.apply(message, left.throwable));
+      case Empty ignored -> Maybe.error(function.apply(message, new IllegalStateException("Can't retrieve value, state is empty")));
+      case Left<T> left -> Maybe.error(function.apply(message, left.throwable));
       default -> this;
     };
   }
@@ -69,7 +77,7 @@ public sealed interface Maybe<T> {
   default Maybe<T> or(ThrowableSupplier<? extends T> supplier) {
     return switch (this) {
       case Right<T> ignored -> this;
-      default -> Maybe.right(supplier.get());
+      default -> Maybe.of(supplier.get());
     };
   }
 
@@ -83,7 +91,7 @@ public sealed interface Maybe<T> {
   default Maybe<T> or(T value) {
     return switch (this) {
       case Right<T> right -> this;
-      default -> Maybe.right(value);
+      default -> Maybe.of(value);
     };
   }
 
@@ -105,9 +113,7 @@ public sealed interface Maybe<T> {
     ;
 
     enum Empty implements Maybe<Object> {Default}
-
     record Left<T>(Throwable throwable) implements Maybe<T> {}
-
     record Right<T>(T value) implements Maybe<T> {}
   }
 }

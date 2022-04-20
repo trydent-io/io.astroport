@@ -2,9 +2,13 @@ package io.citadel.kernel.media;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 
 import java.util.List;
 import java.util.stream.Stream;
+
+import static java.util.stream.StreamSupport.stream;
 
 public sealed interface Json {
   enum Namespace implements Json {}
@@ -31,6 +35,18 @@ public sealed interface Json {
 
   static JsonArray array(JsonObject... jsons) {
     return new JsonArray(List.of(jsons));
+  }
+
+  static JsonArray array(RowSet<Row> rows) {
+    return Json.array(
+      stream(rows.spliterator(), false)
+        .map(Row::toJson)
+        .toArray(JsonObject[]::new)
+    );
+  }
+
+  static <T> JsonArray array(Iterable<T> itearable) {
+    return array(stream(itearable.spliterator(), false));
   }
 
   static <T> JsonArray array(Stream<T> items) {

@@ -1,10 +1,11 @@
-package io.citadel.kernel.eventstore.type;
+package io.citadel.eventstore.type;
 
-import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.eventstore.data.AggregateInfo;
-import io.citadel.kernel.eventstore.data.EventInfo;
-import io.citadel.kernel.eventstore.data.EventLog;
-import io.citadel.kernel.eventstore.event.Events;
+import io.citadel.eventstore.EventStore;
+import io.citadel.eventstore.data.AggregateInfo;
+import io.citadel.eventstore.data.EventInfo;
+import io.citadel.eventstore.data.EventLog;
+import io.citadel.eventstore.data.Feed;
+import io.citadel.eventstore.event.Events;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.EventBus;
@@ -16,10 +17,10 @@ import java.util.stream.Stream;
 
 public record Local(EventBus eventBus) implements EventStore {
   @Override
-  public Future<Events> findEventsBy(String id, String name) {
+  public Future<Events> seek(String id, String name) {
     return eventBus
       .<JsonObject>request(
-        FIND_EVENTS_BY,
+        SEEK,
         Json.of(
           "id", id,
           "name", name
@@ -30,7 +31,7 @@ public record Local(EventBus eventBus) implements EventStore {
   }
 
   @Override
-  public Future<Stream<EventLog>> persist(AggregateInfo aggregate, Stream<EventInfo> events, String user) {
+  public Future<Feed> persist(AggregateInfo aggregate, Stream<EventInfo> events, String user) {
     return eventBus
       .<JsonArray>request(
         PERSIST,
