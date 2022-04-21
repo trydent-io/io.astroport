@@ -60,7 +60,7 @@ public sealed interface Maybe<T> {
 
   default Maybe<T> or(String message, BiFunction<? super String, ? super Throwable, ? extends RuntimeException> function) {
     return switch (this) {
-      case Empty ignored -> Maybe.error(function.apply(message, new IllegalStateException("Can't retrieve value, state is empty")));
+      case Empty ignored -> Maybe.error(function.apply(message, new IllegalStateException("Can't retrieve value, lifecycle is empty")));
       case Left<T> left -> Maybe.error(function.apply(message, left.throwable));
       default -> this;
     };
@@ -68,7 +68,7 @@ public sealed interface Maybe<T> {
 
   default T otherwise(String message, BiFunction<? super String, ? super Throwable, ? extends RuntimeException> function) {
     return switch (this) {
-      case Empty ignored -> throw function.apply(message, new IllegalStateException("Can't retrieve value, state is empty"));
+      case Empty ignored -> throw function.apply(message, new IllegalStateException("Can't retrieve value, lifecycle is empty"));
       case Left<T> left -> throw function.apply(message, left.throwable);
       case Right<T> right -> right.value;
     };

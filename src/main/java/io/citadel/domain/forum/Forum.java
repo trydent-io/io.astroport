@@ -2,9 +2,11 @@ package io.citadel.domain.forum;
 
 import io.citadel.domain.forum.aggregate.Aggregate;
 import io.citadel.domain.forum.aggregate.Defaults;
-import io.citadel.domain.forum.aggregate.Span;
 import io.citadel.domain.forum.aggregate.Lifecycle;
+import io.citadel.domain.forum.aggregate.Span;
+import io.citadel.domain.forum.aggregate.Seed;
 import io.citadel.domain.forum.aggregate.Snapshot;
+import io.citadel.domain.forum.aggregate.Transaction;
 import io.citadel.domain.forum.handler.Commands;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.domain.forum.model.Attributes;
@@ -12,7 +14,7 @@ import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.func.Maybe;
 
-public sealed interface Forum<F extends Forum<F>> permits Aggregate, Span, Lifecycle, Snapshot {
+public sealed interface Forum<F extends Forum<F>> permits Span, Aggregate, Lifecycle, Seed, Snapshot, Transaction {
   String AGGREGATE_NAME = "FORUM";
 
   Commands commands = Commands.Companion;

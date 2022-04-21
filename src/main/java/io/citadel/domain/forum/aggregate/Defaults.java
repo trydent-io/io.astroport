@@ -15,14 +15,18 @@ public enum Defaults {
   }
 
   public Snapshot snapshot() {
-    return Snapshot.timepoint(Lifecycle.service(Snapshot.hydration()));
+    return Snapshot.timepoint(Seed.service(Snapshot.hydration()));
   }
 
   public Aggregate aggregate(Forum.ID id, long version) {
-    return Aggregate.transaction(Lifecycle.service(Aggregate.root(id, version)));
+    return Aggregate.transaction(Seed.service(Aggregate.root(id, version)));
   }
 
   public Aggregate aggregate(Forum.Model model, long version) {
-    return Aggregate.transaction(Lifecycle.service(Aggregate.root(model, version)));
+    return Aggregate.transaction(Seed.service(Aggregate.root(model, version)));
+  }
+
+  public Snap identity(final String id) {
+    return new Snap(new Lifecycle(), new Forum.Model(new Forum.ID(id)));
   }
 }

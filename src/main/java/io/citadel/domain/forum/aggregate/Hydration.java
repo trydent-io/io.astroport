@@ -72,8 +72,8 @@ final class Hydration implements Snapshot {
   }
 }
 
-final class Timepoint extends Span<Snapshot> implements Snapshot {
-  Timepoint(Lifecycle<Snapshot> lifecycle) {
+final class Timepoint extends Lifecycle<Snapshot> implements Snapshot {
+  Timepoint(Seed<Snapshot> lifecycle) {
     super(lifecycle, Timepoint::new);
   }
 

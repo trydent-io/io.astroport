@@ -8,7 +8,7 @@ public sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Aggreg
     return new Hydration(null);
   }
 
-  static Snapshot timepoint(Lifecycle<Snapshot> lifecycle) {
+  static Snapshot timepoint(Seed<Snapshot> lifecycle) {
     return new Timepoint(lifecycle);
   }
 }
