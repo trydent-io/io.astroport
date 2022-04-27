@@ -2,8 +2,8 @@ package io.citadel.kernel.lang;
 
 import io.citadel.kernel.func.ThrowableBiFunction;
 import io.citadel.kernel.func.ThrowableFunction;
-import io.citadel.kernel.func.ThrowableSupplier;
 
+import java.util.function.BinaryOperator;
 import java.util.stream.Collector;
 
 import static java.util.stream.Collectors.collectingAndThen;

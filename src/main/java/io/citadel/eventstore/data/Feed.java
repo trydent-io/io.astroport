@@ -17,7 +17,7 @@ public interface Feed extends Iterable<Feed.Entry> {
   record Aggregate(String id, String name, long version) {
     public Aggregate(String id, String name) { this(id, name, -1); }
   }
-  record Event(String name, String data) {}
+  record Event(String name, JsonObject data) {}
   record Persisted(LocalDateTime at, String by) {}
   record Entry(UUID id, Aggregate aggregate, Event event, Persisted persisted) {
     public Entry(Aggregate aggregate, Event event) {

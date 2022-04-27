@@ -9,8 +9,8 @@ import java.util.Optional;
 public enum Events {
   Companion;
 
-  public Forum.Event replaced(final Forum.Name name, final Forum.Description description) {return new Replaced(name, description);}
-  public Forum.Event registered(Forum.Name name, Forum.Description description) {return new Registered(name, description);}
+  public Forum.Event replaced(final Forum.Name name, final Forum.Description description) {return new Replaced(new Forum.Details(name, description));}
+  public Forum.Event registered(Forum.Name name, Forum.Description description) {return new Registered(new Forum.Details(name, description));}
   public Forum.Event opened() {return new Opened();}
   public Forum.Event closed() {return new Closed();}
   public Forum.Event reopened() {return new Reopened();}
@@ -18,6 +18,8 @@ public enum Events {
   public Forum.Event fromInfo(EventInfo event) {
     return from(event.name(), event.data()).orElseThrow();
   }
+
+  public enum Names {Opened, Closed, Registered, Reopened, Replaced, Archived}
 
   public Optional<Forum.Event> from(String name, JsonObject json) {
     return switch (name) {
@@ -31,8 +33,8 @@ public enum Events {
     };
   }
 
-  public record Registered(Forum.Name name, Forum.Description description) implements Forum.Event {}
-  public record Replaced(Forum.Name name, Forum.Description description) implements Forum.Event {}
+  public record Registered(Forum.Details details) implements Forum.Event {}
+  public record Replaced(Forum.Details details) implements Forum.Event {}
   public record Opened() implements Forum.Event {}
   public record Closed() implements Forum.Event {}
   public record Reopened() implements Forum.Event {}

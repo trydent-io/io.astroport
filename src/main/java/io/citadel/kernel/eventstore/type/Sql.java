@@ -41,7 +41,7 @@ public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
   }
 
   @Override
-  public Future<Feed> persist(Feed.Aggregate aggregate, Feed.Event event, Feed.Persisted persisted) {
+  public Future<Feed> persist(Feed.Aggregate aggregate, Stream<Feed.Event> events, String by) {
     return SqlTemplate.forUpdate(client, """
         with events as (
           select  es -> 'event' ->> 'name' event_name,
@@ -72,7 +72,7 @@ public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
           "aggregateId", aggregate.id(),
           "aggregateName", aggregate.name(),
           "aggregateVersion", aggregate.version(),
-          "events", Json.array(Stream.of(event))
+          "events", Json.array(events)
         )
       )
       .map(Feed::fromRows);

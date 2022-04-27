@@ -143,9 +143,7 @@
         </executions>
         <configuration>
           <release>${java.release}</release>
-          <compilerArgs>
-            <arg>--enable-preview</arg>
-          </compilerArgs>
+          <compilerArgs>--enable-preview</compilerArgs>
           <forceJavacCompilerUse>true</forceJavacCompilerUse>
           <source>18</source>
           <target>18</target>

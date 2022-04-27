@@ -10,11 +10,11 @@ import io.vertx.core.eventbus.Message;
 public record Register(Forums forums) implements Domain.Handler<Commands.Register> {
   @Override
   public void handle(final Message<Commands.Register> message, final Commands.Register register, final Headers headers) {
-    final var forumId = headers.aggregateId(Forum.ID::new).orElseThrow();
+    final var forumId = headers.aggregateId(Forum.attributes::id).orElseThrow();
 
     forums
-      .findBy(forumId)
-      .map(aggregate -> aggregate.register(register.name(), register.description()))
+      .lookup(forumId)
+      .map(aggregate -> aggregate.register(new Forum.Details(register.name(), register.description())))
       .compose(aggregate -> aggregate.commit(forums::persist))
       .onSuccess(aggregate -> message.reply("Forum with Id %s has been registered".formatted(forumId)))
       .onFailure(throwable -> message.fail(406, "Can't register Forum with Id %s".formatted(forumId)));

@@ -18,13 +18,13 @@ public record Transaction(Lifecycle lifecycle, Stream<Forum.Event> events) imple
   }
 
   @Override
-  public Maybe<Transaction> register(Name name, Description description) {
-    return lifecycle.register(name, description).map(() -> new Transaction(lifecycle, append(Forum.events.registered(name, description))));
+  public Maybe<Transaction> register(Details details) {
+    return lifecycle.register(details).map(() -> new Transaction(lifecycle, append(Forum.events.registered(details.name(), details.description()))));
   }
 
   @Override
-  public Maybe<Transaction> replace(Name name, Description description) {
-    return lifecycle.replace(name, description).map(() -> new Transaction(lifecycle, append(Forum.events.replaced(name, description))));
+  public Maybe<Transaction> replace(Details details) {
+    return lifecycle.replace(details).map(() -> new Transaction(lifecycle, append(Forum.events.replaced(details.name(), details.description()))));
   }
 
   @Override

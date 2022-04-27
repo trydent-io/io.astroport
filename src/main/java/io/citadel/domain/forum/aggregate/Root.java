@@ -7,13 +7,13 @@ import java.util.stream.Stream;
 
 record Root(Model model, long version, Transaction transaction) implements Aggregate {
   @Override
-  public Maybe<Aggregate> register(final Name name, final Description description) {
-    return transaction.register(name, description).map(it -> new Root(model, version, it));
+  public Maybe<Aggregate> register(Details details) {
+    return transaction.register(details).map(it -> new Root(model, version, it));
   }
 
   @Override
-  public Maybe<Aggregate> replace(final Name name, final Description description) {
-    return transaction.replace(name, description).map(it -> new Root(model, version, it));
+  public Maybe<Aggregate> replace(Details details) {
+    return transaction.replace(details).map(it -> new Root(model, version, it));
   }
 
   @Override

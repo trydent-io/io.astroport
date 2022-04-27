@@ -19,8 +19,8 @@ public sealed interface EventStore permits EventStore.Verticle, Local, Sql {
 
   Future<Feed> seek(Feed.Aggregate aggregate);
 
-  default Future<Feed> persist(Feed.Aggregate aggregate, Feed.Event event) {
-    return persist(aggregate, event, null);
+  default Future<Feed> persist(Feed.Aggregate aggregate, Stream<Feed.Event> events) {
+    return persist(aggregate, events, null);
   }
-  Future<Feed> persist(Feed.Aggregate aggregate, Feed.Event event, Feed.Persisted persisted);
+  Future<Feed> persist(Feed.Aggregate aggregate, Stream<Feed.Event> events, String by);
 }
