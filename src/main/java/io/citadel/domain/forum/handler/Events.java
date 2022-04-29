@@ -9,8 +9,8 @@ import java.util.Optional;
 public enum Events {
   Companion;
 
-  public Forum.Event replaced(final Forum.Name name, final Forum.Description description) {return new Replaced(new Forum.Details(name, description));}
-  public Forum.Event registered(Forum.Name name, Forum.Description description) {return new Registered(new Forum.Details(name, description));}
+  public Forum.Event replaced(final Forum.Details details) {return new Replaced(details);}
+  public Forum.Event registered(Forum.Details details) {return new Registered(details);}
   public Forum.Event opened() {return new Opened();}
   public Forum.Event closed() {return new Closed();}
   public Forum.Event reopened() {return new Reopened();}

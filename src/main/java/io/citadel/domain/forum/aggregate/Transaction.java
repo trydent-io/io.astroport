@@ -4,6 +4,7 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.func.Maybe;
 import io.citadel.kernel.func.ThrowableFunction;
+import io.vertx.core.Future;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -18,33 +19,33 @@ public record Transaction(Lifecycle lifecycle, Stream<Forum.Event> events) imple
   }
 
   @Override
-  public Maybe<Transaction> register(Details details) {
-    return lifecycle.register(details).map(() -> new Transaction(lifecycle, append(Forum.events.registered(details.name(), details.description()))));
+  public Future<Transaction> register(Details details) {
+    return lifecycle.register(details).map(it -> new Transaction(lifecycle, append(Forum.events.registered(details))));
   }
 
   @Override
-  public Maybe<Transaction> replace(Details details) {
-    return lifecycle.replace(details).map(() -> new Transaction(lifecycle, append(Forum.events.replaced(details.name(), details.description()))));
+  public Future<Transaction> replace(Details details) {
+    return lifecycle.replace(details).map(it -> new Transaction(lifecycle, append(Forum.events.replaced(details))));
   }
 
   @Override
-  public Maybe<Transaction> open() {
-    return lifecycle.open().map(() -> new Transaction(lifecycle, append(Forum.events.opened())));
+  public Future<Transaction> open() {
+    return lifecycle.open().map(it -> new Transaction(lifecycle, append(Forum.events.opened())));
   }
 
   @Override
-  public Maybe<Transaction> close() {
-    return lifecycle.close().map(() -> new Transaction(lifecycle, append(Forum.events.closed())));
+  public Future<Transaction> close() {
+    return lifecycle.close().map(it -> new Transaction(lifecycle, append(Forum.events.closed())));
   }
 
   @Override
-  public Maybe<Transaction> archive() {
-    return lifecycle.archive().map(() -> new Transaction(lifecycle, append(Forum.events.archived())));
+  public Future<Transaction> archive() {
+    return lifecycle.archive().map(it -> new Transaction(lifecycle, append(Forum.events.archived())));
   }
 
   @Override
-  public Maybe<Transaction> reopen() {
-    return lifecycle.reopen().map(() -> new Transaction(lifecycle, append(Forum.events.reopened())));
+  public Future<Transaction> reopen() {
+    return lifecycle.reopen().map(it -> new Transaction(lifecycle, append(Forum.events.reopened())));
   }
 
   @Override
