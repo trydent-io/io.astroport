@@ -29,8 +29,8 @@ public sealed interface Domain {
     A aggregate(ThrowablePredicate<? super M> predicate);
   }
 
-  interface Aggregates<A extends Aggregate, I extends Domain.ID<?>, E extends Domain.Event> {
-    static <A extends Aggregate, I extends Domain.ID<?>, E extends Domain.Event, M extends Record> Aggregates<A, I, E> repository(EventStore eventStore, Snapshot<A, M> snapshot, String name, ThrowableFunction<? super String, ? extends I> asId) {
+  interface Aggregates<A extends Aggregate, I extends Domain.ID<?>, E extends Domain.Event, M extends Record> {
+    static <A extends Aggregate, I extends Domain.ID<?>, E extends Domain.Event, M extends Record> Aggregates<A, I, E, M> repository(EventStore eventStore, Snapshot<A, M> snapshot, String name, ThrowableFunction<? super String, ? extends I> asId) {
       return new Repository<>(eventStore, snapshot, name);
     }
 
@@ -38,6 +38,9 @@ public sealed interface Domain {
     default Future<A> persist(I id, long version, Stream<E> events) {
       return persist(id, version, events, null);
     }
+
+    Future<A> lookup(I id, ThrowablePredicate<? super M> with);
+
     Future<A> persist(I id, long version, Stream<E> events, String by);
   }
 
