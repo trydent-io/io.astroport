@@ -9,13 +9,13 @@ import io.vertx.core.Future;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public record Transaction(Lifecycle lifecycle, Stream<Forum.Event> events) implements Forum<Transaction>, Domain.Seed<Stream<Forum.Event>> {
+public record Transaction(Lifecycle lifecycle, Stream<Forum.Event> events) implements Forum<Transaction>, Domain.Transaction {
   public Transaction(Lifecycle lifecycle) { this(lifecycle, Stream.empty()); }
 
   private Stream<Event> append(Event... events) {
-    return Optional.ofNullable(this.events)
-      .map(it -> Stream.concat(it, Stream.of(events)))
-      .orElseGet(() -> Stream.of(events));
+    return this.events != null
+      ? Stream.concat(this.events, Stream.of(events))
+      : Stream.of(events);
   }
 
   @Override
@@ -49,7 +49,7 @@ public record Transaction(Lifecycle lifecycle, Stream<Forum.Event> events) imple
   }
 
   @Override
-  public <R> R eventually(ThrowableFunction<? super Stream<Event>, ? extends R> then) {
-    return then.apply(events);
+  public Future<Void> commit(String aggregateId, String aggregateName, long aggregateVersion, String by) {
+    return null;
   }
 }

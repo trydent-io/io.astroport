@@ -45,7 +45,7 @@ public sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate per
     }
 
     @Override
-    public <T> T commit() {
+    public <T> T submit() {
       return null;
     }
   }

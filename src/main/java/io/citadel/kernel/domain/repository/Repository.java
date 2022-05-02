@@ -43,7 +43,7 @@ public final class Repository<A extends Domain.Aggregate, I extends Domain.ID<?>
   @Override
   public Future<A> persist(final I id, final long version, final Stream<E> events, final String by) {
     return eventStore
-      .persist(new Feed.Aggregate(id.toString(), name, version), events.map(it -> new Feed.Event(it.getClass().getSimpleName(), JsonObject.mapFrom(it))), by)
+      .feed(new Feed.Aggregate(id.toString(), name, version), events.map(it -> new Feed.Event(it.getClass().getSimpleName(), JsonObject.mapFrom(it))), by)
       .map(Feed::stream)
       .map(it -> it.collect(By.reducing(snapshot, this::next)))
       .map(Domain.Snapshot::aggregate);

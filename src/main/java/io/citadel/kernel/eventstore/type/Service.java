@@ -2,15 +2,11 @@ package io.citadel.kernel.eventstore.type;
 
 import io.citadel.eventstore.data.Feed;
 import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.media.Json;
 import io.citadel.kernel.sql.Migration;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-
-import java.util.stream.Stream;
 
 public final class Service extends AbstractVerticle implements EventStore.Verticle {
   private final Migration migration;
@@ -67,6 +63,6 @@ public final class Service extends AbstractVerticle implements EventStore.Vertic
 
   @Override
   public Future<Feed> persist(Feed.Aggregate aggregate, Feed.Event event, Feed.Persisted persisted) {
-    return eventStore.persist(aggregate, event, persisted);
+    return eventStore.feed(aggregate, event, persisted);
   }
 }

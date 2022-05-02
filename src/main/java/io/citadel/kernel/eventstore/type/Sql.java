@@ -4,12 +4,16 @@ import io.citadel.eventstore.data.Feed;
 import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
 public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
@@ -41,7 +45,7 @@ public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
   }
 
   @Override
-  public Future<Feed> persist(Feed.Aggregate aggregate, Stream<Feed.Event> events, String by) {
+  public Future<Feed> feed(Feed.Aggregate aggregate, Stream<Feed.Event> events, String by) {
     return SqlTemplate.forUpdate(client, """
         with events as (
           select  es -> 'event' ->> 'name' event_name,
@@ -75,6 +79,15 @@ public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
           "events", Json.array(events)
         )
       )
-      .map(Feed::fromRows);
+      .map(Feed::fromRows)
+      .onSuccess(feed ->
+        feed.forEach(entry ->
+          eventBus.publish(entry.event().name(), entry.event().data(), new DeliveryOptions()
+            .addHeader("aggregateId", entry.aggregate().id())
+            .addHeader("persistedAt", entry.persisted().at().format(ISO_DATE_TIME))
+            .addHeader("persistedBy", entry.persisted().by())
+          )
+        )
+      );
   }
 }

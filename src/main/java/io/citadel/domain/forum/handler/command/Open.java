@@ -16,7 +16,7 @@ public record Open(Forums forums) implements Domain.Handler<Commands.Open> {
     forums
       .lookup(forumId)
       .compose(Forum::open)
-      .compose(Aggregate::commit)
+      .compose(Aggregate::submit)
       .onSuccess(aggregate -> message.reply("Forum with Id %s has been opened".formatted(forumId)))
       .onFailure(throwable -> message.fail(406, "Can't open Forum with Id %s".formatted(forumId)));
   }
