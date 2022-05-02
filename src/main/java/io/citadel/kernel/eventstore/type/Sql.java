@@ -9,7 +9,6 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
 
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.stream.Stream;
 

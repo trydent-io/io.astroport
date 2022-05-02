@@ -1,17 +1,12 @@
 package io.citadel;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.citadel.domain.Domain;
-import io.citadel.domain.forum.Forum;
-import io.citadel.domain.forum.message.Commands;
-import io.citadel.eventstore.EventStore;
+import io.citadel.domain.forum.handler.Commands;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.eventbus.DeliveryContext;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;

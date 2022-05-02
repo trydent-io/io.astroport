@@ -3,13 +3,12 @@ package io.citadel.domain.forum.aggregate;
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.func.ThrowablePredicate;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
 import static io.citadel.domain.forum.handler.Events.Names.valueOf;
 
-public sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Aggregate, Forum.Model> {
+public sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Forum.Aggregate, Forum.Model> {
   static Snapshot hydration() {
     return new Hydration(new Lifecycle());
   }
@@ -18,7 +17,7 @@ public sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Aggreg
     Hydration(Lifecycle lifecycle) {this(lifecycle, null, -1);}
 
     @Override
-    public Domain.Snapshot<Aggregate, Forum.Model> apply(String aggregateId, long aggregateVersion, String eventName, JsonObject eventData) {
+    public Domain.Snapshot<Forum.Aggregate, Forum.Model> apply(String aggregateId, long aggregateVersion, String eventName, JsonObject eventData) {
       final var snapshot = model == null ? new Hydration(lifecycle, Forum.defaults.model(aggregateId), version) : this;
       return
         (
@@ -33,13 +32,9 @@ public sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Aggreg
         ).otherwise("Can't hydrate aggregate for Forum with ID %s".formatted(aggregateId), IllegalStateException::new);
     }
 
-    private ThrowablePredicate<Lifecycle> byModel(final Forum.ID id) {
-      return it -> model != null && model.id().equals(id);
-    }
-
     @Override
-    public Aggregate aggregate() {
-      return new Aggregate.Root(model, version, new Transaction(lifecycle));
+    public Aggregate aggregate(final Domain.Transaction transaction) {
+      return new Root(model, version, lifecycle, transaction);
     }
 
     @Override

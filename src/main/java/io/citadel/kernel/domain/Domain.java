@@ -32,25 +32,25 @@ public sealed interface Domain {
   interface Snapshot<A extends Aggregate, M extends Record> {
     Snapshot<A, M> apply(String aggregateId, long aggregateVersion, String eventName, JsonObject eventData);
 
-    default A aggregate() {
+    default A aggregate(final Transaction transaction) {
       return aggregate(m -> true);
     }
 
     A aggregate(ThrowablePredicate<? super M> predicate);
   }
 
-  interface Aggregates<A extends Aggregate, I extends Domain.ID<?>, E extends Domain.Event, M extends Record> {
-    static <A extends Aggregate, I extends Domain.ID<?>, E extends Domain.Event, M extends Record> Aggregates<A, I, E, M> repository(EventStore eventStore, Snapshot<A, M> snapshot, String name, ThrowableFunction<? super String, ? extends I> asId) {
+  interface Aggregates<A extends Aggregate<M>, I extends Domain.ID<?>, M extends Record> {
+    static <A extends Aggregate<M>, I extends Domain.ID<?>, M extends Record> Aggregates<A, I, M> repository(EventStore eventStore, Snapshot<A, M> snapshot, String name) {
       return new Repository<>(eventStore, snapshot, name);
     }
 
     Future<A> lookup(I id);
-
     Future<A> lookup(I id, ThrowablePredicate<? super M> with);
-
   }
 
-  interface Aggregate {
+  interface Aggregate<M extends Record> {
+    <R> Future<R> transform(ThrowableFunction<? super M, ? extends R> as);
+
     default Future<Void> submit() {
       return submit(null);
     }
@@ -58,7 +58,7 @@ public sealed interface Domain {
   }
 
   interface Transaction {
-    static Transaction committable(EventStore eventStore) {
+    static Transaction begin(EventStore eventStore) {
       return new Committable(eventStore, Stream.empty());
     }
     Transaction log(Domain.Event... events);
@@ -70,12 +70,7 @@ public sealed interface Domain {
     }
   }
 
-  interface Seed<M> {
-    <R> R eventually(ThrowableFunction<? super M, ? extends R> then);
-  }
-
-  interface ID<T> extends Attribute<T> {
-  }
+  interface ID<T> extends Attribute<T> {}
 
   interface Handler<A> extends io.vertx.core.Handler<Message<A>> {
     @Override

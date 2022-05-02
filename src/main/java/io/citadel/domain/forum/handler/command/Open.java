@@ -1,7 +1,6 @@
 package io.citadel.domain.forum.handler.command;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.domain.forum.aggregate.Aggregate;
 import io.citadel.domain.forum.aggregate.Forums;
 import io.citadel.domain.forum.handler.Commands;
 import io.citadel.kernel.domain.Domain;
