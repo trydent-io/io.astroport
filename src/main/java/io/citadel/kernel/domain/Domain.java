@@ -2,10 +2,8 @@ package io.citadel.kernel.domain;
 
 import io.citadel.eventstore.data.Feed;
 import io.citadel.kernel.domain.attribute.Attribute;
-import io.citadel.kernel.domain.repository.Repository;
 import io.citadel.kernel.domain.service.Defaults;
 import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowablePredicate;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
@@ -16,17 +14,12 @@ import java.util.stream.Stream;
 public sealed interface Domain {
   Defaults defaults = Defaults.Companion;
 
-  sealed interface Verticle extends Domain, io.vertx.core.Verticle permits Defaults.Service {
-  }
+  sealed interface Verticle extends Domain, io.vertx.core.Verticle permits Defaults.Service {}
 
-  interface State<S extends Enum<S>> {
-  }
-
-  interface Command {
-  }
-
+  interface State<S extends Enum<S>> {}
+  interface Command {}
   interface Event {
-    default JsonObject asJson() { return JsonObject.mapFrom(this); }
+    default Feed.Event asFeed() { return new Feed.Event(this.getClass().getSimpleName(), JsonObject.mapFrom(this)); }
   }
 
   interface Snapshot<A extends Aggregate, M extends Record> {
@@ -39,18 +32,12 @@ public sealed interface Domain {
     A aggregate(ThrowablePredicate<? super M> predicate);
   }
 
-  interface Aggregates<A extends Aggregate<M>, I extends Domain.ID<?>, M extends Record> {
-    static <A extends Aggregate<M>, I extends Domain.ID<?>, M extends Record> Aggregates<A, I, M> repository(EventStore eventStore, Snapshot<A, M> snapshot, String name) {
-      return new Repository<>(eventStore, snapshot, name);
-    }
-
+  interface Aggregates<A extends Aggregate, I extends Domain.ID<?>, M extends Record> {
     Future<A> lookup(I id);
     Future<A> lookup(I id, ThrowablePredicate<? super M> with);
   }
 
-  interface Aggregate<M extends Record> {
-    <R> Future<R> transform(ThrowableFunction<? super M, ? extends R> as);
-
+  interface Aggregate {
     default Future<Void> submit() {
       return submit(null);
     }
@@ -58,9 +45,6 @@ public sealed interface Domain {
   }
 
   interface Transaction {
-    static Transaction begin(EventStore eventStore) {
-      return new Committable(eventStore, Stream.empty());
-    }
     Transaction log(Domain.Event... events);
 
     Future<Void> commit(String aggregateId, String aggregateName, long aggregateVersion, String by);
@@ -82,16 +66,16 @@ public sealed interface Domain {
   }
 }
 
-final class Committable implements Domain.Transaction {
+final class Changes implements Domain.Transaction {
   private final EventStore eventStore;
   private final Stream<Domain.Event> events;
 
-  Committable(EventStore eventStore, Stream<Domain.Event> events) {
+  Changes(EventStore eventStore, Stream<Domain.Event> events) {
     this.eventStore = eventStore;
     this.events = events;
   }
   public Domain.Transaction log(Domain.Event... events) {
-    return new Committable(eventStore, this.events != null
+    return new Changes(eventStore, this.events != null
       ? Stream.concat(this.events, Stream.of(events))
       : Stream.of(events)
     );
@@ -101,7 +85,7 @@ final class Committable implements Domain.Transaction {
   public Future<Void> commit(String aggregateId, String aggregateName, long aggregateVersion, String by) {
     return eventStore.feed(
       new Feed.Aggregate(aggregateId, aggregateName, aggregateVersion),
-      events.map(it -> new Feed.Event(it.getClass().getSimpleName(), JsonObject.mapFrom(it))),
+      events.map(Domain.Event::asFeed),
       by
     ).mapEmpty();
   }

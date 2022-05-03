@@ -1,10 +1,6 @@
 package io.citadel.domain.forum.aggregate;
 
-import io.citadel.CitadelException;
 import io.citadel.domain.forum.Forum;
-import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.func.Maybe;
-import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 
@@ -13,13 +9,13 @@ import static io.citadel.domain.forum.Forum.State.Closed;
 import static io.citadel.domain.forum.Forum.State.Open;
 import static io.citadel.domain.forum.Forum.State.Registered;
 
-public record Lifecycle(State state) implements Forum<Lifecycle>, Task {
-  public Lifecycle() {this(null);}
+public record Staging(State state) implements Forum.Lifecycle, Task {
+  public Staging() {this(null);}
 
   @Override
   public Future<Lifecycle> register(Details details) {
     return switch (state) {
-      case null -> success(new Lifecycle(Registered));
+      case null -> success(new Staging(Registered));
       default -> failure("Can't apply register, lifecycle is identity");
     };
   }
@@ -35,7 +31,7 @@ public record Lifecycle(State state) implements Forum<Lifecycle>, Task {
   @Override
   public Future<Lifecycle> open() {
     return switch (state) {
-      case Registered -> success(new Lifecycle(Open));
+      case Registered -> success(new Staging(Open));
       default -> failure("Can't apply open, lifecycle is not registered");
     };
   }
@@ -43,7 +39,7 @@ public record Lifecycle(State state) implements Forum<Lifecycle>, Task {
   @Override
   public Future<Lifecycle> close() {
     return switch (state) {
-      case Open -> success(new Lifecycle(Closed));
+      case Open -> success(new Staging(Closed));
       default -> failure("Can't apply close, lifecycle is not open");
     };
   }
@@ -51,7 +47,7 @@ public record Lifecycle(State state) implements Forum<Lifecycle>, Task {
   @Override
   public Future<Lifecycle> archive() {
     return switch (state) {
-      case Closed -> success(new Lifecycle(Archived));
+      case Closed -> success(new Staging(Archived));
       default -> failure("Can't apply archive, lifecycle is not closed");
     };
   }
@@ -59,7 +55,7 @@ public record Lifecycle(State state) implements Forum<Lifecycle>, Task {
   @Override
   public Future<Lifecycle> reopen() {
     return switch (state) {
-      case Closed -> success(new Lifecycle(Open));
+      case Closed -> success(new Staging(Open));
       default -> failure("Can't apply reopen, lifecycle is not closed");
     };
   }

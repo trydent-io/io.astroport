@@ -2,7 +2,6 @@ package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.func.ThrowableFunction;
 import io.vertx.core.Future;
 
 public record Root(Model model, long version, Lifecycle lifecycle, Domain.Transaction transaction) implements Forum.Aggregate {
@@ -88,11 +87,6 @@ public record Root(Model model, long version, Lifecycle lifecycle, Domain.Transa
           transaction.log(Forum.events.reopened())
         )
       );
-  }
-
-  @Override
-  public <R> Future<R> transform(final ThrowableFunction<? super Model, ? extends R> as) {
-    return Future.succeededFuture(as.apply(model));
   }
 
   @Override

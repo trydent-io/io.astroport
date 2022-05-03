@@ -7,7 +7,7 @@ import io.citadel.kernel.func.ThrowablePredicate;
 import io.citadel.kernel.lang.By;
 import io.vertx.core.Future;
 
-public final class Repository<A extends Domain.Aggregate<M>, I extends Domain.ID<?>, E extends Domain.Event, M extends Record> implements Domain.Aggregates<A, I, M> {
+public final class Repository<A extends Domain.Aggregate<M>, I extends Domain.ID<?>, M extends Record> implements Domain.Aggregates<A, I, M> {
   private final EventStore eventStore;
   private final Domain.Snapshot<A, M> snapshot;
   private final String name;

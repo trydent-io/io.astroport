@@ -6,7 +6,7 @@ import io.citadel.kernel.eventstore.EventStore;
 import io.vertx.core.Future;
 
 public sealed interface Forums permits Repository {
-  static Forums repository(EventStore eventStore, Snapshot snapshot) {
+  static Forums repository(EventStore eventStore, Forum.Snapshot snapshot) {
     return new Repository(Aggregates.repository(eventStore, snapshot, Forum.AGGREGATE_NAME));
   }
 

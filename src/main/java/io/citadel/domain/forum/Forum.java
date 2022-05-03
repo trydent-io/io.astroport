@@ -1,8 +1,9 @@
 package io.citadel.domain.forum;
 
 import io.citadel.domain.forum.aggregate.Defaults;
-import io.citadel.domain.forum.aggregate.Lifecycle;
-import io.citadel.domain.forum.aggregate.Snapshot;
+import io.citadel.domain.forum.aggregate.Hydration;
+import io.citadel.domain.forum.aggregate.Root;
+import io.citadel.domain.forum.aggregate.Staging;
 import io.citadel.domain.forum.handler.Commands;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.domain.forum.model.Attributes;
@@ -12,7 +13,7 @@ import io.vertx.core.Future;
 
 import java.util.UUID;
 
-public sealed interface Forum<F extends Forum<F>> permits Forum.Aggregate, Lifecycle, Snapshot {
+public sealed interface Forum<F extends Forum<F>> permits Forum.Aggregate, Forum.Lifecycle, Forum.Snapshot {
   String AGGREGATE_NAME = "FORUM";
 
   Commands commands = Commands.Companion;
@@ -25,9 +26,9 @@ public sealed interface Forum<F extends Forum<F>> permits Forum.Aggregate, Lifec
   sealed interface Command extends Domain.Command permits Commands.Replace, Commands.Archive, Commands.Close, Commands.Open, Commands.Register, Commands.Reopen {}
   sealed interface Event extends Domain.Event permits Events.Archived, Events.Closed, Events.Replaced, Events.Opened, Events.Registered, Events.Reopened {}
 
-  sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate<Forum.Model> {
-
-  }
+  sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate permits Root {}
+  sealed interface Lifecycle extends Forum<Lifecycle>, Domain.Lifecycle permits Staging {}
+  sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Forum.Aggregate, Forum.Model> permits Hydration {}
 
   record ID(UUID value) implements Domain.ID<UUID> {} // ID
   record Name(String value) implements Attribute<String> {} // part of Details
