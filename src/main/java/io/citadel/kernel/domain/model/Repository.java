@@ -1,4 +1,4 @@
-package io.citadel.kernel.domain.repository;
+package io.citadel.kernel.domain.model;
 
 import io.citadel.eventstore.data.Feed;
 import io.citadel.kernel.domain.Domain;
@@ -7,7 +7,7 @@ import io.citadel.kernel.func.ThrowablePredicate;
 import io.citadel.kernel.lang.By;
 import io.vertx.core.Future;
 
-public final class Repository<A extends Domain.Aggregate<M>, I extends Domain.ID<?>, M extends Record> implements Domain.Aggregates<A, I, M> {
+public final class Repository<A extends Domain.Aggregate, I extends Domain.ID<?>, M extends Record> implements Domain.Aggregates<A, I, M> {
   private final EventStore eventStore;
   private final Domain.Snapshot<A, M> snapshot;
   private final String name;
@@ -20,12 +20,12 @@ public final class Repository<A extends Domain.Aggregate<M>, I extends Domain.ID
 
   @Override
   public Future<A> lookup(final I id) {
-    return hydratingBy(id).map(snapshot -> snapshot.aggregate(Domain.Transaction.begin(eventStore)));
+    return hydratingBy(id).map(snapshot -> snapshot.aggregate(Defaults.transaction(eventStore)));
   }
 
   @Override
   public Future<A> lookup(I id, ThrowablePredicate<? super M> with) {
-    return hydratingBy(id).map(s -> s.aggregate(with));
+    return hydratingBy(id).map(snapshot -> snapshot.aggregate(with));
   }
 
   private Future<Domain.Snapshot<A, M>> hydratingBy(final I id) {

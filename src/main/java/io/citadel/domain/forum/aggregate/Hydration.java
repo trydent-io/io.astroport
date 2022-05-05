@@ -3,6 +3,7 @@ package io.citadel.domain.forum.aggregate;
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.func.ThrowablePredicate;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
@@ -36,6 +37,11 @@ public record Hydration(Lifecycle lifecycle, Model model, long version) implemen
   @Override
   public Aggregate aggregate(final Domain.Transaction transaction) {
     return new Root(model, version, lifecycle, transaction);
+  }
+
+  @Override
+  public Aggregate aggregate(ThrowablePredicate<? super Model> predicate) {
+    return null;
   }
 
   @Override
