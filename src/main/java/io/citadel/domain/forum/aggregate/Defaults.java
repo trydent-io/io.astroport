@@ -8,7 +8,7 @@ public enum Defaults {
   Companion;
 
   public Forums forums(EventStore eventStore) {
-    return Forums.repository(eventStore, Forum.defaults.snapshot());
+    return new Repository(Domain.defaults.repository(eventStore, Forum.defaults.snapshot(), Forum.AGGREGATE_NAME));
   }
 
   public Forum.Model model(String id) {
@@ -20,6 +20,6 @@ public enum Defaults {
   }
 
   public Forum.Aggregate aggregate(Forum.Model model, long version, Forum.Lifecycle lifecycle) {
-    return new Root(model, version, lifecycle, Domain.defaults.transaction());
+    return new Root(model, version, lifecycle, null);
   }
 }

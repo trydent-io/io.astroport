@@ -8,6 +8,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 
+import java.util.stream.Stream;
+
 public final class Service extends AbstractVerticle implements EventStore.Verticle {
   private final Migration migration;
   private final EventStore eventStore;
@@ -32,7 +34,7 @@ public final class Service extends AbstractVerticle implements EventStore.Vertic
         .onFailure(it -> message.fail(500, it.getMessage()))
     );
 
-    vertx.eventBus().<JsonObject>localConsumer(PERSIST,
+    vertx.eventBus().<JsonObject>localConsumer(FEED,
       message -> persist(
         message.body().getJsonObject("aggregate"),
         message.body().getJsonObject("event"),
@@ -45,11 +47,7 @@ public final class Service extends AbstractVerticle implements EventStore.Vertic
   }
 
   private Future<Feed> persist(final JsonObject aggregate, JsonObject event, JsonObject persisted) {
-    return persist(
-      aggregate.mapTo(Feed.Aggregate.class),
-      event.mapTo(Feed.Event.class),
-      persisted.mapTo(Feed.Persisted.class)
-    );
+    return null;
   }
 
   private Future<Feed> seek(final JsonObject aggregate) {
@@ -62,7 +60,12 @@ public final class Service extends AbstractVerticle implements EventStore.Vertic
   }
 
   @Override
-  public Future<Feed> persist(Feed.Aggregate aggregate, Feed.Event event, Feed.Persisted persisted) {
-    return eventStore.feed(aggregate, event, persisted);
+  public Future<Feed> feed(final Feed.Aggregate aggregate, final Stream<Feed.Event> events, final String by) {
+    return null;
   }
+
+/*  @Override
+  public Future<Feed> feed(Feed.Aggregate aggregate, Feed.Event event, Feed.Persisted persisted) {
+    return eventStore.feed(aggregate, event, persisted);
+  }*/
 }

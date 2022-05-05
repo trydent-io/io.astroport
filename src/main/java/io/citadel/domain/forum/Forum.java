@@ -27,7 +27,7 @@ public sealed interface Forum<F extends Forum<F>> permits Forum.Aggregate, Forum
   sealed interface Event extends Domain.Event permits Events.Archived, Events.Closed, Events.Replaced, Events.Opened, Events.Registered, Events.Reopened {}
 
   sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate permits Root {}
-  sealed interface Lifecycle extends Forum<Lifecycle>, Domain.Lifecycle permits Staging {}
+  sealed interface Lifecycle extends Forum<Lifecycle> permits Staging {}
   sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Forum.Aggregate, Forum.Model> permits Hydration {}
 
   record ID(UUID value) implements Domain.ID<UUID> {} // ID
@@ -42,7 +42,7 @@ public sealed interface Forum<F extends Forum<F>> permits Forum.Aggregate, Forum
   Future<F> archive();
   Future<F> reopen();
 
-  record Model(ID id, Details details) {
+  record Model(ID id, Details details) implements Domain.Model<Forum.ID> {
     public Model(ID id) {this(id, null);}
   }
 }

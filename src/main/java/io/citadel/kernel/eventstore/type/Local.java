@@ -11,7 +11,6 @@ import io.vertx.core.json.JsonObject;
 import java.util.stream.Stream;
 
 public record Local(EventBus eventBus) implements EventStore {
-  @Override
   public Future<Feed> seek(String id, String name) {
     return eventBus
       .<JsonObject>request(
@@ -25,11 +24,20 @@ public record Local(EventBus eventBus) implements EventStore {
       .map(Feed::fromJson);
   }
 
-  @Override
-  public Future<Feed> persist(final Stream<Feed.Entry> entries) {
+  public Future<Feed> feed(final Stream<Feed.Entry> entries) {
     return eventBus
-      .<JsonObject>request(PERSIST, Json.array(entries))
+      .<JsonObject>request(FEED, Json.array(entries))
       .map(Message::body)
       .map(Feed::fromJson);
+  }
+
+  @Override
+  public Future<Feed> seek(final Feed.Aggregate aggregate) {
+    return null;
+  }
+
+  @Override
+  public Future<Feed> feed(final Feed.Aggregate aggregate, final Stream<Feed.Event> events, final String by) {
+    return null;
   }
 }

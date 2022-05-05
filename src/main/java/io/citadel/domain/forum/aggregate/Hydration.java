@@ -7,6 +7,8 @@ import io.citadel.kernel.func.ThrowablePredicate;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
+import java.util.function.Function;
+
 import static io.citadel.domain.forum.handler.Events.Names.valueOf;
 
 public record Hydration(Lifecycle lifecycle, Model model, long version) implements Forum.Snapshot {
@@ -16,7 +18,7 @@ public record Hydration(Lifecycle lifecycle, Model model, long version) implemen
   public Domain.Snapshot<Aggregate, Model> apply(String aggregateId, long aggregateVersion, String eventName, JsonObject eventData) {
     final var snapshot = model == null ? new Hydration(lifecycle, Forum.defaults.model(aggregateId), version) : this;
     return
-      (
+      (Domain.Snapshot<Aggregate, Model>) (
         switch (valueOf(eventName)) {
           case Opened ->
             snapshot.open();
@@ -31,7 +33,7 @@ public record Hydration(Lifecycle lifecycle, Model model, long version) implemen
           case Archived ->
             snapshot.archive();
         }
-      ).otherwise("Can't hydrate aggregate for Forum with ID %s".formatted(aggregateId), IllegalStateException::new);
+      ).mapEmpty();
   }
 
   @Override

@@ -1,5 +1,7 @@
 package io.citadel.kernel.func;
 
+import io.citadel.kernel.domain.Domain;
+
 import java.util.function.BiFunction;
 
 @FunctionalInterface

@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 
 public sealed interface EventStore permits EventStore.Verticle, Local, Sql {
   String SEEK = "eventStore.seek";
-  String PERSIST = "eventStore.persist";
+  String FEED = "eventStore.feed";
 
   Defaults defaults = Defaults.Companion;
 

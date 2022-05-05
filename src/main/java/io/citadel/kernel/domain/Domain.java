@@ -30,9 +30,13 @@ public sealed interface Domain {
     A aggregate(ThrowablePredicate<? super M> predicate);
   }
 
-  interface Aggregates<A extends Aggregate, I extends Domain.ID<?>, M extends Record> {
-    Future<A> lookup(I id);
-    Future<A> lookup(I id, ThrowablePredicate<? super M> with);
+  interface Model<ID extends Domain.ID<?>> {
+    ID id();
+  }
+
+  interface Models<ID extends Domain.ID<?>, M extends Record & Model<ID>> {
+    Future<M> lookup(ID id);
+    Future<M> lookup(ID id, ThrowablePredicate<? super M> predicate);
   }
 
   interface Aggregate {

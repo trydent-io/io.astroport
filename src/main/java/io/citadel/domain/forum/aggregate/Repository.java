@@ -1,17 +1,17 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.kernel.domain.Domain.Aggregates;
+import io.citadel.kernel.domain.Domain;
 import io.vertx.core.Future;
 
-record Repository(Aggregates<Forum.Aggregate, Forum.ID, Forum.Model> aggregates) implements Forums {
+record Repository(Domain.Models<Forum.ID, Forum.Model> models) implements Forums {
   @Override
-  public Future<Forum.Aggregate> lookup(final Forum.ID id) {
-    return aggregates.lookup(id);
+  public Future<Forum.Aggregate> forum(final Forum.ID id) {
+    return models.lookup(id).map(it -> Forum.defaults.aggregate(it, ));
   }
 
   @Override
-  public Future<Forum.Aggregate> lookup(Forum.ID id, Forum.Name name) {
-    return aggregates.lookup(id, it -> it.details().name().equals(name));
+  public Future<Forum.Aggregate> forum(Forum.ID id, Forum.Name name) {
+    return models.lookup(id, it -> it.details().name().equals(name));
   }
 }

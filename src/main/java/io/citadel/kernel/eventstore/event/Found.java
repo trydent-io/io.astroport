@@ -1,8 +1,5 @@
 package io.citadel.kernel.eventstore.event;
 
-import io.citadel.kernel.domain.Domain;
-
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import io.citadel.kernel.eventstore.data.EventInfo;
@@ -18,12 +15,4 @@ public final class Found implements Events {
     this.stream = stream;
   }
 
-  @Override
-  public <A extends Domain.Aggregate> Optional<A> aggregateFrom(Domain.Snapshot<A> snapshot) {
-    try {
-      return Optional.of(snapshot.aggregate(id, version, stream));
-    } catch (Throwable e) {
-      return Optional.empty();
-    }
-  }
 }

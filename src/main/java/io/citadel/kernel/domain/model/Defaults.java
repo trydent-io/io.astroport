@@ -12,8 +12,8 @@ public enum Defaults {
     return new Service();
   }
 
-  public <A extends Domain.Aggregate, I extends Domain.ID<?>, M extends Record> Domain.Aggregates<A, I, M> aggregates(EventStore eventStore, Domain.Snapshot<A, M> snapshot, String name) {
-    return new Repository<>(eventStore, snapshot, name);
+  public <A extends Domain.Aggregate, I extends Domain.ID<?>, M extends Record> Domain.Models<A, I, M> repository(EventStore eventStore, Domain.Snapshot<A, M> snapshot, String name) {
+    return new Snapshots<>(eventStore, snapshot, name);
   }
 
   static Domain.Transaction transaction(EventStore eventStore) {
