@@ -4,6 +4,7 @@ import io.citadel.eventstore.data.Feed;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
+import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.func.ThrowablePredicate;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
@@ -20,26 +21,22 @@ public sealed interface Domain {
     default Feed.Event asFeed() { return new Feed.Event(this.getClass().getSimpleName(), JsonObject.mapFrom(this)); }
   }
 
-  interface Snapshot<A extends Aggregate, M extends Record> {
-    Snapshot<A, M> apply(String aggregateId, long aggregateVersion, String eventName, JsonObject eventData);
-
-    default A aggregate(final Transaction transaction) {
-      return aggregate(m -> true);
-    }
-
-    A aggregate(ThrowablePredicate<? super M> predicate);
+  interface Snapshot<M extends Record & Domain.Model<?>, A extends Aggregate<M>, S extends Snapshot<M, A, S>> {
+    S identity(String id);
+    S event(long aggregateVersion, String eventName, JsonObject eventData);
+    A aggregate(EventStore eventStore);
   }
 
   interface Model<ID extends Domain.ID<?>> {
     ID id();
   }
 
-  interface Models<ID extends Domain.ID<?>, M extends Record & Model<ID>> {
-    Future<M> lookup(ID id);
-    Future<M> lookup(ID id, ThrowablePredicate<? super M> predicate);
+  interface Aggregates<ID extends Domain.ID<?>, M extends Record & Model<ID>, A extends Aggregate<M>> {
+    Future<A> lookup(ID id);
+    Future<A> lookup(ID id, ThrowablePredicate<? super M> predicate);
   }
 
-  interface Aggregate {
+  interface Aggregate<M extends Model<?>> {
     default Future<Void> submit() {
       return submit(null);
     }

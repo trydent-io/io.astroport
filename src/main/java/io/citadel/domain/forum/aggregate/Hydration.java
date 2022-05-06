@@ -3,6 +3,7 @@ package io.citadel.domain.forum.aggregate;
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.func.ThrowablePredicate;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
@@ -74,5 +75,20 @@ public record Hydration(Lifecycle lifecycle, Model model, long version) implemen
   @Override
   public Future<Snapshot> reopen() {
     return lifecycle.reopen().map(it -> new Hydration(it, model, version));
+  }
+
+  @Override
+  public Snapshot identity(String id) {
+    return new Hydration(Forum.defaults.aggregate(Forum.defaults.model(id), ));
+  }
+
+  @Override
+  public Snapshot event(long aggregateVersion, String eventName, JsonObject eventData) {
+    return null;
+  }
+
+  @Override
+  public Aggregate aggregate(EventStore eventStore) {
+    return null;
   }
 }

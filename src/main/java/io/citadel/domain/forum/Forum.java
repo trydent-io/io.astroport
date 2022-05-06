@@ -26,9 +26,9 @@ public sealed interface Forum<F extends Forum<F>> permits Forum.Aggregate, Forum
   sealed interface Command extends Domain.Command permits Commands.Replace, Commands.Archive, Commands.Close, Commands.Open, Commands.Register, Commands.Reopen {}
   sealed interface Event extends Domain.Event permits Events.Archived, Events.Closed, Events.Replaced, Events.Opened, Events.Registered, Events.Reopened {}
 
-  sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate permits Root {}
+  sealed interface Aggregate extends Forum<Aggregate>, Domain.Aggregate<Forum.Model> permits Root {}
   sealed interface Lifecycle extends Forum<Lifecycle> permits Staging {}
-  sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Forum.Aggregate, Forum.Model> permits Hydration {}
+  sealed interface Snapshot extends Forum<Snapshot>, Domain.Snapshot<Forum.Model, Forum.Aggregate, Forum.Snapshot> permits Hydration {}
 
   record ID(UUID value) implements Domain.ID<UUID> {} // ID
   record Name(String value) implements Attribute<String> {} // part of Details
