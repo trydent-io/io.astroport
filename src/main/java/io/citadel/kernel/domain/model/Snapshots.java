@@ -9,11 +9,12 @@ import io.citadel.kernel.func.ThrowablePredicate;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 
+import java.util.Optional;
 import java.util.function.BinaryOperator;
 
-public final class Snapshots<ID extends Domain.ID<?>, M extends Record & Domain.Model<ID>, A extends Domain.Aggregate<M>> implements Domain.Aggregates<ID, M, A>, Task {
+public final class Snapshots<ID extends Domain.ID<?>, M extends Record & Domain.Model<ID>, A extends Domain.Aggregate<M>, S extends Domain.Snapshot<M, A, S>> implements Domain.Aggregates<ID, M, A>, Task {
   private final EventStore eventStore;
-  private final Domain.Snapshot<A, M> snapshot;
+  private final S snapshot;
   private final ThrowableFunction<? super ID, ? extends M> identity;
   private final ThrowableBiFunction<? super M, ? super Feed.Entry, ? extends M> reduce;
   private final String name;
@@ -26,21 +27,33 @@ public final class Snapshots<ID extends Domain.ID<?>, M extends Record & Domain.
   }
 
   @Override
-  public Future<M> lookup(final ID id) {
+  public Future<A> lookup(final ID id) {
     return eventStore.seek(new Feed.Aggregate(id.toString(), name))
       .map(Feed::stream)
       .map(entries -> entries.reduce(identity.apply(id), reduce::apply, nothing()));
   }
 
   @Override
-  public Future<M> lookup(final ID id, final ThrowablePredicate<? super M> predicate) {
+  public Future<A> lookup(final ID id, final ThrowablePredicate<? super M> predicate) {
     return eventStore.seek(new Feed.Aggregate(id.toString(), name))
       .map(Feed::stream)
-      .map(entries -> entries.reduce(snapshot.identity(id), reduce::apply, nothing()))
+      .map(entries ->
+        entries.<Optional<S>>reduce(
+          entries.findFirst().map(entry -> snapshot.identity(entry.aggregate().id())),
+          (current, entry) -> current.map(it -> it.event(
+              entry.aggregate().version(),
+              entry.event().name(),
+              entry.event().data()
+            )
+          ),
+          nothing()
+        )
+      )
+      .map(Optional::orElseThrow)
       .compose(filter(message(id), predicate));
   }
 
-  private BinaryOperator<M> nothing() {
+  private <U> BinaryOperator<U> nothing() {
     return (a, b) -> a;
   }
 
