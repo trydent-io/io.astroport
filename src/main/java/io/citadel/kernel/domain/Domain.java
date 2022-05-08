@@ -21,22 +21,24 @@ public sealed interface Domain {
     default Feed.Event asFeed() { return new Feed.Event(this.getClass().getSimpleName(), JsonObject.mapFrom(this)); }
   }
 
-  interface Snapshot<M extends Record & Domain.Model<?>, A extends Aggregate<M>, S extends Snapshot<M, A, S>> {
-    S identity(String id);
-    S event(long aggregateVersion, String eventName, JsonObject eventData);
-    A aggregate(EventStore eventStore);
+  interface Snapshot<M extends Record & Domain.Model<?>, A extends Aggregate, S extends Snapshot<M, A, S>> {
+    Future<S> apply(String aggregateId, long aggregateVersion, String eventName, JsonObject eventData);
+    Future<M> model();
+    Future<A> aggregate(EventStore eventStore);
   }
 
   interface Model<ID extends Domain.ID<?>> {
     ID id();
   }
 
-  interface Aggregates<ID extends Domain.ID<?>, M extends Record & Model<ID>, A extends Aggregate<M>> {
-    Future<A> lookup(ID id);
+  interface Aggregates<ID extends Domain.ID<?>, M extends Record & Model<ID>, A extends Aggregate> {
+    default Future<A> lookup(ID id) {
+      return lookup(id, it -> true);
+    }
     Future<A> lookup(ID id, ThrowablePredicate<? super M> predicate);
   }
 
-  interface Aggregate<M extends Model<?>> {
+  interface Aggregate {
     default Future<Void> submit() {
       return submit(null);
     }
@@ -55,13 +57,13 @@ public sealed interface Domain {
 
   interface ID<T> extends Attribute<T> {}
 
-  interface Handler<A> extends io.vertx.core.Handler<Message<A>> {
+  interface Handler<S extends Record> extends io.vertx.core.Handler<Message<S>> {
     @Override
-    default void handle(Message<A> message) {
+    default void handle(Message<S> message) {
       handle(message, message.headers().get("aggregateId"), message.body(), message.headers().get("by"), Headers.of(message.headers()));
     }
 
-    void handle(final Message<A> message, final String aggregateId, final A content, final String by, final Headers headers);
+    void handle(final Message<S> message, final String aggregateId, final S content, final String by, final Headers headers);
   }
 }
 

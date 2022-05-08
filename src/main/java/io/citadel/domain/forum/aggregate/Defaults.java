@@ -19,7 +19,7 @@ public enum Defaults {
     return new Hydration(new Staging());
   }
 
-  public Forum.Aggregate aggregate(Forum.Model model, long version, Forum.Lifecycle lifecycle) {
-    return new Root(model, version, lifecycle, null);
+  public Forum.Aggregate aggregate(Forum.Model model, long version, Forum.Lifecycle lifecycle, final Domain.Transaction transaction) {
+    return new Root(model, version, lifecycle, transaction);
   }
 }

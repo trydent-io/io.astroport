@@ -4,10 +4,10 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.Future;
 
-record Repository(Domain.Aggregates<Forum.ID, Forum.Model> aggregates) implements Forums {
+record Repository(Domain.Aggregates<Forum.ID, Forum.Model, Forum.Aggregate> aggregates) implements Forums {
   @Override
   public Future<Forum.Aggregate> forum(final Forum.ID id) {
-    return aggregates.lookup(id).map(it -> Forum.defaults.aggregate(it, ));
+    return aggregates.lookup(id);
   }
 
   @Override

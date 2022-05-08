@@ -3,6 +3,7 @@ package io.citadel.kernel.func;
 import io.citadel.kernel.domain.Domain;
 
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 @FunctionalInterface
 public interface ThrowableBiFunction<A, B, R> extends BiFunction<A, B, R> {
@@ -15,5 +16,9 @@ public interface ThrowableBiFunction<A, B, R> extends BiFunction<A, B, R> {
     } catch (Throwable e) {
       throw new FunctionalException("Can't apply function", e);
     }
+  }
+
+  static <U> BinaryOperator<U> noOp() {
+    return (a, b) -> a;
   }
 }

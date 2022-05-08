@@ -12,11 +12,11 @@ public enum Defaults {
     return new Service();
   }
 
-  public <A extends Domain.Aggregate, I extends Domain.ID<?>, M extends Record> Domain.Aggregates<A, I, M> repository(EventStore eventStore, Domain.Snapshot<A, M> snapshot, String name) {
+  public <A extends Domain.Aggregate, I extends Domain.ID<?>, M extends Record & Domain.Model<I>> Domain.Aggregates<I, M, A> repository(EventStore eventStore, Domain.Snapshot<M, A, S> snapshot, String name) {
     return new Snapshots<>(eventStore, snapshot, name);
   }
 
-  static Domain.Transaction transaction(EventStore eventStore) {
+  public Domain.Transaction transaction(EventStore eventStore) {
     return new Changes(eventStore, Stream.empty());
   }
 }

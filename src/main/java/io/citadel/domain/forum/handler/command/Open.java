@@ -9,14 +9,12 @@ import io.vertx.core.eventbus.Message;
 
 public record Open(Forums forums) implements Domain.Handler<Commands.Open> {
   public void handle(final Message<Commands.Open> message, final Commands.Open open, final Headers headers) {
-
-/*
     forums
       .forum(forumId)
       .compose(Forum::open)
       .compose(Aggregate::submit)
       .onSuccess(aggregate -> message.reply("Forum with Id %s has been opened".formatted(forumId)))
-      .onFailure(throwable -> message.fail(406, "Can't open Forum with Id %s".formatted(forumId)));*/
+      .onFailure(throwable -> message.fail(406, "Can't open Forum with Id %s".formatted(forumId)));
   }
 
   @Override

@@ -4,91 +4,72 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.func.ThrowablePredicate;
+import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
-import java.util.function.Function;
+import java.util.UUID;
 
 import static io.citadel.domain.forum.handler.Events.Names.valueOf;
 
-public record Hydration(Lifecycle lifecycle, Model model, long version) implements Forum.Snapshot {
+public record Hydration(Lifecycle lifecycle, Forum.Model modelled, long version) implements Forum.Snapshot, Task {
   Hydration(Lifecycle lifecycle) {this(lifecycle, null, -1);}
 
   @Override
-  public Domain.Snapshot<Aggregate, Model> apply(String aggregateId, long aggregateVersion, String eventName, JsonObject eventData) {
-    final var snapshot = model == null ? new Hydration(lifecycle, Forum.defaults.model(aggregateId), version) : this;
-    return
-      (Domain.Snapshot<Aggregate, Model>) (
-        switch (valueOf(eventName)) {
-          case Opened ->
-            snapshot.open();
-          case Closed ->
-            snapshot.close();
-          case Registered ->
-            snapshot.register(eventData.mapTo(Events.Registered.class).details());
-          case Reopened ->
-            snapshot.reopen();
-          case Replaced ->
-            snapshot.replace(eventData.mapTo(Events.Replaced.class).details());
-          case Archived ->
-            snapshot.archive();
-        }
-      ).mapEmpty();
+  public Future<Snapshot> apply(String id, long version, String eventName, JsonObject eventData) {
+    return switch (valueOf(eventName)) {
+      case Opened -> snapshot(id, version).open();
+      case Closed -> snapshot(id, version).close();
+      case Registered -> snapshot(id, version).register(eventData.mapTo(Events.Registered.class).details());
+      case Reopened -> snapshot(id, version).reopen();
+      case Replaced -> snapshot(id, version).replace(eventData.mapTo(Events.Replaced.class).details());
+      case Archived -> snapshot(id, version).archive();
+    };
+  }
+
+  private Hydration snapshot(final String id, long version) {
+    return modelled == null
+      ? new Hydration(lifecycle, Forum.defaults.model(id), version)
+      : this;
   }
 
   @Override
-  public Aggregate aggregate(final Domain.Transaction transaction) {
-    return new Root(model, version, lifecycle, transaction);
+  public Future<Model> model() {
+    return success(modelled);
   }
 
   @Override
-  public Aggregate aggregate(ThrowablePredicate<? super Model> predicate) {
-    return null;
+  public Future<Aggregate> aggregate(final EventStore eventStore) {
+    return success(Forum.defaults.aggregate(modelled, version, lifecycle, Domain.defaults.transaction(eventStore)));
   }
 
   @Override
   public Future<Snapshot> register(final Details details) {
-    return lifecycle.register(details).map(it -> new Hydration(it, new Model(model.id(), details), version));
+    return lifecycle.register(details).map(it -> new Hydration(it, new Model(modelled.id(), details), version));
   }
 
   @Override
   public Future<Snapshot> replace(final Details details) {
-    return lifecycle.replace(details).map(it -> new Hydration(it, new Model(model.id(), details), version));
+    return lifecycle.replace(details).map(it -> new Hydration(it, new Model(modelled.id(), details), version));
   }
 
   @Override
   public Future<Snapshot> open() {
-    return lifecycle.open().map(it -> new Hydration(it, model, version));
+    return lifecycle.open().map(it -> new Hydration(it, modelled, version));
   }
 
   @Override
   public Future<Snapshot> close() {
-    return lifecycle.close().map(it -> new Hydration(it, model, version));
+    return lifecycle.close().map(it -> new Hydration(it, modelled, version));
   }
 
   @Override
   public Future<Snapshot> archive() {
-    return lifecycle.archive().map(it -> new Hydration(it, model, version));
+    return lifecycle.archive().map(it -> new Hydration(it, modelled, version));
   }
 
   @Override
   public Future<Snapshot> reopen() {
-    return lifecycle.reopen().map(it -> new Hydration(it, model, version));
-  }
-
-  @Override
-  public Snapshot identity(String id) {
-    return new Hydration(Forum.defaults.aggregate(Forum.defaults.model(id), ));
-  }
-
-  @Override
-  public Snapshot event(long aggregateVersion, String eventName, JsonObject eventData) {
-    return null;
-  }
-
-  @Override
-  public Aggregate aggregate(EventStore eventStore) {
-    return null;
+    return lifecycle.reopen().map(it -> new Hydration(it, modelled, version));
   }
 }
