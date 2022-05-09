@@ -19,7 +19,7 @@ public interface MessageBus {
 
 interface Codec<R extends Record> extends MessageCodec<R, R> {
   static <R extends Record> Codec<R> of(Class<R> type) {
-    return new Message<>(type);
+    return new Handlers<>(type);
   }
 }
 
