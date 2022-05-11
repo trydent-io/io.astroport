@@ -11,7 +11,7 @@ public interface Switch {
     return new Handlers(new ConcurrentHashMap<>());
   }
 
-  <R extends Record> Switch bind(String address, Domain.Handler<R> handler);
+  <R extends Codec> Switch bind(String address, Domain.Handler<R> handler);
   EventBus apply(EventBus eventBus);
 }
 
@@ -23,7 +23,7 @@ final class Handlers implements Switch {
   }
 
   @Override
-  public <R extends Record> Switch bind(String address, Domain.Handler<R> handler) {
+  public <R extends Codec> Switch bind(String address, Domain.Handler<R> handler) {
     handlers.put(address, handler);
     return this;
   }

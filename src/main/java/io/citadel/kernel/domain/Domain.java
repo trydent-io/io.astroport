@@ -6,6 +6,7 @@ import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
 import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.func.ThrowablePredicate;
+import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
@@ -58,16 +59,13 @@ public sealed interface Domain {
 
   interface ID<T> extends Attribute<T> {}
 
-  interface Handler<S extends Record> extends io.vertx.core.Handler<Message<JsonObject>> {
-    Class<S> type();
-    EventBus bind(EventBus eventBus);
-
+  interface Handler<S extends Record> extends Task.Handler<S> {
     @Override
-    default void handle(Message<JsonObject> message) {
-      handle(message, message.headers().get("aggregateId"), message.body().mapTo(type()), message.headers().get("by"), Headers.of(message.headers()));
+    default void handle(Message<S> message) {
+      handle(message, message.headers().get("aggregateId"), message.body(), message.headers().get("by"), Headers.of(message.headers()));
     }
 
-    void handle(final Message<JsonObject> message, final String aggregateId, final S content, final String by, final Headers headers);
+    void handle(final Message<S> message, final String aggregateId, final S content, final String by, final Headers headers);
   }
 }
 

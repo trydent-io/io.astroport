@@ -1,9 +1,9 @@
 package io.citadel.kernel.vertx;
 
 import io.citadel.CitadelException;
-import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowablePredicate;
 import io.vertx.core.Future;
+import io.vertx.core.eventbus.Message;
 
 import java.util.function.Function;
 
@@ -23,4 +23,9 @@ public interface Task {
   default <T> Function<T, Future<T>> filter(String error, ThrowablePredicate<? super T> predicate) {
     return it -> predicate.test(it) ? success(it) : failure(error);
   }
+
+  interface Handler<R extends java.lang.Record> extends io.vertx.core.Handler<Message<R>> {
+    Behaviours bind(Behaviours behaviours);
+  }
+
 }

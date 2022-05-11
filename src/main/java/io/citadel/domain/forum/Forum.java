@@ -51,11 +51,11 @@ public sealed interface Forum<F extends Forum<F>> permits Forum.Aggregate, Forum
 
   interface Handler<S extends Record> extends Domain.Handler<S> {
     @Override
-    default void handle(final Message<JsonObject> message, final String aggregateId, final S content, final String by, final Headers headers) {
+    default void handle(final Message<S> message, final String aggregateId, final S content, final String by, final Headers headers) {
       handle(message, headers.aggregateId(Forum.attributes::id).orElseThrow(), content, by, headers);
     }
 
-    void handle(Message<JsonObject> message, Forum.ID forumId, S content, String by, Headers headers);
+    void handle(Message<S> message, Forum.ID forumId, S content, String by, Headers headers);
   }
 }
 
