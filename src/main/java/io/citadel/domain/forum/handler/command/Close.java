@@ -5,8 +5,10 @@ import io.citadel.domain.forum.aggregate.Forums;
 import io.citadel.domain.forum.handler.Commands;
 import io.citadel.kernel.domain.Headers;
 import io.citadel.kernel.vertx.Behaviours;
+import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
+
+import java.util.UUID;
 
 public record Close(Forums forums) implements Forum.Handler<Commands.Close> {
   @Override
@@ -22,5 +24,23 @@ public record Close(Forums forums) implements Forum.Handler<Commands.Close> {
   @Override
   public Behaviours bind(final Behaviours behaviours) {
     return behaviours.be(Commands.Close.class, "forum.close", this);
+  }
+
+  interface Actor<R extends Record> {
+    <C extends Record> void be(Class<C> type, String address, Handler<R> handler);
+    void commit();
+  }
+
+  record Model(UUID id) {}
+
+  interface Assembly {
+    void close();
+  }
+
+  record Aggregate(Actor<Model> actor) implements Assembly {
+    @Override
+    public void close() {
+      actor.be(Commands.Close.class, "assembly.close", model -> {});
+    }
   }
 }

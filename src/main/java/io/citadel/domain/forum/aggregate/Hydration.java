@@ -44,32 +44,32 @@ public record Hydration(Lifecycle lifecycle, Forum.Model modelled, long version)
   }
 
   @Override
-  public Future<Snapshot> register(final Details details) {
-    return lifecycle.register(details).map(it -> new Hydration(it, new Model(modelled.id(), details), version));
+  public Snapshot register(final Details details) {
+    return new Hydration(lifecycle.register(details), new Model(modelled.id(), details), version);
   }
 
   @Override
-  public Future<Snapshot> replace(final Details details) {
-    return lifecycle.replace(details).map(it -> new Hydration(it, new Model(modelled.id(), details), version));
+  public Snapshot replace(final Details details) {
+    return new Hydration(lifecycle.replace(details), new Model(modelled.id(), details), version);
   }
 
   @Override
-  public Future<Snapshot> open() {
-    return lifecycle.open().map(it -> new Hydration(it, modelled, version));
+  public Snapshot open() {
+    return new Hydration(lifecycle.open(), modelled, version);
   }
 
   @Override
-  public Future<Snapshot> close() {
-    return lifecycle.close().map(it -> new Hydration(it, modelled, version));
+  public Snapshot close() {
+    return new Hydration(lifecycle.close(), modelled, version);
   }
 
   @Override
-  public Future<Snapshot> archive() {
-    return lifecycle.archive().map(it -> new Hydration(it, modelled, version));
+  public Snapshot archive() {
+    return new Hydration(lifecycle.archive(), modelled, version);
   }
 
   @Override
-  public Future<Snapshot> reopen() {
-    return lifecycle.reopen().map(it -> new Hydration(it, modelled, version));
+  public Snapshot reopen() {
+    return new Hydration(lifecycle.reopen(), modelled, version);
   }
 }

@@ -7,28 +7,31 @@ import io.citadel.kernel.func.ThrowablePredicate;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 
-import java.util.Optional;
-import java.util.function.BiFunction;
-
 import static io.citadel.kernel.func.ThrowableBiFunction.noOp;
 
-public final class Snapshots<ID extends Domain.ID<?>, M extends Record & Domain.Model<ID>, A extends Domain.Aggregate, S extends Domain.Snapshot<M, A, S>> implements Domain.Aggregates<ID, M, A>, Task {
+public final class Aggregates<ID extends Domain.ID<?>, M extends Record & Domain.Model<ID>, A extends Domain.Aggregate, S extends Domain.Snapshot<M, A, S>> implements Domain.Lookup<ID, M, A>, Task {
   private final EventStore eventStore;
   private final S snapshot;
   private final String name;
+  private final ThrowablePredicate<? super M> validator;
 
-  public Snapshots(final EventStore eventStore, final S snapshot, final String name) {
+  public Aggregates(EventStore eventStore, S snapshot, String name) {
+    this(eventStore, snapshot, name, it -> true);
+  }
+  public Aggregates(EventStore eventStore, S snapshot, String name, ThrowablePredicate<? super M> validator) {
     this.eventStore = eventStore;
     this.snapshot = snapshot;
     this.name = name;
+    this.validator = validator;
   }
 
+
   @Override
-  public Future<A> lookup(final ID id, final ThrowablePredicate<? super M> predicate) {
+  public Future<A> aggregate(final ID id) {
     return eventStore.seek(new Feed.Aggregate(id.toString(), name))
       .map(Feed::stream)
       .map(entries -> entries.reduce(snapshot, this::next, noOp()))
-      .compose(filter("Can't solve predicate", it -> predicate.test(it.model())))
+      .compose(filter(it -> it.model().co validator.test(it.model())))
       .compose(snapshot -> snapshot.aggregate(eventStore));
   }
 

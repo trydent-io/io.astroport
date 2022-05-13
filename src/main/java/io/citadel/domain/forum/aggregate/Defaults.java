@@ -8,7 +8,7 @@ public enum Defaults {
   Companion;
 
   public Forums forums(EventStore eventStore) {
-    return new Repository(Domain.defaults.repository(eventStore, Forum.defaults.snapshot(), Forum.AGGREGATE_NAME));
+    return new Repository(Domain.defaults.lookup(eventStore, Forum.defaults.snapshot(), Forum.AGGREGATE_NAME));
   }
 
   public Forum.Model model(String id) {

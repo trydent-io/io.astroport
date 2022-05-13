@@ -4,23 +4,22 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.Future;
 
+import java.util.Optional;
+
 public record Root(Model model, long version, Lifecycle lifecycle, Domain.Transaction transaction) implements Forum.Aggregate {
   @Override
-  public Future<Aggregate> register(Details details) {
-    return lifecycle
-      .register(details)
-      .map(it ->
-        new Root(
-          model,
-          version,
-          lifecycle,
-          transaction.log(Forum.events.registered(details))
-        )
-      );
+  public Aggregate register(Details details) {
+    lifecycle.register(details);
+    return new Root(
+      model,
+      version,
+      lifecycle,
+      transaction.log(Forum.events.registered(details))
+    );
   }
 
   @Override
-  public Future<Aggregate> replace(Details details) {
+  public Aggregate replace(Details details) {
     return lifecycle
       .replace(details)
       .map(it ->
@@ -34,7 +33,7 @@ public record Root(Model model, long version, Lifecycle lifecycle, Domain.Transa
   }
 
   @Override
-  public Future<Aggregate> open() {
+  public Aggregate open() {
     return lifecycle
       .open()
       .map(it ->
@@ -48,7 +47,7 @@ public record Root(Model model, long version, Lifecycle lifecycle, Domain.Transa
   }
 
   @Override
-  public Future<Aggregate> close() {
+  public Aggregate close() {
     return lifecycle
       .close()
       .map(it ->
@@ -62,7 +61,7 @@ public record Root(Model model, long version, Lifecycle lifecycle, Domain.Transa
   }
 
   @Override
-  public Future<Aggregate> archive() {
+  public Aggregate archive() {
     return lifecycle
       .archive()
       .map(it ->
@@ -76,7 +75,7 @@ public record Root(Model model, long version, Lifecycle lifecycle, Domain.Transa
   }
 
   @Override
-  public Future<Aggregate> reopen() {
+  public Aggregate reopen() {
     return lifecycle
       .reopen()
       .map(it ->

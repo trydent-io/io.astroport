@@ -8,7 +8,6 @@ import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.func.ThrowablePredicate;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 
@@ -33,11 +32,8 @@ public sealed interface Domain {
     ID id();
   }
 
-  interface Aggregates<ID extends Domain.ID<?>, M extends Record & Model<ID>, A extends Aggregate> {
-    default Future<A> lookup(ID id) {
-      return lookup(id, it -> true);
-    }
-    Future<A> lookup(ID id, ThrowablePredicate<? super M> predicate);
+  interface Lookup<ID extends Domain.ID<?>, M extends Record & Model<ID>, A extends Aggregate> {
+    Future<A> aggregate(ID id);
   }
 
   interface Aggregate {

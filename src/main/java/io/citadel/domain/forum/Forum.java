@@ -38,12 +38,12 @@ public sealed interface Forum<F extends Forum<F>> permits Forum.Aggregate, Forum
   record Description(String value) implements Attribute<String> {} // part of Details
   record Details(Name name, Description description) {} // ValueObject for Details
 
-  Future<F> register(Forum.Details details);
-  Future<F> replace(Forum.Details details);
-  Future<F> open();
-  Future<F> close();
-  Future<F> archive();
-  Future<F> reopen();
+  F register(Forum.Details details);
+  F replace(Forum.Details details);
+  F open();
+  F close();
+  F archive();
+  F reopen();
 
   record Model(ID id, Details details) implements Domain.Model<Forum.ID> {
     public Model(ID id) {this(id, null);}
