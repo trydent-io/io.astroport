@@ -4,19 +4,15 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.vertx.Task;
-import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-
-import java.util.UUID;
 
 import static io.citadel.domain.forum.handler.Events.Names.valueOf;
 
-public record Hydration(Lifecycle lifecycle, Forum.Model modelled, long version) implements Forum.Snapshot, Task {
+public record Hydration(Lifecycle lifecycle, Model modelled, long version) implements Forum.Snapshot {
   Hydration(Lifecycle lifecycle) {this(lifecycle, null, -1);}
 
   @Override
-  public Future<Snapshot> apply(String id, long version, String eventName, JsonObject eventData) {
+  public Snapshot apply(String id, long version, String eventName, JsonObject eventData) {
     return switch (valueOf(eventName)) {
       case Opened -> snapshot(id, version).open();
       case Closed -> snapshot(id, version).close();
@@ -34,18 +30,18 @@ public record Hydration(Lifecycle lifecycle, Forum.Model modelled, long version)
   }
 
   @Override
-  public Future<Model> model() {
-    return success(modelled);
+  public Model model() {
+    return modelled;
   }
 
   @Override
-  public Future<Aggregate> aggregate(final EventStore eventStore) {
-    return success(Forum.defaults.aggregate(modelled, version, lifecycle, Domain.defaults.transaction(eventStore)));
+  public Aggregate aggregate(final EventStore eventStore) {
+    return Forum.defaults.aggregate(modelled, version, lifecycle, Domain.defaults.transaction(eventStore));
   }
 
   @Override
   public Snapshot register(final Details details) {
-    return new Hydration(lifecycle.register(details), new Model(modelled.id(), details), version);
+    return new Hydration(lifecycle.register(details), modelled.register(details), version);
   }
 
   @Override

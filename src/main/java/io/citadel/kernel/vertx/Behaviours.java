@@ -16,7 +16,7 @@ record Registry(EventBus eventBus) implements Behaviours {
   @Override
   public <R extends java.lang.Record, H extends Task.Handler<R>> Behaviours be(final Class<R> type, final String address, final H handler) {
     eventBus
-      .registerDefaultCodec(type, Record.codec(type))
+      .registerDefaultCodec(type, RecordType.codec(type))
       .localConsumer(address, handler);
     return this;
   }

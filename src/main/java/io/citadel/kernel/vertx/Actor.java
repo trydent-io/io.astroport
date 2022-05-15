@@ -3,49 +3,71 @@ package io.citadel.kernel.vertx;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.domain.Headers;
 import io.citadel.kernel.func.ThrowableFunction;
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 
 public interface Actor<A extends Domain.Aggregate> {
-  static <ID extends Domain.ID<?>, A extends Domain.Aggregate, S extends Domain.Lookup<ID, ?, A>> Actor<A> create(Vertx vertx, S aggregates, ThrowableFunction<? super String, ? extends ID> id) {
-    return new Async<>(vertx, aggregates, id);
+  static <ID extends Domain.ID<?>, A extends Domain.Aggregate> Actor<A> create(Vertx vertx, Domain.Lookup<ID, ?, A> lookup, ThrowableFunction<? super String, ? extends ID> id) {
+    return new Async<>(vertx, lookup, id);
   }
 
-  <R extends java.lang.Record> Actor<A> be(Class<R> type, String address, Handler<A, R> handler);
+  <R extends Record> Actor<A> be(Class<R> type, String address, Handler<A, R> handler);
 
-  interface Handler<A extends Domain.Aggregate, R extends java.lang.Record> {
-    void handle(Headers headers, Message<R> message, Future<A> aggregate, R behaviour, String by);
+  interface Handler<A extends Domain.Aggregate, R extends Record> {
+    void handle(Headers headers, Message<R> message, A aggregate, R behaviour, String by);
+  }
+
+  interface Behaviour<A extends Domain.Aggregate, R extends Record> extends Handler<A, R> {
+    @Override
+    default void handle(Headers headers, Message<R> message, A aggregate, R behaviour, String by) {
+      handle(aggregate, behaviour, by);
+    }
+
+    void handle(A aggregate, R behaviour, String by);
   }
 }
 
-final class Async<ID extends Domain.ID<?>, A extends Domain.Aggregate, S extends Domain.Lookup<ID, ?, A>> implements Actor<A> {
+final class Async<ID extends Domain.ID<?>, A extends Domain.Aggregate> implements Actor<A> {
   private final EventBus eventBus;
-  private final S aggregates;
+  private final Domain.Lookup<ID, ?, A> lookup;
   private final ThrowableFunction<? super String, ? extends ID> id;
 
-  public Async(Vertx vertx, S aggregates, ThrowableFunction<? super String, ? extends ID> id) {
-    this.eventBus = vertx.eventBus();
-    this.aggregates = aggregates;
+  Async(Vertx vertx, final Domain.Lookup<ID, ?, A> lookup, final ThrowableFunction<? super String, ? extends ID> id) {
+    this(vertx.eventBus(), lookup, id);
+  }
+
+  Async(final EventBus eventBus, final Domain.Lookup<ID, ?, A> lookup, final ThrowableFunction<? super String, ? extends ID> id) {
+    this.eventBus = eventBus;
+    this.lookup = lookup;
     this.id = id;
   }
 
   @Override
-  public <R extends java.lang.Record> Actor<A> be(Class<R> type, String address, Handler<A, R> handler) {
+  public <R extends Record> Actor<A> be(Class<R> type, String address, Handler<A, R> handler) {
     eventBus
-      .registerDefaultCodec(type, Record.codec(type))
-      .<R>localConsumer(address, message -> handler.handle(
-        Headers.of(message.headers()),
-        message,
-        aggregate(message),
-        message.body(),
-        message.headers().get("by"))
+      .registerDefaultCodec(type, RecordType.codec(type))
+      .<R>localConsumer(address, message ->
+        lookup
+          .findAggregate(aggregateId(message))
+          .onSuccess(aggregate -> handler.handle(
+            Headers.of(message.headers()),
+            message,
+            aggregate,
+            message.body(),
+            message.headers().get("by"))
+          )
+          .onFailure(throwable -> message.fail(500, error(message, throwable)))
       );
-    return null;
+    return this;
   }
 
-  private <R extends java.lang.Record> Future<A> aggregate(Message<R> message) {
-    return aggregates.aggregate(id.apply(message.headers().get("aggregateId")));
+  private <R extends Record> String error(final Message<R> message, final Throwable throwable) {
+    return "Can't lookup aggregate %s, because of %s".formatted(message.headers().get("aggregateId"), throwable.getMessage());
   }
+
+  private <R extends Record> ID aggregateId(final Message<R> message) {
+    return id.apply(message.headers().get("aggregateId"));
+  }
+
 }

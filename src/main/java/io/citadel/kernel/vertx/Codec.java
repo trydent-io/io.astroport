@@ -4,13 +4,13 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.json.JsonObject;
 
-interface Record<T> extends MessageCodec<T, T> {
-  static <R extends java.lang.Record> Record<R> codec(Class<R> type) {
+interface RecordType<T> extends MessageCodec<T, T> {
+  static <R extends java.lang.Record> RecordType<R> codec(Class<R> type) {
     return new Codec<>(type);
   }
 }
 
-record Codec<R extends java.lang.Record>(Class<R> type) implements Record<R> {
+record Codec<R extends java.lang.Record>(Class<R> type) implements RecordType<R> {
   @Override
   public void encodeToWire(Buffer buffer, R record) {
     buffer.appendBuffer(JsonObject.mapFrom(record).toBuffer());

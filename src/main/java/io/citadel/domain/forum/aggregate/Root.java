@@ -4,8 +4,6 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.Future;
 
-import java.util.Optional;
-
 public record Root(Model model, long version, Lifecycle lifecycle, Domain.Transaction transaction) implements Forum.Aggregate {
   @Override
   public Aggregate register(Details details) {

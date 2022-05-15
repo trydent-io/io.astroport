@@ -1,8 +1,6 @@
 package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.kernel.vertx.Task;
-import io.vertx.core.Future;
 
 import static io.citadel.domain.forum.Forum.State.Archived;
 import static io.citadel.domain.forum.Forum.State.Closed;
@@ -16,7 +14,7 @@ public record Staging(State state) implements Forum.Lifecycle {
   public Lifecycle register(Details details) {
     return switch (state) {
       case null -> new Staging(Registered);
-      default -> throw new IllegalStateException("Can't apply register, lifecycle is identity");
+      default -> throw new IllegalStateException("Can't apply register, lifecycle is not initial");
     };
   }
 

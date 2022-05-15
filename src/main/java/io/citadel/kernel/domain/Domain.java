@@ -2,6 +2,7 @@ package io.citadel.kernel.domain;
 
 import io.citadel.eventstore.data.Feed;
 import io.citadel.kernel.domain.attribute.Attribute;
+import io.citadel.kernel.domain.model.CollectorImpl;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
 import io.citadel.kernel.eventstore.EventStore;
@@ -10,6 +11,18 @@ import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
+
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+
+import static io.citadel.kernel.func.ThrowableBiFunction.noOp;
+import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
 public sealed interface Domain {
   Defaults defaults = Defaults.Companion;
@@ -22,18 +35,48 @@ public sealed interface Domain {
     default Feed.Event asFeed() { return new Feed.Event(this.getClass().getSimpleName(), JsonObject.mapFrom(this)); }
   }
 
-  interface Snapshot<M extends Record & Domain.Model<?>, A extends Aggregate, S extends Snapshot<M, A, S>> {
-    Future<S> apply(String aggregateId, long aggregateVersion, String eventName, JsonObject eventData);
-    Future<M> model();
-    Future<A> aggregate(EventStore eventStore);
+  static <A extends Aggregate> Collector<Feed.Entry, ?, A> toAggregate() {
+    BinaryOperator<A> op = null;
+    return new CollectorImpl<>(
+      () -> (A[]) new Object[] { null },
+      (a, t) -> { a[0] = op.apply(a[0], t); },
+      (a, b) -> { a[0] = op.apply(a[0], b[0]); return a; },
+      a -> a[0],
+      IDENTITY_FINISH);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> Supplier<T[]> boxSupplier(T identity) {
+    return ;
+  }
+
+  interface Snapshot<A extends Aggregate> extends Collector<Feed.Entry, Domain.Snapshot<A>, Optional<A>> {
+    Set<Characteristics> characteristics = Set.of(IDENTITY_FINISH);
+    @Override
+    default Supplier<Snapshot<A>> supplier() {
+      return () -> this;
+    }
+
+    @Override
+    default BinaryOperator<Snapshot<A>> combiner() {
+      return noOp();
+    }
+
+    @Override
+    default Set<Characteristics> characteristics() {
+      return characteristics;
+    }
   }
 
   interface Model<ID extends Domain.ID<?>> {
     ID id();
   }
 
-  interface Lookup<ID extends Domain.ID<?>, M extends Record & Model<ID>, A extends Aggregate> {
-    Future<A> aggregate(ID id);
+  interface Lookup<M extends Record & Model<?>, A extends Aggregate> {
+    default Future<A> findAggregate(Domain.ID<?> id) {
+      return findAggregate(id, it -> true);
+    }
+    Future<A> findAggregate(Domain.ID<?> id, ThrowablePredicate<? super M> verify);
   }
 
   interface Aggregate {
