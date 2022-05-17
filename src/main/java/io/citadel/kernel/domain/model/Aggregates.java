@@ -7,17 +7,12 @@ import io.citadel.kernel.func.ThrowablePredicate;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import static io.citadel.kernel.func.ThrowableBiFunction.noOp;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
@@ -33,14 +28,16 @@ public final class Aggregates<M extends Record & Domain.Model<?>, A extends Doma
     this.name = name;
   }
 
-  private record Version<S>(long version, S snapshot) {}
-
   @Override
   public Future<A> findAggregate(final Domain.ID<?> id, ThrowablePredicate<? super M> verify) {
-    return eventStore.seek(new Feed.Aggregate(id.toString(), name))
+    return eventStore.seek(aggregate(id))
       .map(Feed::stream)
       .map(entries -> entries.collect(toAggregate(verify)))
       .compose(requireNonNull("Can't match aggregate with provided verification"));
+  }
+
+  private Feed.Aggregate aggregate(final Domain.ID<?> id) {
+    return new Feed.Aggregate(id.toString(), name);
   }
 
   private Aggregation toAggregate(ThrowablePredicate<? super M> verify) {

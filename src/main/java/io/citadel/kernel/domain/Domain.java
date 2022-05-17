@@ -5,6 +5,7 @@ import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
 import io.citadel.kernel.eventstore.EventStore;
+import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowablePredicate;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
@@ -38,7 +39,10 @@ public sealed interface Domain {
     Future<A> findAggregate(Domain.ID<?> id, ThrowablePredicate<? super M> verify);
   }
 
-  interface Aggregate {
+  interface Aggregate<M extends Record & Model<?>, A extends Aggregate<M, A>> {
+    Future<A> filter(ThrowablePredicate<? super M> predicate);
+    Future<A> map(ThrowableFunction<? super M, ? extends >)
+
     default Future<Void> submit() {
       return submit(null);
     }
@@ -56,14 +60,5 @@ public sealed interface Domain {
   }
 
   interface ID<T> extends Attribute<T> {}
-
-  interface Handler<S extends Record> extends Task.Handler<S> {
-    @Override
-    default void handle(Message<S> message) {
-      handle(message, message.headers().get("aggregateId"), message.body(), message.headers().get("by"), Headers.of(message.headers()));
-    }
-
-    void handle(final Message<S> message, final String aggregateId, final S content, final String by, final Headers headers);
-  }
 }
 
