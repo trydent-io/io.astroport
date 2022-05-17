@@ -8,8 +8,7 @@ import io.vertx.core.Vertx;
 public sealed interface Citadel permits Citadel.Verticle {
   static Citadel.Verticle verticle(Vertx vertx) {
     return new Service(
-      EventStore.defaults.verticle(vertx, Database.postgresql("localhost", 5433, "citadel", "citadel", "docker")),
-      Domain.defaults.verticle()
+      Domain.defaults.verticle(vertx, Database.postgresql("localhost", 5433, "citadel", "citadel", "docker"))
     );
   }
 

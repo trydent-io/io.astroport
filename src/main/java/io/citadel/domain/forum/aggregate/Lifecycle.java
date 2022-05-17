@@ -7,13 +7,13 @@ import static io.citadel.domain.forum.Forum.State.Closed;
 import static io.citadel.domain.forum.Forum.State.Open;
 import static io.citadel.domain.forum.Forum.State.Registered;
 
-public record Staging(State state) implements Forum.Lifecycle {
-  public Staging() {this(null);}
+public record Lifecycle(State state) implements Forum<Lifecycle> {
+  public Lifecycle() {this(null);}
 
   @Override
   public Lifecycle register(Details details) {
     return switch (state) {
-      case null -> new Staging(Registered);
+      case null -> new Lifecycle(Registered);
       default -> throw new IllegalStateException("Can't apply register, lifecycle is not initial");
     };
   }
@@ -29,7 +29,7 @@ public record Staging(State state) implements Forum.Lifecycle {
   @Override
   public Lifecycle open() {
     return switch (state) {
-      case Registered -> new Staging(Open);
+      case Registered -> new Lifecycle(Open);
       default -> throw new IllegalStateException("Can't apply open, lifecycle is not registered");
     };
   }
@@ -37,7 +37,7 @@ public record Staging(State state) implements Forum.Lifecycle {
   @Override
   public Lifecycle close() {
     return switch (state) {
-      case Open -> new Staging(Closed);
+      case Open -> new Lifecycle(Closed);
       default -> throw new IllegalStateException("Can't apply close, lifecycle is not open");
     };
   }
@@ -45,7 +45,7 @@ public record Staging(State state) implements Forum.Lifecycle {
   @Override
   public Lifecycle archive() {
     return switch (state) {
-      case Closed -> new Staging(Archived);
+      case Closed -> new Lifecycle(Archived);
       default -> throw new IllegalStateException("Can't apply archive, lifecycle is not closed");
     };
   }
@@ -53,7 +53,7 @@ public record Staging(State state) implements Forum.Lifecycle {
   @Override
   public Lifecycle reopen() {
     return switch (state) {
-      case Closed -> new Staging(Open);
+      case Closed -> new Lifecycle(Open);
       default -> throw new IllegalStateException("Can't apply reopen, lifecycle is not closed");
     };
   }

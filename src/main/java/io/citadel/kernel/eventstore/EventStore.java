@@ -3,7 +3,7 @@ package io.citadel.kernel.eventstore;
 import io.citadel.eventstore.data.Feed;
 import io.citadel.kernel.eventstore.type.Defaults;
 import io.citadel.kernel.eventstore.type.Local;
-import io.citadel.kernel.eventstore.type.Service;
+import io.citadel.kernel.domain.model.Service;
 import io.citadel.kernel.eventstore.type.Sql;
 import io.vertx.core.Future;
 

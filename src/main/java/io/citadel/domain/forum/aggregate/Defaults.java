@@ -7,19 +7,15 @@ import io.citadel.kernel.eventstore.EventStore;
 public enum Defaults {
   Companion;
 
-  public Forums forums(EventStore eventStore) {
-    return new Repository(Domain.defaults.lookup(eventStore, Forum.defaults.snapshot(), Forum.AGGREGATE_NAME));
+  public Forum.Model model(String id) {
+    return new Forum.Model(Forum.attributes.id(id));
   }
 
-  public Model model(String id) {
-    return new Model(Forum.attributes.id(id));
+  public Snapshot snapshot() {
+    return new Snapshot(new Lifecycle());
   }
 
-  public Forum.Snapshot snapshot() {
-    return new Hydration(new Staging());
-  }
-
-  public Forum.Aggregate aggregate(Model model, long version, Forum.Lifecycle lifecycle, final Domain.Transaction transaction) {
+  public Forum.Aggregate aggregate(Forum.Model model, long version, Lifecycle lifecycle, final Domain.Transaction transaction) {
     return new Root(model, version, lifecycle, transaction);
   }
 }

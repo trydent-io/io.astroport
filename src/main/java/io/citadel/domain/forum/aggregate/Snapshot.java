@@ -6,10 +6,12 @@ import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
 import io.vertx.core.json.JsonObject;
 
+import java.util.function.Predicate;
+
 import static io.citadel.domain.forum.handler.Events.Names.valueOf;
 
-public record Hydration(Lifecycle lifecycle, Model modelled, long version) implements Forum.Snapshot {
-  Hydration(Lifecycle lifecycle) {this(lifecycle, null, -1);}
+public record Snapshot(Lifecycle lifecycle, Model modelled, long version) implements Forum<Snapshot>, Domain.Snapshot<Forum.Model, Forum.Aggregate> {
+  Snapshot(Lifecycle lifecycle) {this(lifecycle, null, -1);}
 
   @Override
   public Snapshot apply(String id, long version, String eventName, JsonObject eventData) {
@@ -23,15 +25,10 @@ public record Hydration(Lifecycle lifecycle, Model modelled, long version) imple
     };
   }
 
-  private Hydration snapshot(final String id, long version) {
+  private Snapshot snapshot(final String id, long version) {
     return modelled == null
-      ? new Hydration(lifecycle, Forum.defaults.model(id), version)
+      ? new Snapshot(lifecycle, Forum.defaults.model(id), version)
       : this;
-  }
-
-  @Override
-  public Model model() {
-    return modelled;
   }
 
   @Override
@@ -40,32 +37,37 @@ public record Hydration(Lifecycle lifecycle, Model modelled, long version) imple
   }
 
   @Override
+  public Aggregate aggregate(EventStore eventStore, Predicate<? super Model> verify) {
+    return verify.test(modelled) ? new Root(modelled, version, lifecycle, Domain.defaults.transaction(eventStore)) : null;
+  }
+
+  @Override
   public Snapshot register(final Details details) {
-    return new Hydration(lifecycle.register(details), modelled.register(details), version);
+    return new Snapshot(lifecycle.register(details), new Model(modelled.id(), details), version);
   }
 
   @Override
   public Snapshot replace(final Details details) {
-    return new Hydration(lifecycle.replace(details), new Model(modelled.id(), details), version);
+    return new Snapshot(lifecycle.replace(details), new Model(modelled.id(), details), version);
   }
 
   @Override
   public Snapshot open() {
-    return new Hydration(lifecycle.open(), modelled, version);
+    return new Snapshot(lifecycle.open(), modelled, version);
   }
 
   @Override
   public Snapshot close() {
-    return new Hydration(lifecycle.close(), modelled, version);
+    return new Snapshot(lifecycle.close(), modelled, version);
   }
 
   @Override
   public Snapshot archive() {
-    return new Hydration(lifecycle.archive(), modelled, version);
+    return new Snapshot(lifecycle.archive(), modelled, version);
   }
 
   @Override
   public Snapshot reopen() {
-    return new Hydration(lifecycle.reopen(), modelled, version);
+    return new Snapshot(lifecycle.reopen(), modelled, version);
   }
 }

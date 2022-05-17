@@ -24,6 +24,10 @@ public interface Task {
     return it -> predicate.test(it) ? success(it) : failure(error);
   }
 
+  default <T> Function<T, Future<T>> requireNonNull(String error) {
+    return it -> it == null ? failure(error) : success(it);
+  }
+
   interface Handler<R extends java.lang.Record> extends io.vertx.core.Handler<Message<R>> {
     Behaviours bind(Behaviours behaviours);
   }

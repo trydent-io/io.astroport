@@ -25,11 +25,9 @@ public final class Service extends AbstractVerticle implements Citadel.Verticle 
   private static final Logger log = LoggerFactory.getLogger(Citadel.class);
 
   private final Domain.Verticle domain;
-  private final EventStore.Verticle eventStore;
 
-  Service(EventStore.Verticle eventStore, Domain.Verticle domain) {
+  Service(Domain.Verticle domain) {
     this.domain = domain;
-    this.eventStore = eventStore;
   }
 
   @Override

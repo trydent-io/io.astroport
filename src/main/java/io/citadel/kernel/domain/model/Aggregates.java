@@ -7,16 +7,19 @@ import io.citadel.kernel.func.ThrowablePredicate;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
-import static io.citadel.kernel.domain.model.Aggregates.Pair.pair;
 import static io.citadel.kernel.func.ThrowableBiFunction.noOp;
-import static java.util.function.Function.identity;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
 public final class Aggregates<M extends Record & Domain.Model<?>, A extends Domain.Aggregate> implements Domain.Lookup<M, A>, Task {
@@ -36,44 +39,51 @@ public final class Aggregates<M extends Record & Domain.Model<?>, A extends Doma
   public Future<A> findAggregate(final Domain.ID<?> id, ThrowablePredicate<? super M> verify) {
     return eventStore.seek(new Feed.Aggregate(id.toString(), name))
       .map(Feed::stream)
-      .map(entries -> entries.collect(new Collector<Feed.Entry, Domain.Snapshot<M, A>, A>() {
-            @Override
-            public Supplier<Domain.Snapshot<M, A>> supplier() {
-              return () -> snapshot;
-            }
-
-            @Override
-            public BiConsumer<Domain.Snapshot<M, A>, Feed.Entry> accumulator() {
-              return (a, entry) -> a.apply(entry.aggregate().id(), entry.aggregate().version(), entry.event().name(), entry.event().data());
-            }
-
-            @Override
-            public BinaryOperator<Domain.Snapshot<M, A>> combiner() {
-              return noOp();
-            }
-
-            @Override
-            public Function<Domain.Snapshot<M, A>, A> finisher() {
-              return snapshot -> verify.test(snapshot.model()) ? snapshot.aggregate(null) : null;
-            }
-
-            @Override
-            public Set<Characteristics> characteristics() {
-              return Set.of(IDENTITY_FINISH);
-            }
-          })
-        .findFirst()
-        .map(first ->  version(first, entries.reduce(snapshot, this::next, noOp())))
-        .filter(version -> verify.test(version.snapshot.model()))
-      )
-      .compose(snapshot -> snapshot.aggregate(eventStore));
+      .map(entries -> entries.collect(toAggregate(verify)))
+      .compose(requireNonNull("Can't match aggregate with provided verification"));
   }
 
-  private Version<Domain.Snapshot<M, A>> version(Feed.Entry first, Domain.Snapshot<M, A> snapshot) {
-    return new Version<>(first.aggregate().version(), snapshot);
+  private Aggregation toAggregate(ThrowablePredicate<? super M> verify) {
+    return new Aggregation(verify);
   }
 
-  private Domain.Snapshot<M, A> next(final Domain.Snapshot<M, A> current, final Feed.Entry entry) {
-    return current.apply(entry.aggregate().id(), entry.aggregate().version(), entry.event().name(), entry.event().data());
+  private final class Aggregation implements Collector<Feed.Entry, Domain.Snapshot<M, A>[], A> {
+    private static final Set<Characteristics> CHARACTERISTIC = Set.of(IDENTITY_FINISH);
+    private final ThrowablePredicate<? super M> verify;
+
+    public Aggregation(ThrowablePredicate<? super M> verify) {
+      this.verify = verify;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Supplier<Domain.Snapshot<M, A>[]> supplier() {
+      return () -> (Domain.Snapshot<M, A>[]) new Domain.Snapshot[]{snapshot};
+    }
+
+    @Override
+    public BiConsumer<Domain.Snapshot<M, A>[], Feed.Entry> accumulator() {
+      return (snapshot, entry) -> snapshot[0] = snapshot[0].apply(
+        entry.aggregate().id(),
+        entry.aggregate().version(),
+        entry.event().name(),
+        entry.event().data()
+      );
+    }
+
+    @Override
+    public BinaryOperator<Domain.Snapshot<M, A>[]> combiner() {
+      return noOp();
+    }
+
+    @Override
+    public Function<Domain.Snapshot<M, A>[], A> finisher() {
+      return snapshot -> snapshot[0].aggregate(eventStore, verify);
+    }
+
+    @Override
+    public Set<Characteristics> characteristics() {
+      return CHARACTERISTIC;
+    }
   }
 }

@@ -12,16 +12,6 @@ import io.vertx.sqlclient.SqlClient;
 public enum Defaults {
   Companion;
 
-  public EventStore.Verticle verticle(Vertx vertx, Database database) {
-    return new Service(
-      Migration.eventStore(vertx, database),
-      EventStore.defaults.sql(
-        vertx.eventBus(),
-        PgPool.pool(vertx, database.asPgOptions(), new PoolOptions().setMaxSize(10))
-      )
-    );
-  }
-
   public EventStore sql(EventBus eventBus, SqlClient client) {
     return new Sql(eventBus, client);
   }
