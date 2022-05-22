@@ -7,12 +7,18 @@ import io.vertx.core.Future;
 
 import java.util.stream.Stream;
 
-public record Changes(EventStore eventStore, Stream<Domain.Event> events) implements Domain.Transaction {
-  public Domain.Transaction log(Domain.Event... events) {
-    return new Changes(eventStore, this.events != null
-      ? Stream.concat(this.events, Stream.of(events))
-      : Stream.of(events)
-    );
+public record Changes<E extends Domain.Event, L extends Domain.Lifecycle<E, L>>(L lifecycle, EventStore eventStore, Stream<E> events) implements Domain.Transaction<E> {
+  public Domain.Transaction<E> log(E event) {
+    return lifecycle
+      .assembly(event)
+      .map(l -> new Changes<>(
+        lifecycle,
+        eventStore,
+        this.events != null
+          ? Stream.concat(this.events, Stream.of(event))
+          : Stream.of(event))
+      )
+      .orElseThrow(() -> new IllegalStateException("Can't log event %s, lifecycle is %s".formatted(event, lifecycle)));
   }
 
   @Override

@@ -1,52 +1,43 @@
 package io.citadel.kernel.domain;
 
+import io.citadel.kernel.domain.model.Aggregates;
 import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.vertx.RecordType;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 
-public interface Actor<ID extends Domain.ID<?>, M extends Record & Domain.Model<ID>, A extends Domain.Aggregate> {
-  static <ID extends Domain.ID<?>, M extends Record & Domain.Model<ID>, A extends Domain.Aggregate> Actor<ID, M, A> create(Vertx vertx, Domain.Lookup<M, A> lookup, ThrowableFunction<? super String, ? extends ID> id) {
-    return new Behavioural<>(vertx, lookup, id);
+public interface Actor<A extends Domain.Aggregate<?, ?>> {
+  static <M extends Record & Domain.Model<?>, A extends Domain.Aggregate<?, ?>> Actor<A> create(Vertx vertx, Domain.Archetype<M> archetype) {
+    return new Behavioural<>(vertx, Domain.defaults.lookup(), archetype);
   }
 
-  default <R extends Record> Actor<ID, M, A> be(Class<R> type, String address, Behaviour<A, R> handler) {
-    return be(type, address, it -> true, handler);
-  }
+  <R extends Record> Actor<A> be(Class<R> type, String address, Behaviour<A, R> handler);
 
-  <R extends Record> Actor<ID, M, A> be(Class<R> type, String address, Assertion<M> assertion, Behaviour<A, R> handler);
-
-  interface Assertion<M extends Record & Domain.Model<?>> {
-    boolean assertThat(M model);
-  }
-
-  interface Behaviour<A extends Domain.Aggregate, R extends Record> {
+  interface Behaviour<A extends Domain.Aggregate<?, ?>, R extends Record> {
     default void be(Headers headers, Message<R> message, A aggregate, R behaviour, String by) {
       be(aggregate, behaviour, by);
     }
-
     void be(A aggregate, R behaviour, String by);
   }
 }
 
-final class Behavioural<ID extends Domain.ID<?>, M extends Record & Domain.Model<ID>, A extends Domain.Aggregate> implements Actor<ID, M, A> {
+final class Behavioural<M extends Record & Domain.Model<?>, A extends Domain.Aggregate<?, ?>> implements Actor<A> {
   private final EventBus eventBus;
-  private final Domain.Lookup<M, A> lookup;
-  private final ThrowableFunction<? super String, ? extends ID> id;
+  private final Domain.Lookup<A> lookup;
+  private final Domain.Archetype<M> archetype;
 
-  Behavioural(Vertx vertx, final Domain.Lookup<M, A> lookup, final ThrowableFunction<? super String, ? extends ID> id) {
-    this(vertx.eventBus(), lookup, id);
+  Behavioural(Vertx vertx, final Domain.Lookup<A> lookup, final Domain.Archetype<M> archetype) {
+    this(vertx.eventBus(), lookup, archetype);
   }
-
-  Behavioural(final EventBus eventBus, final Domain.Lookup<M, A> lookup, final ThrowableFunction<? super String, ? extends ID> id) {
+  private Behavioural(final EventBus eventBus, final Domain.Lookup<A> lookup, final Domain.Archetype<M> archetype) {
     this.eventBus = eventBus;
     this.lookup = lookup;
-    this.id = id;
+    this.archetype = archetype;
   }
 
   @Override
-  public <R extends Record> Actor<ID, M, A> be(Class<R> type, String address, Assertion<M> assertion, Behaviour<A, R> behaviour) {
+  public <R extends Record> Actor<A> be(Class<R> type, String address, Behaviour<A, R> behaviour) {
     eventBus
       .registerDefaultCodec(type, RecordType.codec(type))
       .<R>localConsumer(address, message ->
@@ -54,8 +45,9 @@ final class Behavioural<ID extends Domain.ID<?>, M extends Record & Domain.Model
           final var headers = Headers.of(message.headers());
           final var action = message.body();
           final var by = message.headers().get("by");
+          final var aggregateId = aggregateId(message);
           lookup
-            .findAggregate(aggregateId(message), assertion::assertThat)
+            .findAggregate(aggregateId)
             .onSuccess(aggregate -> behaviour.be(
                 headers,
                 message,
@@ -75,7 +67,6 @@ final class Behavioural<ID extends Domain.ID<?>, M extends Record & Domain.Model
   }
 
   private <R extends Record> ID aggregateId(final Message<R> message) {
-    return id.apply(message.headers().get("aggregateId"));
+    return archetype.apply(message.headers().get("aggregateId"));
   }
-
 }

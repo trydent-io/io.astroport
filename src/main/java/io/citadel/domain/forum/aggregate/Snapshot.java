@@ -6,68 +6,41 @@ import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
 import io.vertx.core.json.JsonObject;
 
-import java.util.function.Predicate;
+import java.util.Optional;
 
 import static io.citadel.domain.forum.handler.Events.Names.valueOf;
 
-public record Snapshot(Lifecycle lifecycle, Model modelled, long version) implements Forum<Snapshot>, Domain.Snapshot<Forum.Model, Forum.Aggregate> {
-  Snapshot(Lifecycle lifecycle) {this(lifecycle, null, -1);}
+public record Snapshot(Forum lifecycle, Model model, long version) implements Forum, Domain.Snapshot<Forum.Aggregate> {
+  Snapshot(Stage stage, Model model) {this(stage, model, -1);}
 
   @Override
-  public Snapshot apply(String id, long version, String eventName, JsonObject eventData) {
+  public Forum.Aggregate apply(String id, long version, String eventName, JsonObject eventData) {
     return switch (valueOf(eventName)) {
-      case Opened -> snapshot(id, version).open();
-      case Closed -> snapshot(id, version).close();
-      case Registered -> snapshot(id, version).register(eventData.mapTo(Events.Registered.class).details());
-      case Reopened -> snapshot(id, version).reopen();
-      case Replaced -> snapshot(id, version).replace(eventData.mapTo(Events.Replaced.class).details());
-      case Archived -> snapshot(id, version).archive();
-    };
+        case Opened -> assembly(eventData.mapTo(Events.Opened.class));
+        case Closed -> assembly(eventData.mapTo(Events.Closed.class));
+        case Registered -> assembly(eventData.mapTo(Events.Registered.class));
+        case Reopened -> assembly(eventData.mapTo(Events.Reopened.class));
+        case Replaced -> assembly(eventData.mapTo(Events.Replaced.class));
+        case Archived -> assembly(eventData.mapTo(Events.Archived.class));
+      };
   }
 
-  private Snapshot snapshot(final String id, long version) {
-    return modelled == null
-      ? new Snapshot(lifecycle, Forum.defaults.model(id), version)
-      : this;
-  }
+  @SuppressWarnings("DuplicateBranchesInSwitch")
+  @Override
+  public Optional<Forum> assembly(final Event event) {
+    return lifecycle.assembly(event).map(forum ->
+      switch (event) {
+        case Events.Registered e -> new Snapshot(forum, new Model(model.id(), e.details()), version);
+        case Events.Opened e -> new Snapshot(forum, model, version);
+        case Events.Replaced e -> new Snapshot(forum, new Model(model.id(), e.details()), version);
+        case Events.Closed e -> new Snapshot(forum, model, version);
+        case Events.Archived e -> new Snapshot(forum, model, version);
+        case Events.Reopened e -> new Snapshot(forum, model, version);
+      });
+    }
 
   @Override
   public Aggregate aggregate(final EventStore eventStore) {
-    return Forum.defaults.aggregate(modelled, version, lifecycle, Domain.defaults.transaction(eventStore));
-  }
-
-  @Override
-  public Aggregate aggregate(EventStore eventStore, Predicate<? super Model> verify) {
-    return verify.test(modelled) ? new Root(modelled, version, lifecycle, Domain.defaults.transaction(eventStore)) : null;
-  }
-
-  @Override
-  public Snapshot register(final Details details) {
-    return new Snapshot(lifecycle.register(details), new Model(modelled.id(), details), version);
-  }
-
-  @Override
-  public Snapshot replace(final Details details) {
-    return new Snapshot(lifecycle.replace(details), new Model(modelled.id(), details), version);
-  }
-
-  @Override
-  public Snapshot open() {
-    return new Snapshot(lifecycle.open(), modelled, version);
-  }
-
-  @Override
-  public Snapshot close() {
-    return new Snapshot(lifecycle.close(), modelled, version);
-  }
-
-  @Override
-  public Snapshot archive() {
-    return new Snapshot(lifecycle.archive(), modelled, version);
-  }
-
-  @Override
-  public Snapshot reopen() {
-    return new Snapshot(lifecycle.reopen(), modelled, version);
+    return Forum.defaults.aggregate(model, version, lifecycle, Domain.defaults.transaction(eventStore));
   }
 }

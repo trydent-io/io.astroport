@@ -8,7 +8,7 @@ public record Archive() implements Actor.Behaviour<Forum.Aggregate, Commands.Arc
   @Override
   public void be(Forum.Aggregate aggregate, Commands.Archive behaviour, String by) {
     aggregate
-      .archive()
+      .notify(Forum.events::archived)
       .submit(by);
   }
 }

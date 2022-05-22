@@ -2,7 +2,6 @@ package io.citadel.domain.forum.aggregate;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.EventStore;
 
 public enum Defaults {
   Companion;
@@ -12,10 +11,10 @@ public enum Defaults {
   }
 
   public Snapshot snapshot() {
-    return new Snapshot(new Lifecycle());
+    return new Snapshot(new Stage());
   }
 
-  public Forum.Aggregate aggregate(Forum.Model model, long version, Lifecycle lifecycle, final Domain.Transaction transaction) {
-    return new Root(model, version, lifecycle, transaction);
+  public Forum.Aggregate aggregate(Forum.Model model, long version, Stage stage, final Domain.Transaction transaction) {
+    return new Root(model, version, stage, transaction);
   }
 }

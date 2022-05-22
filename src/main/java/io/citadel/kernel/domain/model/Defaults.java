@@ -8,6 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 
+import java.lang.invoke.MethodHandles;
 import java.util.stream.Stream;
 
 public enum Defaults {
@@ -16,7 +17,7 @@ public enum Defaults {
   public Domain.Verticle verticle(Vertx vertx, Database database) {
     return new Service(
       Migration.eventStore(vertx, database),
-      EventStore.defaults.sql(
+      EventStore.sql(
         vertx.eventBus(),
         PgPool.pool(vertx, database.asPgOptions(), new PoolOptions().setMaxSize(10))
       )
@@ -24,11 +25,11 @@ public enum Defaults {
   }
 
 
-  public <A extends Domain.Aggregate, I extends Domain.ID<?>, M extends Record & Domain.Model<I>> Domain.Lookup<M, A> lookup(EventStore eventStore, Domain.Snapshot<M, A> snapshot, String name) {
-    return new Aggregates<>(eventStore, snapshot, name);
+  public <A extends Domain.Aggregate<?, ?>> Domain.Lookup<A> lookup(EventStore eventStore, Domain.Snapshot<A> snapshot) {
+    return new Aggregates<>(eventStore, snapshot);
   }
 
-  public Domain.Transaction transaction(EventStore eventStore) {
-    return new Changes(eventStore, Stream.empty());
+  public <E extends Domain.Event, L extends Domain.Lifecycle<E, L>> Domain.Transaction<E> transaction(EventStore eventStore, L lifecycle) {
+    return new Changes<>(lifecycle, eventStore, Stream.empty());
   }
 }
