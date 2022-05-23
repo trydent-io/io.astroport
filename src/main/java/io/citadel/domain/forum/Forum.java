@@ -8,11 +8,10 @@ import io.citadel.domain.forum.handler.Events;
 import io.citadel.domain.forum.model.Attributes;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.domain.attribute.Attribute;
-import io.citadel.kernel.func.ThrowableFunction;
 
 import java.util.UUID;
 
-public sealed interface Forum extends Domain.Lifecycle<Forum.Event, Forum> permits Snapshot, Stage {
+public sealed interface Forum extends Domain.Timeline<Forum.Event> permits Snapshot, Stage {
   Commands commands = Commands.Companion;
   Events events = Events.Companion;
   Attributes attributes = Attributes.Companion;
@@ -30,8 +29,26 @@ public sealed interface Forum extends Domain.Lifecycle<Forum.Event, Forum> permi
   record Description(String value) implements Attribute<String> {} // part of Details
   record Details(Name name, Description description) {} // ValueObject for Details
 
-  record Model(Forum.ID id, Forum.Details details) implements Domain.Model<Forum.ID> {
+  record Model(Forum.ID id, Forum.Details details) implements Domain.Model<Forum.ID>, Domain.Timeline<Event, Model> {
     public Model(Forum.ID id) {this(id, null);}
+
+    @SuppressWarnings("DuplicateBranchesInSwitch")
+    @Override
+    public Domain.Timeline<Event, Model> take(Event event) {
+      return switch (event) {
+        case Events.Archived archived -> this;
+        case Events.Registered registered -> new Model(id, registered.details());
+        case Events.Reopened reopened -> this;
+        case Events.Opened opened -> this;
+        case Events.Closed closed -> this;
+        case Events.Replaced replaced -> new Model(id, replaced.details());
+      };
+    }
+
+    @Override
+    public Model get() {
+      return this;
+    }
   }
 }
 

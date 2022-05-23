@@ -1,5 +1,6 @@
 package io.citadel.eventstore.data;
 
+import io.citadel.kernel.lang.Iterators;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -14,6 +15,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public interface Feed extends Iterable<Feed.Entry> {
+  Feed EMPTY = new Type.Entries();
+
   record Aggregate(String id, String name, long version) {
     public Aggregate(String id, String name) { this(id, name, -1); }
   }
@@ -23,10 +26,21 @@ public interface Feed extends Iterable<Feed.Entry> {
     public Entry(Aggregate aggregate, Event event) {
       this(null, aggregate, event, null);
     }
+    public Entry(Aggregate aggregate) {
+      this(null, aggregate, null, null);
+    }
   }
 
   static Feed fromJson(JsonObject json) {
     return from(json.getJsonArray("entries"));
+  }
+
+  static Feed empty(String aggregateId, String aggregateName) {
+    return new Type.Entries(Feed.archetype(aggregateId, aggregateName));
+  }
+
+  static Feed.Entry archetype(String aggregateId, String aggregateName) {
+    return new Entry(new Aggregate(aggregateId, aggregateName));
   }
 
   static Feed from(JsonArray array) {
@@ -49,6 +63,13 @@ public interface Feed extends Iterable<Feed.Entry> {
   }
 
   enum Type {;
+    private record Empty(Feed.Entry entry) implements Feed {
+
+      @Override
+      public Iterator<Entry> iterator() {
+        return Iterators.defaults.empty();
+      }
+    }
     private record Entries(Feed.Entry... entries) implements Feed {
       @Override
       public Iterator<Entry> iterator() {

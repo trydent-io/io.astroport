@@ -14,7 +14,7 @@ public record Stage(State state) implements Forum {
   public Stage() {this(null);}
 
   @Override
-  public Optional<Forum> assembly(final Event event) {
+  public Optional<Forum> stage(final Event event) {
     return Optional.ofNullable(switch (event) {
       case Events.Registered it && state == null -> new Stage(Registered);
       case Events.Replaced it && state.is(Registered, Open) -> this;

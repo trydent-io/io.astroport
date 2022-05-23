@@ -6,15 +6,15 @@ import io.citadel.kernel.domain.model.Changes;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
 import io.citadel.kernel.eventstore.EventStore;
+import io.citadel.kernel.func.ThrowableBiFunction;
 import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowablePredicate;
 import io.citadel.kernel.func.ThrowableSupplier;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public sealed interface Domain {
   Defaults defaults = Defaults.Companion;
@@ -28,6 +28,8 @@ public sealed interface Domain {
       while (index < states.length && states[index] != this) index++;
       return index < states.length;
     }
+
+    S next();
   }
 
   interface Command {}
@@ -39,13 +41,43 @@ public sealed interface Domain {
     M generate(String id);
   }
 
-  interface Lifecycle<E extends Domain.Event> {
-    Optional<Domain.Lifecycle<E>> assembly(E event);
+  interface Timeline<E extends Domain.Event, R> extends Supplier<R> {
+    Timeline<E, R> take(E event);
+    Timeline<E, R> freeze();
+
+    enum Type {;
+
+      private static final class Past<S extends Enum<S> & State<S>, E extends Event, M extends Record & Model<?>> implements Timeline<E, M> {
+        private final S state;
+        private final M model;
+        private final UnaryOperator<S> next;
+        private final ThrowableBiFunction<? super S, ? super M, ? extends M> applier;
+
+        private Past(S state, M model, UnaryOperator<S> next, ThrowableBiFunction<? super S, ? super M, ? extends M> applier) {
+          this.state = state;
+          this.model = model;
+          this.next = next;
+          this.applier = applier;
+        }
+
+        @Override
+        public Timeline<E, M> take(E event) {
+          return new Past<>(next.apply(state), applier.apply(state, model), next, applier);
+        }
+
+        @Override
+        public M get() {
+          return null;
+        }
+      }
+
+    }
   }
 
   interface Snapshot<A extends Aggregate<?, ?>>  {
-    Snapshot<A> apply(String aggregateId, long aggregateVersion, String eventName, JsonObject eventData);
-    A aggregate(EventStore eventStore);
+    Snapshot<A> archetype(String aggregateId, long aggregateVersion);
+    Snapshot<A> hydrate(String eventName, JsonObject eventData);
+    A transaction(EventStore eventStore);
   }
 
   interface Model<ID extends Domain.ID<?>> {

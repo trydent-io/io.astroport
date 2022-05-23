@@ -8,7 +8,6 @@ import io.vertx.core.Vertx;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 
-import java.lang.invoke.MethodHandles;
 import java.util.stream.Stream;
 
 public enum Defaults {
@@ -29,7 +28,7 @@ public enum Defaults {
     return new Aggregates<>(eventStore, snapshot);
   }
 
-  public <E extends Domain.Event, L extends Domain.Lifecycle<E, L>> Domain.Transaction<E> transaction(EventStore eventStore, L lifecycle) {
+  public <E extends Domain.Event, L extends Domain.Timeline<E, L>> Domain.Transaction<E> transaction(EventStore eventStore, L lifecycle) {
     return new Changes<>(lifecycle, eventStore, Stream.empty());
   }
 }

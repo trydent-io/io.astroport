@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public sealed interface Array<T> extends Iterable<T> {
-  Iterators iterators = Iterators.Defaults;
+  Iterators iterators = Iterators.defaults;
 
   @SafeVarargs
   static <T> Array<T> of(T... elements) {

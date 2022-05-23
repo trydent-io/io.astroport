@@ -7,10 +7,10 @@ import io.vertx.core.Future;
 
 import java.util.stream.Stream;
 
-public record Changes<E extends Domain.Event, L extends Domain.Lifecycle<E, L>>(L lifecycle, EventStore eventStore, Stream<E> events) implements Domain.Transaction<E> {
+public record Changes<E extends Domain.Event, L extends Domain.Timeline<E, L>>(L lifecycle, EventStore eventStore, Stream<E> events) implements Domain.Transaction<E> {
   public Domain.Transaction<E> log(E event) {
     return lifecycle
-      .assembly(event)
+      .stage(event)
       .map(l -> new Changes<>(
         lifecycle,
         eventStore,

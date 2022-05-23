@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public enum Iterators {
-  Defaults;
+  defaults;
 
   @SafeVarargs
   public final <T> java.util.Iterator<T> iterator(T... elements) {
