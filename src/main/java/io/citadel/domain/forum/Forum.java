@@ -9,6 +9,7 @@ import io.citadel.domain.forum.model.Attributes;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.domain.attribute.Attribute;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public sealed interface Forum extends Domain.Timeline<Forum.Event> permits Snapshot, Stage {
@@ -17,12 +18,28 @@ public sealed interface Forum extends Domain.Timeline<Forum.Event> permits Snaps
   Attributes attributes = Attributes.Companion;
   Defaults defaults = Defaults.Companion;
 
-  enum State implements Domain.State<Forum.State> {Registered, Open, Closed, Archived}
+  enum State implements Domain.State<Forum.State, Forum.Event> {
+    Registered, Open, Closed, Archived;
+    @Override
+    public Optional<Forum.State> push(final Event event) {
+      return Optional.ofNullable(
+        switch (event) {
+          case Events.Registered it && this.is(Registered) -> this;
+          case Events.Replaced it && this.is(Registered, Open) -> this;
+          case Events.Opened it && this.is(Registered) -> Open;
+          case Events.Closed it && this.is(Open) -> Closed;
+          case Events.Reopened it && this.is(Closed) -> Registered;
+          case Events.Archived it && this.is(Closed) -> Archived;
+          default -> null;
+        }
+      );
+    }
+  }
 
   sealed interface Command extends Domain.Command permits Commands.Replace, Commands.Archive, Commands.Close, Commands.Open, Commands.Register, Commands.Reopen {}
   sealed interface Event extends Domain.Event permits Events.Archived, Events.Closed, Events.Replaced, Events.Opened, Events.Registered, Events.Reopened {}
 
-  interface Aggregate extends Domain.Aggregate<Forum.Model, Forum.Event> {}
+  interface Transaction extends Domain.Transaction<Model, Event> {}
 
   record ID(UUID value) implements Domain.ID<UUID> {} // ID
   record Name(String value) implements Attribute<String> {} // part of Details

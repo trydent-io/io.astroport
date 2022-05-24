@@ -14,7 +14,7 @@ public enum Defaults {
     return new Snapshot(new Stage());
   }
 
-  public Forum.Aggregate aggregate(Forum.Model model, long version, Stage stage, final Domain.Transaction transaction) {
+  public Forum.Transaction aggregate(Forum.Model model, long version, Stage stage, final Domain.Transaction transaction) {
     return new Root(model, version, stage, transaction);
   }
 }

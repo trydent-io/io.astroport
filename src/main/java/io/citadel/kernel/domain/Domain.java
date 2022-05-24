@@ -2,7 +2,6 @@ package io.citadel.kernel.domain;
 
 import io.citadel.eventstore.data.Feed;
 import io.citadel.kernel.domain.attribute.Attribute;
-import io.citadel.kernel.domain.model.Changes;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
 import io.citadel.kernel.eventstore.EventStore;
@@ -13,104 +12,127 @@ import io.citadel.kernel.func.ThrowableSupplier;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public sealed interface Domain {
   Defaults defaults = Defaults.Companion;
 
   sealed interface Verticle extends Domain, io.vertx.core.Verticle permits Service {}
 
-  interface State<S extends Enum<S> & State<S>> {
+  interface State<S extends Enum<S> & State<S, E>, E extends Domain.Event> {
     @SuppressWarnings("unchecked")
     default boolean is(S... states) {
       var index = 0;
-      while (index < states.length && states[index] != this) index++;
+      while (index < states.length && states[index] != this)
+        index++;
       return index < states.length;
     }
-
-    S next();
+    Optional<S> push(E event);
   }
 
   interface Command {}
+
   interface Event {
-    default Feed.Event asFeed() { return new Feed.Event(this.getClass().getSimpleName(), JsonObject.mapFrom(this)); }
+    default Feed.Event asFeed() {return new Feed.Event(this.getClass().getSimpleName(), JsonObject.mapFrom(this));}
   }
 
   interface Archetype<M extends Record & Model<?>> {
     M generate(String id);
   }
 
-  interface Timeline<E extends Domain.Event, R> extends Supplier<R> {
-    Timeline<E, R> take(E event);
-    Timeline<E, R> freeze();
+  interface Timeline<S extends Enum<S> & State<S, ?>, T> {
+    static <S extends Enum<S> & State<S, E>, E extends Domain.Event, M extends Record & Model<?>> Timeline<S, M> pastline(S initial, M archetype) {
+      return new Type.Pastline<>(initial, archetype);
+    }
 
-    enum Type {;
+    <F extends Domain.Event> Timeline<S, T> point(F event, ThrowableBiFunction<? super F, ? super T, ? extends T> then);
+    default <F extends Domain.Event> Timeline<S, T> point(F event, ThrowableFunction<? super T, ? extends T> then) {
+      return point(event, (it, t) -> then.apply(t));
+    }
 
-      private static final class Past<S extends Enum<S> & State<S>, E extends Event, M extends Record & Model<?>> implements Timeline<E, M> {
+    <R> R freeze(ThrowableBiFunction<? super S, ? super T, ? extends R> then);
+    default <R> R freeze(ThrowableFunction<? super T, ? extends R> then) {
+      return freeze((s, t) -> then.apply(t));
+    }
+
+    enum Type {
+      ;
+
+      private static final class Pastline<S extends Enum<S> & State<S, E>, E extends Event, M extends Record & Model<?>> implements Timeline<S, M> {
         private final S state;
         private final M model;
-        private final UnaryOperator<S> next;
-        private final ThrowableBiFunction<? super S, ? super M, ? extends M> applier;
 
-        private Past(S state, M model, UnaryOperator<S> next, ThrowableBiFunction<? super S, ? super M, ? extends M> applier) {
+        private Pastline(final S state, final M model) {
           this.state = state;
           this.model = model;
-          this.next = next;
-          this.applier = applier;
+        }
+        @SuppressWarnings("unchecked")
+        @Override
+        public <F extends Domain.Event> Timeline<S, M> point(final F event, final ThrowableBiFunction<? super F, ? super M, ? extends M> then) {
+          return (Timeline<S, M>) state.push(event)
+            .map(it -> new Pastline<>(it, then.apply(event, model)))
+            .orElseThrow(() -> new IllegalStateException("Can't point event"));
         }
 
         @Override
-        public Timeline<E, M> take(E event) {
-          return new Past<>(next.apply(state), applier.apply(state, model), next, applier);
-        }
-
-        @Override
-        public M get() {
-          return null;
+        public <R> R freeze(final ThrowableBiFunction<? super S, ? super M, ? extends R> then) {
+          return then.apply(state, model);
         }
       }
 
+      private static final class Farline<S extends Enum<S> & State<S, E>, E extends Event> implements Timeline<S, Stream<E>> {
+        private final S state;
+        private final Stream<E> events;
+
+        private Farline(final S state) {
+          this(state, Stream.empty());
+        }
+        private Farline(final S state, final Stream<E> events) {
+          this.state = state;
+          this.events = events;
+        }
+
+        public <F extends E> Timeline<S, Stream<E>> point(final F event, final ThrowableBiFunction<? super F, ? super Stream<E>, ? extends Stream<E>> then) {
+          return state.push(event)
+            .map(it -> new Farline<>(state, then.apply(event, events)))
+            .orElseThrow(() -> new IllegalStateException("Can't point event"));
+        }
+
+        @Override
+        public <R> R freeze(final ThrowableBiFunction<? super S, ? super Stream<E>, ? extends R> then) {
+          return then.apply(state, events);
+        }
+      }
     }
   }
 
-  interface Snapshot<A extends Aggregate<?, ?>>  {
-    Snapshot<A> archetype(String aggregateId, long aggregateVersion);
-    Snapshot<A> hydrate(String eventName, JsonObject eventData);
-    A transaction(EventStore eventStore);
+  interface Snapshot<T extends Transaction<?, ?>> {
+    Snapshot<T> archetype(String aggregateId, long aggregateVersion);
+    Snapshot<T> hydrate(String eventName, JsonObject eventData);
+    T transaction(EventStore eventStore);
   }
 
   interface Model<ID extends Domain.ID<?>> {
     ID id();
   }
 
-  interface Lookup<A extends Aggregate<?, ?>> {
-    default Future<A> findAggregate(Domain.ID<?> id) {
-      return findAggregate(id, null);
+  interface Lookup<T extends Transaction<?, ?>> {
+    default Future<T> openAggregate(Domain.ID<?> id) {
+      return openAggregate(id, null);
     }
-    Future<A> findAggregate(ID<?> id, String name);
+    Future<T> openAggregate(ID<?> id, String name);
   }
 
-  interface Aggregate<M extends Record & Model<?>, E extends Domain.Event> {
-    Aggregate<M, E> asserts(ThrowablePredicate<? super M> where);
-    Aggregate<M, E> notify(ThrowableFunction<? super M, ? extends E> event);
-    Aggregate<M, E> notify(ThrowableSupplier<? extends E> event);
-    <R extends Aggregate<?, ?>> R supply(ThrowableFunction<? super M, ? extends R> aggregate);
-
-    default Future<Void> submit() {
-      return submit(null);
+  interface Transaction<M extends Record & Model<?>, E extends Domain.Event> {
+    Transaction<M, E> has(ThrowablePredicate<? super M> condition);
+    Transaction<M, E> log(ThrowableFunction<? super M, ? extends E> event);
+    Transaction<M, E> log(ThrowableSupplier<? extends E> event);
+    <R extends Transaction<?, ?>> R let(ThrowableFunction<? super M, ? extends R> aggregate);
+    default Future<Void> commit() {
+      return commit(null);
     }
-    Future<Void> submit(String by);
-  }
-
-  sealed interface Transaction<E extends Domain.Event> permits Changes {
-    Transaction<E> log(E event);
-
-    Future<Void> commit(String aggregateId, String aggregateName, long aggregateVersion, String by);
-
-    default Future<Void> commit(String aggregateId, String aggregateName, long aggregateVersion) {
-      return commit(aggregateId, aggregateName, aggregateVersion, null);
-    }
+    Future<Void> commit(String by);
   }
 
   interface ID<T> extends Attribute<T> {}

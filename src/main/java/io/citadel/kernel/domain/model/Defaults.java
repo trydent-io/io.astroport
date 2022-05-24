@@ -24,7 +24,7 @@ public enum Defaults {
   }
 
 
-  public <A extends Domain.Aggregate<?, ?>> Domain.Lookup<A> lookup(EventStore eventStore, Domain.Snapshot<A> snapshot) {
+  public <A extends Domain.Transaction<?, ?>> Domain.Lookup<A> lookup(EventStore eventStore, Domain.Snapshot<A> snapshot) {
     return new Aggregates<>(eventStore, snapshot);
   }
 

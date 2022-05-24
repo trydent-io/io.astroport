@@ -4,12 +4,12 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Commands;
 import io.citadel.kernel.domain.Actor;
 
-public record Open() implements Actor.Behaviour<Forum.Aggregate, Commands.Open> {
+public record Open() implements Actor.Behaviour<Forum.Transaction, Commands.Open> {
   @Override
-  public void be(Forum.Aggregate aggregate, Commands.Open behaviour, String by) {
+  public void be(Forum.Transaction aggregate, Commands.Open behaviour, String by) {
     aggregate
-      .asserts(model -> model.details().description().value().isEmpty())
-      .notify(Forum.events::opened)
-      .submit();
+      .has(model -> model.details().description().value().isEmpty())
+      .log(Forum.events::opened)
+      .commit();
   }
 }

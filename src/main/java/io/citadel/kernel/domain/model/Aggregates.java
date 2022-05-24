@@ -17,17 +17,17 @@ import java.util.stream.Collector;
 import static io.citadel.kernel.func.ThrowableBiFunction.noOp;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
-public final class Aggregates<A extends Domain.Aggregate<?, ?>> implements Domain.Lookup<A>, Task {
+public final class Aggregates<T extends Domain.Transaction<?, ?>> implements Domain.Lookup<T>, Task {
   private final EventStore eventStore;
-  private final Domain.Snapshot<A> snapshot;
+  private final Domain.Snapshot<T> snapshot;
 
-  public Aggregates(EventStore eventStore, Domain.Snapshot<A> snapshot) {
+  public Aggregates(EventStore eventStore, Domain.Snapshot<T> snapshot) {
     this.eventStore = eventStore;
     this.snapshot = snapshot;
   }
 
   @Override
-  public Future<A> findAggregate(final Domain.ID<?> aggregateId, final String aggregateName) {
+  public Future<T> openAggregate(final Domain.ID<?> aggregateId, final String aggregateName) {
     return eventStore.seek(aggregate(aggregateId, aggregateName))
       .map(Feed::stream)
       .map(entries -> entries
@@ -50,7 +50,7 @@ public final class Aggregates<A extends Domain.Aggregate<?, ?>> implements Domai
     return new Aggregation(aggregate.id(), aggregate.version());
   }
 
-  private final class Aggregation implements Collector<Feed.Entry, Domain.Snapshot<A>[], A> {
+  private final class Aggregation implements Collector<Feed.Entry, Domain.Snapshot<T>[], T> {
     private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
     private final String id;
     private final long version;
@@ -62,12 +62,12 @@ public final class Aggregates<A extends Domain.Aggregate<?, ?>> implements Domai
 
     @SuppressWarnings("unchecked")
     @Override
-    public Supplier<Domain.Snapshot<A>[]> supplier() {
-      return () -> (Domain.Snapshot<A>[]) new Domain.Snapshot[]{snapshot.archetype(id, version)};
+    public Supplier<Domain.Snapshot<T>[]> supplier() {
+      return () -> (Domain.Snapshot<T>[]) new Domain.Snapshot[]{snapshot.archetype(id, version)};
     }
 
     @Override
-    public BiConsumer<Domain.Snapshot<A>[], Feed.Entry> accumulator() {
+    public BiConsumer<Domain.Snapshot<T>[], Feed.Entry> accumulator() {
       return (snapshot, entry) -> snapshot[0] = snapshot[0].hydrate(
         entry.event().name(),
         entry.event().data()
@@ -75,12 +75,12 @@ public final class Aggregates<A extends Domain.Aggregate<?, ?>> implements Domai
     }
 
     @Override
-    public BinaryOperator<Domain.Snapshot<A>[]> combiner() {
+    public BinaryOperator<Domain.Snapshot<T>[]> combiner() {
       return noOp();
     }
 
     @Override
-    public Function<Domain.Snapshot<A>[], A> finisher() {
+    public Function<Domain.Snapshot<T>[], T> finisher() {
       return snapshot -> snapshot[0].transaction(eventStore);
     }
 

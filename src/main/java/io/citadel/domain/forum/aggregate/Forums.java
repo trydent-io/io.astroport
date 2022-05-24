@@ -5,7 +5,7 @@ import io.vertx.core.Future;
 
 public interface Forums {
 
-  Future<Forum.Aggregate> forum(Forum.ID id);
+  Future<Forum.Transaction> forum(Forum.ID id);
 
-  Future<Forum.Aggregate> forum(Forum.ID id, Forum.Name name);
+  Future<Forum.Transaction> forum(Forum.ID id, Forum.Name name);
 }
