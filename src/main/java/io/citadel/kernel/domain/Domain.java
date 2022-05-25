@@ -40,6 +40,9 @@ public sealed interface Domain {
   interface Archetype<M extends Record & Model<?>> {
     M generate(String id);
   }
+  interface Factory<E extends Domain.Event> {
+    E event(String name, JsonObject json);
+  }
 
   interface Timeline<S extends Enum<S> & State<S, ?>, T> {
     static <S extends Enum<S> & State<S, E>, E extends Domain.Event, M extends Record & Model<?>> Timeline<S, M> pastline(S initial, M archetype) {
@@ -111,6 +114,46 @@ public sealed interface Domain {
     Snapshot<T> archetype(String aggregateId, long aggregateVersion);
     Snapshot<T> hydrate(String eventName, JsonObject eventData);
     T transaction(EventStore eventStore);
+
+    enum Type {
+      ;
+
+      private record Initial<M extends Record & Model<?>, E extends Domain.Event, S extends Enum<S> & Domain.State<S, E>, T extends Transaction<M, E>>(S state, Archetype<M> archetype, Factory<E> factory) implements Snapshot<T> {
+        @Override
+        public Snapshot<T> archetype(String aggregateId, long aggregateVersion) {
+          return new Generated<>(state, archetype.generate(aggregateId), aggregateVersion, factory);
+        }
+
+        @Override
+        public Snapshot<T> hydrate(String eventName, JsonObject eventData) {
+          return this;
+        }
+
+        @Override
+        public T transaction(EventStore eventStore) {
+          return null;
+        }
+      }
+
+      private record Generated<S extends Enum<S> & Domain.State<S, E>, M extends Record & Model<?>, E extends Domain.Event, T extends Transaction<M, E>>(S state, M model, long version, Factory<E> factory) implements Snapshot<T> {
+        @Override
+        public Snapshot<T> archetype(String aggregateId, long aggregateVersion) {
+          return this;
+        }
+
+        @Override
+        public Snapshot<T> hydrate(String eventName, JsonObject eventData) {
+          final var event = factory.event(eventName, eventData);
+          state.push(event).map(it -> );
+          return null;
+        }
+
+        @Override
+        public T transaction(EventStore eventStore) {
+          return null;
+        }
+      }
+    }
   }
 
   interface Model<ID extends Domain.ID<?>> {
