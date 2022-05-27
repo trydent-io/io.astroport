@@ -1,7 +1,5 @@
-package io.citadel.kernel.eventstore.type;
+package io.citadel.kernel.eventstore;
 
-import io.citadel.eventstore.data.Feed;
-import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -12,12 +10,13 @@ import io.vertx.sqlclient.templates.SqlTemplate;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static io.citadel.kernel.eventstore.Past.toTimelineOf;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
 public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
   @Override
-  public Future<Feed> seek(Feed.Aggregate aggregate) {
+  public Future<Timeline> seek(Feed.Aggregate aggregate) {
     return SqlTemplate.forQuery(client, """
         with aggregate as (
           select  aggregate_version as version
@@ -40,7 +39,9 @@ public record Sql(EventBus eventBus, SqlClient client) implements EventStore {
           "aggregateVersion", aggregate.version()
         )
       )
-      .map(Feed::fromRows);
+      .map(Feed::fromRows)
+      .map(Feed::stream)
+      .map(logs -> logs.collect(toTimelineOf(aggregate)));
   }
 
   @Override

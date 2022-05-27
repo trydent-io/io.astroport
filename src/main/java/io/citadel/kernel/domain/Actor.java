@@ -45,7 +45,7 @@ final class Behavioural<M extends Record & Domain.Model<?>, A extends Domain.Tra
           final var by = message.headers().get("by");
           final var aggregateId = aggregateId(message);
           lookup
-            .openAggregate(aggregateId)
+            .findLogs(aggregateId)
             .onSuccess(aggregate -> behaviour.be(
                 headers,
                 message,

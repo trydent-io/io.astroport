@@ -1,4 +1,4 @@
-package io.citadel.eventstore.data;
+package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.lang.Iterators;
 import io.citadel.kernel.media.Json;
@@ -14,19 +14,21 @@ import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public interface Feed extends Iterable<Feed.Entry> {
+public interface Feed extends Iterable<Feed.Log> {
   Feed EMPTY = new Type.Entries();
 
   record Aggregate(String id, String name, long version) {
     public Aggregate(String id, String name) { this(id, name, -1); }
   }
-  record Event(String name, JsonObject data) {}
+  record Timepoint(LocalDateTime at) {}
+  record Event(String name, JsonObject data, Timepoint timepoint) {}
+
   record Persisted(LocalDateTime at, String by) {}
-  record Entry(UUID id, Aggregate aggregate, Event event, Persisted persisted) {
-    public Entry(Aggregate aggregate, Event event) {
+  record Log(UUID id, Aggregate aggregate, Event event, Persisted persisted) {
+    public Log(Aggregate aggregate, Event event) {
       this(null, aggregate, event, null);
     }
-    public Entry(Aggregate aggregate) {
+    public Log(Aggregate aggregate) {
       this(null, aggregate, null, null);
     }
   }
@@ -39,22 +41,22 @@ public interface Feed extends Iterable<Feed.Entry> {
     return new Type.Entries(Feed.archetype(aggregateId, aggregateName));
   }
 
-  static Feed.Entry archetype(String aggregateId, String aggregateName) {
-    return new Entry(new Aggregate(aggregateId, aggregateName));
+  static Log archetype(String aggregateId, String aggregateName) {
+    return new Log(new Aggregate(aggregateId, aggregateName));
   }
 
   static Feed from(JsonArray array) {
     return new Type.Entries(array.stream()
       .map(Json::fromAny)
-      .map(it -> it.mapTo(Entry.class))
-      .toArray(Entry[]::new));
+      .map(it -> it.mapTo(Log.class))
+      .toArray(Log[]::new));
   }
 
   static Feed fromRows(RowSet<Row> rows) {
     return from(Json.array(rows));
   }
 
-  default Stream<Feed.Entry> stream() {
+  default Stream<Log> stream() {
     return StreamSupport.stream(this.spliterator(), false);
   }
 
@@ -63,16 +65,16 @@ public interface Feed extends Iterable<Feed.Entry> {
   }
 
   enum Type {;
-    private record Empty(Feed.Entry entry) implements Feed {
+    private record Empty(Log log) implements Feed {
 
       @Override
-      public Iterator<Entry> iterator() {
+      public Iterator<Log> iterator() {
         return Iterators.defaults.empty();
       }
     }
-    private record Entries(Feed.Entry... entries) implements Feed {
+    private record Entries(Log... entries) implements Feed {
       @Override
-      public Iterator<Entry> iterator() {
+      public Iterator<Log> iterator() {
         return List.of(entries).iterator();
       }
     }

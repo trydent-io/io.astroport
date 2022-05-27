@@ -1,8 +1,9 @@
 package io.citadel.kernel.domain.model;
 
-import io.citadel.eventstore.data.Feed;
+import io.citadel.kernel.eventstore.Feed;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
+import io.citadel.kernel.eventstore.Past;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 
@@ -17,28 +18,30 @@ import java.util.stream.Collector;
 import static io.citadel.kernel.func.ThrowableBiFunction.noOp;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
-public final class Aggregates<T extends Domain.Transaction<?, ?>> implements Domain.Lookup<T>, Task {
+public final class Aggregates<S extends Domain.State<?, E>, E extends Domain.Event, M extends Domain.Model<?>> implements Domain.Lookup<M, E>, Task {
   private final EventStore eventStore;
-  private final Domain.Snapshot<T> snapshot;
+  private final Domain.Snapshot<S, E, M> snapshot;
 
-  public Aggregates(EventStore eventStore, Domain.Snapshot<T> snapshot) {
+  public Aggregates(EventStore eventStore, Domain.Snapshot<S, E, M> snapshot) {
     this.eventStore = eventStore;
     this.snapshot = snapshot;
   }
 
   @Override
-  public Future<T> openAggregate(final Domain.ID<?> aggregateId, final String aggregateName) {
-    return eventStore.seek(aggregate(aggregateId, aggregateName))
+  public Future<Domain.Transaction<M, E>> findLogs(final Domain.ID<?> aggregateId, final String aggregateName) {
+    return eventStore
+      .seek(aggregate(aggregateId, aggregateName))
       .map(Feed::stream)
-      .map(entries -> entries
-        .findFirst()
-        .or(empty(aggregateId, aggregateName))
-        .map(entry -> entries.collect(to(entry.aggregate())))
-        .orElseThrow()
-      );
+      .map(logs -> logs.collect(toTimeline(aggregateId, aggregateName)))
+      .map(timeline -> timeline.)
+        //.findFirst().or(elseEmpty(aggregateId, aggregateName)).map(log -> logs.collect(to(log.aggregate()))).orElseThrow());
   }
 
-  private Supplier<Optional<? extends Feed.Entry>> empty(Domain.ID<?> id, String name) {
+  private Past toTimeline(final Domain.ID<?> aggregateId, final String aggregateName) {
+    return new Past(aggregateId.toString(), aggregateName);
+  }
+
+  private Supplier<Optional<? extends Feed.Log>> elseEmpty(Domain.ID<?> id, String name) {
     return () -> Optional.of(Feed.archetype(id.toString(), name));
   }
 
@@ -50,7 +53,7 @@ public final class Aggregates<T extends Domain.Transaction<?, ?>> implements Dom
     return new Aggregation(aggregate.id(), aggregate.version());
   }
 
-  private final class Aggregation implements Collector<Feed.Entry, Domain.Snapshot<T>[], T> {
+  private final class Aggregation implements Collector<Feed.Log, Domain.Snapshot<S, E, M>[], Domain.Transaction<M, E>> {
     private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
     private final String id;
     private final long version;
@@ -62,25 +65,22 @@ public final class Aggregates<T extends Domain.Transaction<?, ?>> implements Dom
 
     @SuppressWarnings("unchecked")
     @Override
-    public Supplier<Domain.Snapshot<T>[]> supplier() {
-      return () -> (Domain.Snapshot<T>[]) new Domain.Snapshot[]{snapshot.archetype(id, version)};
+    public Supplier<Domain.Snapshot<S, E, M>[]> supplier() {
+      return () -> (Domain.Snapshot<S, E, M>[]) new Domain.Snapshot[]{snapshot.archetype(id, version)};
     }
 
     @Override
-    public BiConsumer<Domain.Snapshot<T>[], Feed.Entry> accumulator() {
-      return (snapshot, entry) -> snapshot[0] = snapshot[0].hydrate(
-        entry.event().name(),
-        entry.event().data()
-      );
+    public BiConsumer<Domain.Snapshot<S, E, M>[], Feed.Log> accumulator() {
+      return (snapshot, log) -> snapshot[0] = snapshot[0].hydrate(log.event().name(), log.event().data());
     }
 
     @Override
-    public BinaryOperator<Domain.Snapshot<T>[]> combiner() {
+    public BinaryOperator<Domain.Snapshot<S, E, M>[]> combiner() {
       return noOp();
     }
 
     @Override
-    public Function<Domain.Snapshot<T>[], T> finisher() {
+    public Function<Domain.Snapshot<S, E, M>[], Domain.Transaction<M, E>> finisher() {
       return snapshot -> snapshot[0].transaction(eventStore);
     }
 

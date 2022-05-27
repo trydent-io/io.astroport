@@ -8,7 +8,7 @@ import io.vertx.core.Future;
 
 import static java.util.Objects.*;
 
-public final class Open<M extends Record & Domain.Model<?>, E extends Domain.Event> implements Domain.Transaction<M, E> {
+public final class Open<M extends Domain.Model<?>, E extends Domain.Event> implements Domain.Transaction<M, E> {
   private final M model;
   private final long version;
   private final Domain.Timeline<S, E, ;

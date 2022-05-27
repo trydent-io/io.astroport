@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain.model;
 
-import io.citadel.eventstore.data.Feed;
+import io.citadel.kernel.eventstore.Feed;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.sql.Migration;

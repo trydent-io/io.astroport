@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.eventstore.data.Feed;
+import io.citadel.kernel.eventstore.Feed;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
@@ -110,10 +110,10 @@ public sealed interface Domain {
     }
   }
 
-  interface Snapshot<T extends Transaction<?, ?>> {
-    Snapshot<T> archetype(String aggregateId, long aggregateVersion);
-    Snapshot<T> hydrate(String eventName, JsonObject eventData);
-    T transaction(EventStore eventStore);
+  interface Snapshot<S extends State<?, E>, E extends Domain.Event, M extends Model<?>> {
+    Snapshot<S, E, M> archetype(String aggregateId, long aggregateVersion);
+    Snapshot<S, E, M> hydrate(String eventName, JsonObject eventData);
+    Transaction<M, E> transaction(EventStore eventStore);
 
     enum Type {
       ;
@@ -160,14 +160,14 @@ public sealed interface Domain {
     ID id();
   }
 
-  interface Lookup<T extends Transaction<?, ?>> {
-    default Future<T> openAggregate(Domain.ID<?> id) {
-      return openAggregate(id, null);
+  interface Lookup<M extends Model<?>, E extends Domain.Event> {
+    default Future<Transaction<M, E>> findLogs(Domain.ID<?> id) {
+      return findLogs(id, null);
     }
-    Future<T> openAggregate(ID<?> id, String name);
+    Future<Transaction<M, E>> findLogs(ID<?> id, String name);
   }
 
-  interface Transaction<M extends Record & Model<?>, E extends Domain.Event> {
+  interface Transaction<M extends Model<?>, E extends Domain.Event> {
     Transaction<M, E> has(ThrowablePredicate<? super M> condition);
     Transaction<M, E> log(ThrowableFunction<? super M, ? extends E> event);
     Transaction<M, E> log(ThrowableSupplier<? extends E> event);
