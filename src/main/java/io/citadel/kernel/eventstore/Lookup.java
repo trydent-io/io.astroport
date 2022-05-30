@@ -5,8 +5,7 @@ import io.citadel.kernel.eventstore.lookup.Sql;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.SqlClient;
 
-
-public sealed interface Lookup permits io.citadel.kernel.eventstore.lookup.Sql {
+public sealed interface Lookup permits Sql {
   static Lookup sql(SqlClient client) {
     return new Sql(client);
   }

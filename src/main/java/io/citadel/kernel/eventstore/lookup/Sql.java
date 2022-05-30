@@ -55,7 +55,7 @@ public record Sql(SqlClient client) implements Lookup {
   }
 
   @SuppressWarnings({"unchecked", "ConstantConditions"})
-  public static final class ToPrototype<ID extends Domain.ID<?>> implements Collector<Meta.Log, Prototype<ID>[], Prototype<ID>> {
+  private static final class ToPrototype<ID extends Domain.ID<?>> implements Collector<Meta.Log, Prototype<ID>[], Prototype<ID>> {
     private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
     private final ID aggregateId;
     private final String aggregateName;

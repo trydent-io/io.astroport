@@ -4,7 +4,6 @@ import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
-import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.func.ThrowableBiFunction;
 import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowablePredicate;
@@ -19,6 +18,9 @@ public sealed interface Domain {
   Defaults defaults = Defaults.Companion;
 
   sealed interface Verticle extends Domain, io.vertx.core.Verticle permits Service {}
+  sealed interface Migration extends Domain {
+    Future<Void> migrate();
+  }
 
   interface State<S extends Enum<S> & State<S, E>, E extends Domain.Event> {
     @SuppressWarnings("unchecked")

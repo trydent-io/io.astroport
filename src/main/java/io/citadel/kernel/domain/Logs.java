@@ -1,7 +1,5 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.kernel.eventstore.EventStore;
-
 public interface Logs {
 
 }

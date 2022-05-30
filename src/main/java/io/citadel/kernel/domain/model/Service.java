@@ -2,8 +2,6 @@ package io.citadel.kernel.domain.model;
 
 import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.sql.Migration;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -12,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 import java.util.stream.Stream;
 
 public final class Service extends AbstractVerticle implements Domain.Verticle {
+  private final Domain.Migration domain;
   private final Migration migration;
   private final EventStore eventStore;
 

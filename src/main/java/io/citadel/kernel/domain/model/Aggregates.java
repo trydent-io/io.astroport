@@ -2,7 +2,6 @@ package io.citadel.kernel.domain.model;
 
 import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.eventstore.Prototype;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;

@@ -3,12 +3,8 @@ package io.citadel.domain.forum.aggregate;
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.EventStore;
 import io.vertx.core.json.JsonObject;
 
-import java.util.Optional;
-
-import static io.citadel.domain.forum.handler.Events.Names.Registered;
 import static io.citadel.domain.forum.handler.Events.Names.valueOf;
 
 public record Snapshot(Domain.Archetype<Forum.Model> archetype, Domain.Timeline<Forum.State, Forum.Event, Forum.Model> timeline, long version) implements Domain.Snapshot<Forum.Transaction> {
