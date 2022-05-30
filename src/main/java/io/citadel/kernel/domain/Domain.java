@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.kernel.eventstore.Feed;
+import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
@@ -34,7 +34,7 @@ public sealed interface Domain {
   interface Command {}
 
   interface Event {
-    default Feed.Event asFeed() {return new Feed.Event(this.getClass().getSimpleName(), JsonObject.mapFrom(this));}
+    default Meta.Event asFeed() {return new Meta.Event(this.getClass().getSimpleName(), JsonObject.mapFrom(this));}
   }
 
   interface Archetype<M extends Record & Model<?>> {

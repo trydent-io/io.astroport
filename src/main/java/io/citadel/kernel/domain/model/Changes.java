@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain.model;
 
-import io.citadel.kernel.eventstore.Feed;
+import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
 import io.vertx.core.Future;
@@ -24,7 +24,7 @@ public record Changes<E extends Domain.Event, L extends Domain.Timeline<E, L>>(L
   @Override
   public Future<Void> commit(String aggregateId, String aggregateName, long aggregateVersion, String by) {
     return eventStore.feed(
-      new Feed.Aggregate(aggregateId, aggregateName, aggregateVersion),
+      new Meta.Aggregate(aggregateId, aggregateName, aggregateVersion),
       events.map(Domain.Event::asFeed),
       by
     ).mapEmpty();

@@ -6,7 +6,7 @@ import io.vertx.sqlclient.SqlClient;
 
 import java.util.stream.Stream;
 
-public sealed interface EventStore permits Sql {
+public sealed interface EventStore extends Lookup permits Sql {
   String SEEK = "eventStore.seek";
   String FEED = "eventStore.feed";
 
@@ -14,11 +14,8 @@ public sealed interface EventStore permits Sql {
     return new Sql(eventBus, client);
   }
 
-
-  Future<Timeline> seek(Feed.Aggregate aggregate);
-
-  default Future<Timeline> feed(Feed.Aggregate aggregate, Stream<Feed.Event> events) {
+  default Future<Timeline> feed(Meta.Aggregate aggregate, Stream<Meta.Event> events) {
     return feed(aggregate, events, null);
   }
-  Future<Timeline> feed(Feed.Aggregate aggregate, Stream<Feed.Event> events, String by);
+  Future<Timeline> feed(Meta.Aggregate aggregate, Stream<Meta.Event> events, String by);
 }

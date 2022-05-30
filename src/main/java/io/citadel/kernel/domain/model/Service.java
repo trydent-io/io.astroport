@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain.model;
 
-import io.citadel.kernel.eventstore.Feed;
+import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.sql.Migration;
@@ -47,21 +47,21 @@ public final class Service extends AbstractVerticle implements Domain.Verticle {
     return null;
   }
 
-  private Future<Feed> persist(final JsonObject aggregate, JsonObject event, JsonObject persisted) {
+  private Future<Meta> persist(final JsonObject aggregate, JsonObject event, JsonObject persisted) {
     return null;
   }
 
-  private Future<Feed> seek(final JsonObject aggregate) {
-    return seek(aggregate.mapTo(Feed.Aggregate.class));
+  private Future<Meta> seek(final JsonObject aggregate) {
+    return seek(aggregate.mapTo(Meta.Aggregate.class));
   }
 
   @Override
-  public Future<Feed> seek(Feed.Aggregate aggregate) {
-    return eventStore.seek(aggregate);
+  public Future<Meta> seek(Meta.Aggregate aggregate) {
+    return eventStore.findTimeline(aggregate);
   }
 
   @Override
-  public Future<Feed> feed(final Feed.Aggregate aggregate, final Stream<Feed.Event> events, final String by) {
+  public Future<Meta> feed(final Meta.Aggregate aggregate, final Stream<Meta.Event> events, final String by) {
     return null;
   }
 

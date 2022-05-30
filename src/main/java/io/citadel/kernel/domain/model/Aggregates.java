@@ -1,9 +1,9 @@
 package io.citadel.kernel.domain.model;
 
-import io.citadel.kernel.eventstore.Feed;
+import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.eventstore.Past;
+import io.citadel.kernel.eventstore.Timeline;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 
@@ -30,30 +30,30 @@ public final class Aggregates<S extends Domain.State<?, E>, E extends Domain.Eve
   @Override
   public Future<Domain.Transaction<M, E>> findLogs(final Domain.ID<?> aggregateId, final String aggregateName) {
     return eventStore
-      .seek(aggregate(aggregateId, aggregateName))
-      .map(Feed::stream)
+      .findTimeline(aggregate(aggregateId, aggregateName))
+      .map(Meta::stream)
       .map(logs -> logs.collect(toTimeline(aggregateId, aggregateName)))
       .map(timeline -> timeline.)
         //.findFirst().or(elseEmpty(aggregateId, aggregateName)).map(log -> logs.collect(to(log.aggregate()))).orElseThrow());
   }
 
-  private Past toTimeline(final Domain.ID<?> aggregateId, final String aggregateName) {
-    return new Past(aggregateId.toString(), aggregateName);
+  private Timeline.ToTimeline toTimeline(final Domain.ID<?> aggregateId, final String aggregateName) {
+    return new Timeline.ToTimeline(aggregateId.toString(), aggregateName);
   }
 
-  private Supplier<Optional<? extends Feed.Log>> elseEmpty(Domain.ID<?> id, String name) {
-    return () -> Optional.of(Feed.archetype(id.toString(), name));
+  private Supplier<Optional<? extends Meta.Log>> elseEmpty(Domain.ID<?> id, String name) {
+    return () -> Optional.of(Meta.archetype(id.toString(), name));
   }
 
-  private Feed.Aggregate aggregate(final Domain.ID<?> id, final String name) {
-    return new Feed.Aggregate(id.toString(), name);
+  private Meta.Aggregate aggregate(final Domain.ID<?> id, final String name) {
+    return new Meta.Aggregate(id.toString(), name);
   }
 
-  private Aggregation to(Feed.Aggregate aggregate) {
+  private Aggregation to(Meta.Aggregate aggregate) {
     return new Aggregation(aggregate.id(), aggregate.version());
   }
 
-  private final class Aggregation implements Collector<Feed.Log, Domain.Snapshot<S, E, M>[], Domain.Transaction<M, E>> {
+  private final class Aggregation implements Collector<Meta.Log, Domain.Snapshot<S, E, M>[], Domain.Transaction<M, E>> {
     private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
     private final String id;
     private final long version;
@@ -70,7 +70,7 @@ public final class Aggregates<S extends Domain.State<?, E>, E extends Domain.Eve
     }
 
     @Override
-    public BiConsumer<Domain.Snapshot<S, E, M>[], Feed.Log> accumulator() {
+    public BiConsumer<Domain.Snapshot<S, E, M>[], Meta.Log> accumulator() {
       return (snapshot, log) -> snapshot[0] = snapshot[0].hydrate(log.event().name(), log.event().data());
     }
 
