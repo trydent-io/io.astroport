@@ -3,7 +3,7 @@ package io.citadel.kernel.domain.model;
 import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.eventstore.Timeline;
+import io.citadel.kernel.eventstore.Prototype;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 
@@ -30,15 +30,15 @@ public final class Aggregates<S extends Domain.State<?, E>, E extends Domain.Eve
   @Override
   public Future<Domain.Transaction<M, E>> findLogs(final Domain.ID<?> aggregateId, final String aggregateName) {
     return eventStore
-      .findTimeline(aggregate(aggregateId, aggregateName))
+      .findPrototype(aggregate(aggregateId, aggregateName))
       .map(Meta::stream)
       .map(logs -> logs.collect(toTimeline(aggregateId, aggregateName)))
       .map(timeline -> timeline.)
         //.findFirst().or(elseEmpty(aggregateId, aggregateName)).map(log -> logs.collect(to(log.aggregate()))).orElseThrow());
   }
 
-  private Timeline.ToTimeline toTimeline(final Domain.ID<?> aggregateId, final String aggregateName) {
-    return new Timeline.ToTimeline(aggregateId.toString(), aggregateName);
+  private Prototype.ToTimeline toTimeline(final Domain.ID<?> aggregateId, final String aggregateName) {
+    return new Prototype.ToTimeline(aggregateId.toString(), aggregateName);
   }
 
   private Supplier<Optional<? extends Meta.Log>> elseEmpty(Domain.ID<?> id, String name) {

@@ -2,6 +2,7 @@ package io.citadel.kernel.domain.model;
 
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.EventStore;
+import io.citadel.kernel.eventstore.Lookup;
 import io.citadel.kernel.sql.Database;
 import io.citadel.kernel.sql.Migration;
 import io.vertx.core.Vertx;
@@ -16,6 +17,7 @@ public enum Defaults {
   public Domain.Verticle verticle(Vertx vertx, Database database) {
     return new Service(
       Migration.eventStore(vertx, database),
+      Lookup.sql()
       EventStore.sql(
         vertx.eventBus(),
         PgPool.pool(vertx, database.asPgOptions(), new PoolOptions().setMaxSize(10))

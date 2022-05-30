@@ -57,7 +57,7 @@ public final class Service extends AbstractVerticle implements Domain.Verticle {
 
   @Override
   public Future<Meta> seek(Meta.Aggregate aggregate) {
-    return eventStore.findTimeline(aggregate);
+    return eventStore.findPrototype(aggregate);
   }
 
   @Override

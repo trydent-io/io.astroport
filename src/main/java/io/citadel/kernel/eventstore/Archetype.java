@@ -36,7 +36,8 @@ public final class Archetype<M extends Record & Domain.Model<?>, E extends Domai
 
   @SuppressWarnings({"unchecked", "ConstantConditions"})
   private final class ToFinaltype<S extends Enum<S> & Domain.State<S, E>> implements Collector<E, ToFinaltype.Staging<M, S>[], Finaltype<M, E, S>> {
-    private record Staging<M extends Record & Domain.Model<?>, S extends Enum<S> & Domain.State<S, ?>>(Aggregate<M> aggregate, S state) {}
+    private record Staging<M extends Record & Domain.Model<?>, S extends Enum<S> & Domain.State<S, ?>>(Aggregate<M> aggregate, S state) {
+    }
 
     private final S initial;
     private final ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator;
@@ -53,7 +54,12 @@ public final class Archetype<M extends Record & Domain.Model<?>, E extends Domai
 
     @Override
     public BiConsumer<ToFinaltype.Staging<M, S>[], E> accumulator() {
-      return (aggregates, e) -> aggregates[0] = initial == null ? staging(e, null) : initial.push(e).map(state -> staging(e, state)).orElseThrow(() -> new IllegalStateException("Can't apply event"));
+      return (aggregates, e) -> aggregates[0] =
+        initial == null
+          ? staging(e, null)
+          : initial.push(e)
+          .map(state -> staging(e, state))
+          .orElseThrow(() -> new IllegalStateException("Can't apply event"));
     }
 
     private ToFinaltype.Staging<M, S> staging(final E e, final S state) {

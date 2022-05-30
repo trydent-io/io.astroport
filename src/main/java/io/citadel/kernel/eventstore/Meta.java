@@ -19,7 +19,7 @@ public interface Meta extends Iterable<Meta.Log> {
   Meta EMPTY = new Type.Entries();
 
   record Aggregate<ID extends Domain.ID<?>>(ID id, String name, long version) {}
-  record Timepoint(LocalDateTime dateTime) {}
+  record Timepoint(LocalDateTime val) {}
   record Event(String name, JsonObject data, Timepoint timepoint) {}
 
   record Persisted(LocalDateTime at, String by) {}
