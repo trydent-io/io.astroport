@@ -1,9 +1,8 @@
-package io.citadel.kernel.eventstore.lookup;
+package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.Lookup;
 import io.citadel.kernel.eventstore.Meta;
-import io.citadel.kernel.eventstore.Prototype;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
@@ -15,12 +14,11 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
-public record Sql(SqlClient client) implements Lookup {
+record Query(SqlClient client) implements Lookup {
   @Override
   public <ID extends Domain.ID<?>> Future<Prototype<ID>> findPrototype(final ID aggregateId, final String aggregateName, final long aggregateVersion) {
     return SqlTemplate.forQuery(client, """
@@ -66,11 +64,6 @@ public record Sql(SqlClient client) implements Lookup {
       this.aggregateName = aggregateName;
       this.aggregateVersion = aggregateVersion;
     }
-
-    private Stream<Meta.Event> append(Stream<Meta.Event> events, Meta.Event event) {
-      return Stream.concat(events, Stream.of(event));
-    }
-
     @Override
     public Supplier<Prototype<ID>[]> supplier() {
       return () -> (Prototype<ID>[]) new Object[]{new Prototype<>(aggregateId, aggregateName, aggregateVersion)};
@@ -78,7 +71,9 @@ public record Sql(SqlClient client) implements Lookup {
 
     @Override
     public BiConsumer<Prototype<ID>[], Meta.Log> accumulator() {
-      return (prototypes, log) -> prototypes[0] = prototypes[0].aggregate(log.aggregate()).append(log.event());
+      return (prototypes, log) -> prototypes[0] = prototypes[0]
+        .aggregate(log.aggregate())
+        .append(log.event());
     }
 
     @Override

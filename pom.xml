@@ -17,22 +17,20 @@
     <mainClass>io.citadel.Main</mainClass>
     <final.name>citadel</final.name>
 
-    <vertx.version>4.2.6</vertx.version>
+    <vertx.version>4.3.1</vertx.version>
     <eclipselink.version>3.0.2</eclipselink.version>
-    <h2.version>2.1.210</h2.version>
     <slf4j.version>1.8.0-beta4</slf4j.version>
-    <log4j.version>2.17.0</log4j.version>
-    <jackson.version>2.13.1</jackson.version>
+    <log4j.version>2.17.2</log4j.version>
+    <jackson.version>2.13.3</jackson.version>
 
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     <exec-plugin.version>3.0.0</exec-plugin.version>
     <vertx-plugin.version>1.0.23</vertx-plugin.version>
     <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
-    <flyway.version>8.5.0</flyway.version>
+    <flyway.version>8.5.10</flyway.version>
     <hikaricp.version>5.0.1</hikaricp.version>
-    <postgresql.version>42.3.2</postgresql.version>
-    <guice.version>5.1.0</guice.version>
+    <postgresql.version>42.3.4</postgresql.version>
   </properties>
 
   <dependencyManagement>
@@ -46,11 +44,6 @@
   </dependencyManagement>
 
   <dependencies>
-    <dependency>
-      <groupId>com.google.inject</groupId>
-      <artifactId>guice</artifactId>
-      <version>${guice.version}</version>
-    </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-config</artifactId>
@@ -95,11 +88,6 @@
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
       <version>${flyway.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <version>${h2.version}</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

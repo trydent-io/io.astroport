@@ -1,13 +1,24 @@
-package io.citadel.domain.forum.model;
+package io.citadel.domain.forum;
 
 import io.citadel.domain.forum.Forum;
-import io.citadel.kernel.domain.Domain;
+import io.citadel.domain.forum.handler.Events;
 
 import java.util.Optional;
 import java.util.UUID;
 
-public enum Attributes {
+public enum Defaults {
   Companion;
+
+  Forum.Model snapshot(Forum.Model model, Forum.Event event) {
+    return switch (event) {
+      case Events.Registered registered -> new Forum.Model(model.id(), registered.details());
+      case Events.Closed closed -> model;
+      case Events.Archived archived -> model;
+      case Events.Replaced replaced -> new Forum.Model(model.id(), replaced.details());
+      case Events.Reopened reopened -> model;
+      case Events.Opened opened -> model;
+    };
+  }
 
   public Optional<Forum.Name> name(String value) {
     return Optional.ofNullable(value)

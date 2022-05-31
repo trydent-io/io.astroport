@@ -1,27 +1,26 @@
 package io.citadel.domain.forum;
 
-import io.citadel.domain.forum.aggregate.Defaults;
-import io.citadel.domain.forum.aggregate.Snapshot;
-import io.citadel.domain.forum.aggregate.Stage;
 import io.citadel.domain.forum.handler.Commands;
 import io.citadel.domain.forum.handler.Events;
-import io.citadel.domain.forum.model.Attributes;
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.domain.actor.Actor;
 import io.citadel.kernel.domain.attribute.Attribute;
+import io.citadel.kernel.func.ThrowableBiFunction;
+import io.citadel.kernel.func.ThrowableFunction;
+import io.vertx.core.json.JsonObject;
 
 import java.util.Optional;
 import java.util.UUID;
 
-public sealed interface Forum extends Domain.Timeline<Forum.Event> permits Snapshot, Stage {
+public interface Forum extends Actor<Forum.ID, Forum.Model, Forum.Event, Forum.State> {
   Commands commands = Commands.Companion;
   Events events = Events.Companion;
-  Attributes attributes = Attributes.Companion;
   Defaults defaults = Defaults.Companion;
 
   enum State implements Domain.State<Forum.State, Forum.Event> {
     Registered, Open, Closed, Archived;
     @Override
-    public Optional<Forum.State> push(final Event event) {
+    public Optional<Forum.State> next(final Event event) {
       return Optional.ofNullable(
         switch (event) {
           case Events.Registered it && this.is(Registered) -> this;
@@ -46,26 +45,28 @@ public sealed interface Forum extends Domain.Timeline<Forum.Event> permits Snaps
   record Description(String value) implements Attribute<String> {} // part of Details
   record Details(Name name, Description description) {} // ValueObject for Details
 
-  record Model(Forum.ID id, Forum.Details details) implements Domain.Model<Forum.ID>, Domain.Timeline<Event, Model> {
+  record Model(Forum.ID id, Forum.Details details) implements Domain.Model<Forum.ID> {
     public Model(Forum.ID id) {this(id, null);}
+  }
 
-    @SuppressWarnings("DuplicateBranchesInSwitch")
-    @Override
-    public Domain.Timeline<Event, Model> take(Event event) {
-      return switch (event) {
-        case Events.Archived archived -> this;
-        case Events.Registered registered -> new Model(id, registered.details());
-        case Events.Reopened reopened -> this;
-        case Events.Opened opened -> this;
-        case Events.Closed closed -> this;
-        case Events.Replaced replaced -> new Model(id, replaced.details());
-      };
-    }
+  @Override
+  default ThrowableFunction<? super ID, ? extends Model> identity() {
+    return Model::new;
+  }
 
-    @Override
-    public Model get() {
-      return this;
-    }
+  @Override
+  default ThrowableBiFunction<? super String, ? super JsonObject, ? extends Event> normalize() {
+    return Forum.events::from;
+  }
+
+  @Override
+  default ThrowableBiFunction<? super Model, ? super Event, ? extends Model> hydrate() {
+    return Forum.defaults::snapshot;
+  }
+
+  @Override
+  default State initial() {
+    return State.Registered;
   }
 }
 
