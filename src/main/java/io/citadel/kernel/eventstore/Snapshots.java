@@ -1,9 +1,8 @@
 package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.Lookup;
-import io.citadel.kernel.eventstore.Meta;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
 
@@ -18,9 +17,9 @@ import java.util.stream.Collector;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
-record Query(SqlClient client) implements Lookup {
+record Snapshots(Vertx vertx, SqlClient client) implements Lookup {
   @Override
-  public <ID extends Domain.ID<?>> Future<Prototype<ID>> findPrototype(final ID aggregateId, final String aggregateName, final long aggregateVersion) {
+  public <ID extends Domain.ID<?>> Future<Snapshot<ID>> findSnapshot(final ID aggregateId, final String aggregateName, final long aggregateVersion) {
     return SqlTemplate.forQuery(client, """
         with aggregate as (
           select  aggregate_version as version
@@ -45,44 +44,44 @@ record Query(SqlClient client) implements Lookup {
       )
       .map(Meta::fromRows)
       .map(Meta::stream)
-      .map(logs -> logs.collect(toPrototype(aggregateId, aggregateName, aggregateVersion)));
+      .map(logs -> logs.collect(asSnapshot(aggregateId, aggregateName, aggregateVersion)));
   }
 
-  private <ID extends Domain.ID<?>> ToPrototype<ID> toPrototype(ID aggregateId, String aggregateName, long aggregateVersion) {
-    return new ToPrototype<>(aggregateId, aggregateName, aggregateVersion);
+  private <ID extends Domain.ID<?>> AsSnapshot<ID> asSnapshot(ID aggregateId, String aggregateName, long aggregateVersion) {
+    return new AsSnapshot<>(aggregateId, aggregateName, aggregateVersion);
   }
 
   @SuppressWarnings({"unchecked", "ConstantConditions"})
-  private static final class ToPrototype<ID extends Domain.ID<?>> implements Collector<Meta.Log, Prototype<ID>[], Prototype<ID>> {
+  private static final class AsSnapshot<ID extends Domain.ID<?>> implements Collector<Meta.Log, Snapshot<ID>[], Snapshot<ID>> {
     private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
     private final ID aggregateId;
     private final String aggregateName;
     private final long aggregateVersion;
 
-    public ToPrototype(final ID aggregateId, final String aggregateName, long aggregateVersion) {
+    public AsSnapshot(final ID aggregateId, final String aggregateName, long aggregateVersion) {
       this.aggregateId = aggregateId;
       this.aggregateName = aggregateName;
       this.aggregateVersion = aggregateVersion;
     }
     @Override
-    public Supplier<Prototype<ID>[]> supplier() {
-      return () -> (Prototype<ID>[]) new Object[]{new Prototype<>(aggregateId, aggregateName, aggregateVersion)};
+    public Supplier<Snapshot<ID>[]> supplier() {
+      return () -> (Snapshot<ID>[]) new Object[]{new Snapshot<>(aggregateId, aggregateName, aggregateVersion, sqlClient, vertx)};
     }
 
     @Override
-    public BiConsumer<Prototype<ID>[], Meta.Log> accumulator() {
-      return (prototypes, log) -> prototypes[0] = prototypes[0]
+    public BiConsumer<Snapshot<ID>[], Meta.Log> accumulator() {
+      return (snapshots, log) -> snapshots[0] = snapshots[0]
         .aggregate(log.aggregate())
         .append(log.event());
     }
 
     @Override
-    public BinaryOperator<Prototype<ID>[]> combiner() {
+    public BinaryOperator<Snapshot<ID>[]> combiner() {
       return (prev, next) -> prev;
     }
 
     @Override
-    public Function<Prototype<ID>[], Prototype<ID>> finisher() {
+    public Function<Snapshot<ID>[], Snapshot<ID>> finisher() {
       return prototypes -> prototypes[0];
     }
 

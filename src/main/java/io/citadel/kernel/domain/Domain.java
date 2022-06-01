@@ -1,21 +1,17 @@
 package io.citadel.kernel.domain;
 
+import io.citadel.kernel.eventstore.Context;
 import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
-import io.citadel.kernel.func.ThrowableBiFunction;
-import io.citadel.kernel.func.ThrowableFunction;
-import io.citadel.kernel.func.ThrowablePredicate;
-import io.citadel.kernel.func.ThrowableSupplier;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.stream.Stream;
 
-public interface Domain<ID extends Domain.ID<?>, D extends Domain<ID, D>> {
+public interface Domain {
   Defaults defaults = Defaults.Companion;
 
   sealed interface Verticle extends Domain, io.vertx.core.Verticle permits Service {}
@@ -46,6 +42,11 @@ public interface Domain<ID extends Domain.ID<?>, D extends Domain<ID, D>> {
 
   interface ID<T> extends Attribute<T> {}
 
-  Future<D> restore(ID id);
+  interface Aggregate<ID extends Domain.ID<?>, M extends Record & Model<ID>, E extends Domain.Event, A extends Aggregate<ID, M, E, A>> {
+    default Future<Context<M, E>> load(ID id) {
+      return load(id, -1);
+    }
+    Future<Context<M, E>> load(ID id, long version);
+  }
 }
 
