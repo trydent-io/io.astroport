@@ -15,7 +15,7 @@ public enum Events {
 
   private enum Names {Opened, Closed, Registered, Reopened, Replaced, Archived}
 
-  public Forum.Event from(String name, JsonObject json) {
+  public Forum.Event convert(String name, JsonObject json) {
     return switch (Names.valueOf(name)) {
       case Opened -> json.mapTo(Opened.class);
       case Closed -> json.mapTo(Closed.class);

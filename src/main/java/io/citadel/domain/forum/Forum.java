@@ -3,16 +3,14 @@ package io.citadel.domain.forum;
 import io.citadel.domain.forum.handler.Commands;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.domain.actor.Actor;
 import io.citadel.kernel.domain.attribute.Attribute;
-import io.citadel.kernel.func.ThrowableBiFunction;
-import io.citadel.kernel.func.ThrowableFunction;
-import io.vertx.core.json.JsonObject;
+import io.citadel.kernel.eventstore.Lookup;
+import io.vertx.core.Future;
 
 import java.util.Optional;
 import java.util.UUID;
 
-public interface Forum extends Actor<Forum.ID, Forum.Model, Forum.Event, Forum.State> {
+public interface Forum extends Domain<Forum.ID, Forum> {
   Commands commands = Commands.Companion;
   Events events = Events.Companion;
   Defaults defaults = Defaults.Companion;
@@ -38,8 +36,6 @@ public interface Forum extends Actor<Forum.ID, Forum.Model, Forum.Event, Forum.S
   sealed interface Command extends Domain.Command permits Commands.Replace, Commands.Archive, Commands.Close, Commands.Open, Commands.Register, Commands.Reopen {}
   sealed interface Event extends Domain.Event permits Events.Archived, Events.Closed, Events.Replaced, Events.Opened, Events.Registered, Events.Reopened {}
 
-  interface Transaction extends Domain.Transaction<Model, Event> {}
-
   record ID(UUID value) implements Domain.ID<UUID> {} // ID
   record Name(String value) implements Attribute<String> {} // part of Details
   record Description(String value) implements Attribute<String> {} // part of Details
@@ -48,25 +44,23 @@ public interface Forum extends Actor<Forum.ID, Forum.Model, Forum.Event, Forum.S
   record Model(Forum.ID id, Forum.Details details) implements Domain.Model<Forum.ID> {
     public Model(Forum.ID id) {this(id, null);}
   }
+}
 
-  @Override
-  default ThrowableFunction<? super ID, ? extends Model> identity() {
-    return Model::new;
+final class Aggregate implements Forum {
+  public static final String FORUM = "forum";
+  private final Lookup lookup;
+
+  Aggregate(Lookup lookup) {
+    this.lookup = lookup;
   }
 
   @Override
-  default ThrowableBiFunction<? super String, ? super JsonObject, ? extends Event> normalize() {
-    return Forum.events::from;
-  }
-
-  @Override
-  default ThrowableBiFunction<? super Model, ? super Event, ? extends Model> hydrate() {
-    return Forum.defaults::snapshot;
-  }
-
-  @Override
-  default State initial() {
-    return State.Registered;
+  public Future<Forum> restore(ID id) {
+    return lookup.findPrototype(id, FORUM)
+      .map(it -> it.<Forum.Model, Forum.Event>normalize(Forum.events::convert))
+      .map(it -> it.identity(Model::new))
+      .map(it -> it.hydrate(State.Registered, Forum.defaults::snapshot))
+      .map(it -> it.);
   }
 }
 

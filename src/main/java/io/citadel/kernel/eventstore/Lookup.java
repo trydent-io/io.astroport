@@ -2,6 +2,7 @@ package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.func.ThrowableBiFunction;
+import io.citadel.kernel.func.ThrowableFunction;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.SqlClient;
@@ -51,12 +52,23 @@ public sealed interface Lookup permits Query {
     }
 
     public <M extends Record & Domain.Model<ID>, E extends Domain.Event> Normalize<ID, M, E> normalize(ThrowableBiFunction<? super String, ? super JsonObject, ? extends E> eventuate) {
-      return initializer -> new Archetype<>(
+      return new Normalize<ID, M, E>() {
+        @Override
+        public Identity<M, E> identity(ThrowableFunction<? super ID, ? extends M> initializer) {
+          return new Archetype<>(
+            initializer.apply(aggregate.id()),
+            aggregate.name(),
+            aggregate.version(),
+            events.map(event -> eventuate.apply(event.name(), event.data()))
+          );
+        }
+      };
+      /*return initializer -> new Archetype<>(
         initializer.apply(aggregate.id()),
         aggregate.name(),
         aggregate.version(),
         events.map(event -> eventuate.apply(event.name(), event.data()))
-      );
+      );*/
     }
 
     private final class Archetype<M extends Record & Domain.Model<ID>, E extends Domain.Event> implements Identity<M, E> {
@@ -75,7 +87,7 @@ public sealed interface Lookup permits Query {
       }
 
       @Override
-      public <S extends Enum<S> & Domain.State<S, E>> Aggregate<M, E, S> hydrate(final S initial, final ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator) {
+      public <S extends Enum<S> & Domain.State<S, E>> Context<M, E, S> hydrate(final S initial, final ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator) {
         return events.collect(toAggregate(initial, hydrator));
       }
 
@@ -84,7 +96,7 @@ public sealed interface Lookup permits Query {
       }
 
       @SuppressWarnings({"unchecked", "ConstantConditions"})
-      private final class ToAggregate<S extends Enum<S> & Domain.State<S, E>> implements Collector<E, ToAggregate<S>.Staging[], Aggregate<M, E, S>> {
+      private final class ToAggregate<S extends Enum<S> & Domain.State<S, E>> implements Collector<E, ToAggregate<S>.Staging[], Context<M, E, S>> {
         private final class Staging {
           private final M model;
           private final S state;
@@ -131,8 +143,8 @@ public sealed interface Lookup permits Query {
         }
 
         @Override
-        public Function<Staging[], Aggregate<M, E, S>> finisher() {
-          return stagings -> new Aggregate<>(stagings[0].model, name, version, stagings[0].state);
+        public Function<Staging[], Context<M, E, S>> finisher() {
+          return stagings -> new Context<>(stagings[0].model, name, version, stagings[0].state);
         }
 
         @Override

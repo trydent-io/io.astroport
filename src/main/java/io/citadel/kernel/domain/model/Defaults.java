@@ -1,15 +1,12 @@
 package io.citadel.kernel.domain.model;
 
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.domain.actor.Actor;
 import io.citadel.kernel.eventstore.Lookup;
 import io.citadel.kernel.sql.Database;
 import io.citadel.kernel.sql.Migration;
 import io.vertx.core.Vertx;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-
-import java.util.stream.Stream;
 
 public enum Defaults {
   Companion;

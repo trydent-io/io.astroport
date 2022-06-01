@@ -15,11 +15,11 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public sealed interface Domain {
+public interface Domain<ID extends Domain.ID<?>, D extends Domain<ID, D>> {
   Defaults defaults = Defaults.Companion;
 
   sealed interface Verticle extends Domain, io.vertx.core.Verticle permits Service {}
-  non-sealed interface Migration extends Domain {
+  interface Migration extends Domain {
     Future<Void> migrate();
   }
 
@@ -45,5 +45,7 @@ public sealed interface Domain {
   }
 
   interface ID<T> extends Attribute<T> {}
+
+  Future<D> restore(ID id);
 }
 
