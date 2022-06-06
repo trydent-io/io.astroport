@@ -43,10 +43,12 @@ public interface Domain {
   interface ID<T> extends Attribute<T> {}
 
   interface Aggregate<ID extends Domain.ID<?>, M extends Record & Model<ID>, E extends Domain.Event, A extends Aggregate<ID, M, E, A>> {
-    default Future<Context<M, E>> load(ID id) {
+    default Future<A> load(ID id) {
       return load(id, -1);
     }
-    Future<Context<M, E>> load(ID id, long version);
+    Future<A> load(ID id, long version);
+
+    Future<A> reload();
   }
 }
 

@@ -21,5 +21,11 @@ public final class Context<M extends Record & Domain.Model<?>, E extends Domain.
     return condition.test(model) ? this : null;
   }
 
-  public Context<M, E> load(ThrowableFunction<? super M, ? extends >)
+  public <T> T load(ThrowableFunction<? super M, ? extends T> loader) {
+    return loader.apply(model);
+  }
+
+  public Context<M, E> reload(ThrowableFunction<? super Domain.ID<?>, ? extends Context<M, E>> reloader) {
+    return reloader.apply(model.id());
+  }
 }
