@@ -8,7 +8,6 @@ import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.eventstore.Context;
 import io.citadel.kernel.eventstore.Lookup;
 import io.citadel.kernel.func.ThrowableFunction;
-import io.citadel.kernel.func.ThrowablePredicate;
 import io.vertx.core.Future;
 
 import java.util.Optional;
@@ -16,7 +15,7 @@ import java.util.UUID;
 
 public interface Forum extends Domain.Aggregate<Forum.ID, Forum.Model, Forum.Event, Forum> {
   Commands commands = Commands.Companion;
-  Events events = Events.Companion;
+  Events event = Events.Companion;
   Defaults defaults = Defaults.Companion;
 
   static Forum create(Lookup lookup) {
@@ -93,13 +92,9 @@ final class Root implements Forum {
 
   private Future<Context<Model, Event>> context(ID id, long version) {
     return lookup.findSnapshot(id, FORUM, version)
-      .map(it -> it.<Model, Event>normalize(Forum.events::convert))
+      .map(it -> it.<Model, Event>normalize(Forum.event::fromJson))
       .map(it -> it.identity(Model::new))
       .map(it -> it.hydrate(State.Registered, Forum.defaults::snapshot));
-  }
-
-  private static ThrowablePredicate<Model> descriptionLengthGreaterThanZero() {
-    return model -> model.details().description().value().length() > 0;
   }
 
   @Override

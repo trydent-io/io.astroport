@@ -9,7 +9,7 @@ public record Open() implements Actor.Behaviour<Forum.Transaction, Commands.Open
   public void be(Forum.Transaction aggregate, Commands.Open behaviour, String by) {
     aggregate
       .has(model -> model.details().description().value().isEmpty())
-      .log(Forum.events::opened)
+      .log(Forum.event::opened)
       .commit();
   }
 }
