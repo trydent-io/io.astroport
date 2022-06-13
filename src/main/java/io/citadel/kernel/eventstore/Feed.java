@@ -2,6 +2,7 @@ package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.feed.Sql;
+import io.citadel.kernel.eventstore.meta.Meta;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;

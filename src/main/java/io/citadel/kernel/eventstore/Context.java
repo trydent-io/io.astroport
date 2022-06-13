@@ -4,30 +4,23 @@ import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowablePredicate;
 
-public final class Context<M extends Record & Domain.Model<?>, S extends Enum<S> & Domain.State<S, E>, E extends Domain.Event> {
-  private final M model;
-  private final String name;
-  private final long version;
-
+public final class Context<R extends Record, S extends Enum<S> & Domain.State<S, E>, E> {
+  private final R model;
   private final S state;
-  private final Transaction<E> transaction;
+  private final Transaction transaction;
 
-  Context(M model, String name, long version, Transaction<E> transaction) {
+  Context(R model, S state, Transaction transaction) {
     this.model = model;
-    this.name = name;
-    this.version = version;
+    this.state = state;
     this.transaction = transaction;
   }
 
-  public Context<M, E> has(ThrowablePredicate<? super M> condition) {
+  public Context<R, S, E> has(ThrowablePredicate<? super R> condition) {
     return condition.test(model) ? this : null;
   }
 
-  public <T> T load(ThrowableFunction<? super M, ? extends T> loader) {
+  public <T> T load(ThrowableFunction<? super R, ? extends T> loader) {
     return loader.apply(model);
   }
 
-  public Context<M, E> reload(ThrowableFunction<? super Domain.ID<?>, ? extends Context<M, E>> reloader) {
-    return reloader.apply(model.id());
-  }
 }

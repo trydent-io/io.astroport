@@ -3,10 +3,10 @@ package io.citadel.kernel.eventstore;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.func.ThrowableBiFunction;
 
-public interface Identity<M extends Record & Domain.Model<?>, E extends Domain.Event> {
-  default <S extends Enum<S> & Domain.State<S, E>> Context<M, E> hydrate(ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator) {
+public interface Identity<R extends Record, E> {
+  default <S extends Enum<S> & Domain.State<S, E>> Context<R, S, E> hydrate(ThrowableBiFunction<? super R, ? super E, ? extends R> hydrator) {
     return hydrate(null, hydrator);
   }
 
-  <S extends Enum<S> & Domain.State<S, E>> Context<M, E> hydrate(S initial, ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator);
+  <S extends Enum<S> & Domain.State<S, E>> Context<R, S, E> hydrate(S initial, ThrowableBiFunction<? super R, ? super E, ? extends R> hydrator);
 }

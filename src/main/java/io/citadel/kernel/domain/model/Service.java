@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain.model;
 
-import io.citadel.kernel.eventstore.Meta;
+import io.citadel.kernel.eventstore.meta.Meta;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -38,7 +38,7 @@ public final class Service extends AbstractVerticle implements Domain.Verticle {
       message -> persist(
         message.body().getJsonObject("aggregate"),
         message.body().getJsonObject("event"),
-        message.body().getJsonObject("persisted")
+        message.body().getJsonObject("timepoint")
       )
         .onSuccess(message::reply)
         .onFailure(it -> message.fail(500, it.getMessage()))
@@ -51,21 +51,21 @@ public final class Service extends AbstractVerticle implements Domain.Verticle {
   }
 
   private Future<Meta> seek(final JsonObject aggregate) {
-    return seek(aggregate.mapTo(Meta.Aggregate.class));
+    return seek(aggregate.mapTo(io.citadel.kernel.eventstore.meta.Aggregate.class));
   }
 
   @Override
-  public Future<Meta> seek(Meta.Aggregate aggregate) {
+  public Future<Meta> seek(io.citadel.kernel.eventstore.meta.Aggregate aggregate) {
     return eventStore.findPrototype(aggregate);
   }
 
   @Override
-  public Future<Meta> feed(final Meta.Aggregate aggregate, final Stream<Meta.Event> events, final String by) {
+  public Future<Meta> feed(final io.citadel.kernel.eventstore.meta.Aggregate aggregate, final Stream<io.citadel.kernel.eventstore.meta.Event> events, final String by) {
     return null;
   }
 
 /*  @Override
-  public Future<Feed> feed(Feed.Aggregate aggregate, Feed.Event event, Feed.Persisted persisted) {
-    return eventStore.feed(aggregate, event, persisted);
+  public Future<Feed> feed(Feed.Aggregate aggregate, Feed.Event event, Feed.Persisted timepoint) {
+    return eventStore.feed(aggregate, event, timepoint);
   }*/
 }

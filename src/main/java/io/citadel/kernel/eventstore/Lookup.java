@@ -1,6 +1,7 @@
 package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.eventstore.meta.*;
 import io.citadel.kernel.func.ThrowableBiFunction;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -21,66 +22,59 @@ public sealed interface Lookup permits Snapshots {
   static Lookup create(Vertx vertx, SqlClient client) {
     return new Snapshots(vertx, client);
   }
-
-  <ID extends Domain.ID<?>> Future<Snapshot<ID>> findSnapshot(ID aggregateId, String aggregateName, long aggregateVersion);
-  default <ID extends Domain.ID<?>> Future<Snapshot<ID>> findSnapshot(ID aggregateId, String aggregateName) {
-    return findSnapshot(aggregateId, aggregateName, -1);
+  default <T> Future<Snapshot> findSnapshot(T aggregateId, String aggregateName, long aggregateVersion) {
+    return findSnapshot(Aggregate.id(aggregateId), Aggregate.name(aggregateName), Aggregate.version(aggregateVersion));
   }
-  default <ID extends Domain.ID<?>> Future<Snapshot<ID>> findSnapshot(ID aggregateId) {
-    return findSnapshot(aggregateId, null);
-  }
+  Future<Snapshot> findSnapshot(ID<?> aggregateId, Name name, Version version);
 
-  final class Snapshot<ID extends Domain.ID<?>> {
-    private final Meta.Aggregate<ID> aggregate;
-    private final Stream<Meta.Event> events;
+  final class Snapshot {
+    private final Aggregate aggregate;
+    private final Stream<Event> events;
     private final Vertx vertx;
     private final SqlClient sqlClient;
 
-    public Snapshot(ID aggregateId, String aggregateName, long aggregateVersion, Vertx vertx, SqlClient sqlClient) {
-      this(new Meta.Aggregate<>(aggregateId, aggregateName, aggregateVersion), Stream.empty(), vertx, sqlClient);
+    public Snapshot(Vertx vertx, SqlClient sqlClient, Aggregate aggregate) {
+      this(vertx, sqlClient, aggregate, Stream.empty());
     }
-
-    private Snapshot(Meta.Aggregate<ID> aggregate, Stream<Meta.Event> events, Vertx vertx, SqlClient sqlClient) {
+    private Snapshot(Vertx vertx, SqlClient sqlClient, Aggregate aggregate, Stream<Event> events) {
       this.aggregate = aggregate;
       this.events = events;
       this.vertx = vertx;
       this.sqlClient = sqlClient;
     }
 
-    Snapshot<ID> aggregate(Meta.Aggregate<ID> aggregate) {
-      return this.aggregate.version() == -1 ? new Snapshot<>(aggregate, events,vertx, sqlClient) : this;
+    Snapshot aggregate(Aggregate aggregate) {
+      return this.aggregate.version().isDefault() ? new Snapshot(vertx, sqlClient, aggregate, events) : this;
     }
 
-    Snapshot<ID> append(Meta.Event event) {
-      return new Snapshot<>(aggregate, Stream.concat(events, Stream.of(event)), vertx, sqlClient);
+    Snapshot append(Event event) {
+      return new Snapshot(vertx, sqlClient, aggregate, Stream.concat(events, Stream.of(event)));
     }
 
-    public <M extends Record & Domain.Model<ID>, E extends Domain.Event> Normalize<ID, M, E> normalize(ThrowableBiFunction<? super String, ? super JsonObject, ? extends E> converter) {
+    public <R extends Record, E> Normalize<R, E> normalize(ThrowableBiFunction<? super String, ? super JsonObject, ? extends E> converter) {
       return initializer -> new Archetype<>(
         initializer.apply(aggregate.id()),
-        aggregate.name(),
-        aggregate.version(),
+        aggregate,
         events.map(event -> converter.apply(event.name(), event.data()))
       );
     }
 
-    private final class Archetype<M extends Record & Domain.Model<ID>, E extends Domain.Event> implements Identity<M, E> {
+    private final class Archetype<M extends Record, E> implements Identity<M, E> {
       private static final Set<Collector.Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
 
       private final M model;
-      private final String name;
-      private final long version;
+      private final Aggregate aggregate;
       private final Stream<E> events;
 
-      Archetype(M model, String name, long version, Stream<E> events) {
+      private Archetype(M model, Aggregate aggregate, Stream<E> events) {
         this.model = model;
-        this.name = name;
-        this.version = version;
+        this.aggregate = aggregate;
         this.events = events;
       }
 
+
       @Override
-      public <S extends Enum<S> & Domain.State<S, E>> Context<M, E> hydrate(final S initial, final ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator) {
+      public <S extends Enum<S> & Domain.State<S, E>> Context<M, S, E> hydrate(final S initial, final ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator) {
         return events.collect(asContext(initial, hydrator));
       }
 
@@ -89,7 +83,7 @@ public sealed interface Lookup permits Snapshots {
       }
 
       @SuppressWarnings({"unchecked", "ConstantConditions"})
-      private final class AsContext<S extends Enum<S> & Domain.State<S, E>> implements Collector<E, AsContext<S>.Staging[], Context<M, E>> {
+      private final class AsContext<S extends Enum<S> & Domain.State<S, E>> implements Collector<E, AsContext<S>.Staging[], Context<M, S, E>> {
         private final class Staging {
           private final M model;
           private final S state;
@@ -133,8 +127,8 @@ public sealed interface Lookup permits Snapshots {
         }
 
         @Override
-        public Function<Staging[], Context<M, E>> finisher() {
-          return stagings -> new Context<>(stagings[0].model, name, version, Transaction.open(vertx, sqlClient, stagings[0].state));
+        public Function<Staging[], Context<M, S, E>> finisher() {
+          return stagings -> new Context<>(stagings[0].model, stagings[0].state, Transaction.open(vertx, sqlClient, aggregate));
         }
 
         @Override

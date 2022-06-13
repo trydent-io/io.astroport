@@ -1,10 +1,10 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.kernel.eventstore.Context;
-import io.citadel.kernel.eventstore.Meta;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
+import io.citadel.kernel.eventstore.meta.ID;
+import io.citadel.kernel.eventstore.meta.Timepoint;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
@@ -19,7 +19,7 @@ public interface Domain {
     Future<Void> migrate();
   }
 
-  interface State<S extends Enum<S> & State<S, E>, E extends Domain.Event> {
+  interface State<S extends Enum<S> & State<S, E>, E> {
     @SuppressWarnings("unchecked")
     default boolean is(S... states) {
       var index = 0;
@@ -30,25 +30,11 @@ public interface Domain {
     Optional<S> next(E event);
   }
 
-  interface Command {}
-
-  interface Event {
-    default Meta.Event asFeed() {return new Meta.Event(this.getClass().getSimpleName(), JsonObject.mapFrom(this), new Meta.Timepoint(LocalDateTime.now()));}
-  }
-
-  interface Model<ID extends Domain.ID<?>> {
-    ID id();
-  }
-
-  interface ID<T> extends Attribute<T> {}
-
-  interface Aggregate<ID extends Domain.ID<?>, M extends Record & Model<ID>, E extends Domain.Event, A extends Aggregate<ID, M, E, A>> {
-    default Future<A> load(ID id) {
+  interface Aggregate<M extends Record, E, A extends Aggregate<M, E, A>> {
+    default <T> Future<A> load(ID<T> id) {
       return load(id, -1);
     }
     Future<A> load(ID id, long version);
-
-    Future<A> reload();
   }
 }
 

@@ -1,6 +1,6 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.eventstore.meta.*;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.sqlclient.SqlClient;
@@ -17,9 +17,17 @@ import java.util.stream.Collector;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
-record Snapshots(Vertx vertx, SqlClient client) implements Lookup {
+final class Snapshots implements Lookup {
+  private final Vertx vertx;
+  private final SqlClient client;
+
+  Snapshots(Vertx vertx, SqlClient client) {
+    this.vertx = vertx;
+    this.client = client;
+  }
+
   @Override
-  public <ID extends Domain.ID<?>> Future<Snapshot<ID>> findSnapshot(final ID aggregateId, final String aggregateName, final long aggregateVersion) {
+  public Future<Snapshot> findSnapshot(final ID<?> aggregateId, final Name aggregateName, final Version aggregateVersion) {
     return SqlTemplate.forQuery(client, """
         with aggregate as (
           select  aggregate_version as version
@@ -44,44 +52,41 @@ record Snapshots(Vertx vertx, SqlClient client) implements Lookup {
       )
       .map(Meta::fromRows)
       .map(Meta::stream)
-      .map(logs -> logs.collect(asSnapshot(aggregateId, aggregateName, aggregateVersion)));
+      .map(logs -> logs.collect(asSnapshotOf(aggregateId, aggregateName, aggregateVersion)));
   }
 
-  private <ID extends Domain.ID<?>> AsSnapshot<ID> asSnapshot(ID aggregateId, String aggregateName, long aggregateVersion) {
-    return new AsSnapshot<>(aggregateId, aggregateName, aggregateVersion);
+  private AsSnapshot asSnapshotOf(ID<?> aggregateId, Name aggregateName, Version aggregateVersion) {
+    return new AsSnapshot(Aggregate.of(aggregateId, aggregateName, aggregateVersion));
   }
 
-  @SuppressWarnings({"unchecked", "ConstantConditions"})
-  private static final class AsSnapshot<ID extends Domain.ID<?>> implements Collector<Meta.Log, Snapshot<ID>[], Snapshot<ID>> {
+  @SuppressWarnings({"ConstantConditions"})
+  private final class AsSnapshot implements Collector<Meta.Log, Snapshot[], Snapshot> {
     private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
-    private final ID aggregateId;
-    private final String aggregateName;
-    private final long aggregateVersion;
+    private final Aggregate aggregate;
 
-    public AsSnapshot(final ID aggregateId, final String aggregateName, long aggregateVersion) {
-      this.aggregateId = aggregateId;
-      this.aggregateName = aggregateName;
-      this.aggregateVersion = aggregateVersion;
-    }
-    @Override
-    public Supplier<Snapshot<ID>[]> supplier() {
-      return () -> (Snapshot<ID>[]) new Object[]{new Snapshot<>(aggregateId, aggregateName, aggregateVersion, sqlClient, vertx)};
+    private AsSnapshot(Aggregate aggregate) {
+      this.aggregate = aggregate;
     }
 
     @Override
-    public BiConsumer<Snapshot<ID>[], Meta.Log> accumulator() {
+    public Supplier<Snapshot[]> supplier() {
+      return () -> (Snapshot[]) new Object[]{new Snapshot(vertx, client, aggregate)};
+    }
+
+    @Override
+    public BiConsumer<Snapshot[], Meta.Log> accumulator() {
       return (snapshots, log) -> snapshots[0] = snapshots[0]
         .aggregate(log.aggregate())
         .append(log.event());
     }
 
     @Override
-    public BinaryOperator<Snapshot<ID>[]> combiner() {
+    public BinaryOperator<Snapshot[]> combiner() {
       return (prev, next) -> prev;
     }
 
     @Override
-    public Function<Snapshot<ID>[], Snapshot<ID>> finisher() {
+    public Function<Snapshot[], Snapshot> finisher() {
       return prototypes -> prototypes[0];
     }
 

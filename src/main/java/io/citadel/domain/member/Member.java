@@ -3,25 +3,29 @@ package io.citadel.domain.member;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.eventstore.Context;
-import io.citadel.kernel.lang.Snowflake;
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
 
 import java.time.LocalDate;
-import java.util.UUID;
+import java.util.Optional;
 
 public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model, Member.Event, Member> {
   static Member boundary(Context<Model, Event> context) {
-    return new Root(context);
+    return new Aggregate(context);
   }
 
-  interface Command extends Domain.Command {}
-  interface Event extends Domain.Event {}
+  enum State implements Domain.State<State, Member.Event> {
+    Registered, Onboarded, Offboarded, Unregistered;
 
-  record ID(String value) implements Domain.ID<String> {
-    public static ID uuid() { return new ID(UUID.randomUUID().toString()); }
-    public static ID random() { return new ID(Snowflake.Default.nextAsString()); }
-    public static ID from(JsonObject json) { return new ID(json.getString("id")); }
+    @Override
+    public Optional<State> next(Event event) {
+      return Optional.empty();
+    }
+  }
+
+  interface Command {}
+  interface Event {}
+
+  record ID(String value) {
   }
 
   record FirstName(String value) implements Attribute<String> {}
@@ -32,10 +36,10 @@ public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model,
   record Model(Member.ID id, FirstName firstName, LastName lastName, Birthdate birthdate, FiscalCode fiscalCode) implements Domain.Model<Member.ID> {}
 }
 
-final class Root implements Member {
-  private final Context<Member.Model, Member.Event> context;
+final class Aggregate implements Member {
+  private final Context<Member.Model, Member.State, Member.Event> context;
 
-  Root(Context<Model, Event> context) {
+  Aggregate(Context<Model, Event> context) {
     this.context = context;
   }
 

@@ -41,10 +41,10 @@ public interface Forum extends Domain.Aggregate<Forum.ID, Forum.Model, Forum.Eve
     }
   }
 
-  sealed interface Command extends Domain.Command permits Commands.Replace, Commands.Archive, Commands.Close, Commands.Open, Commands.Register, Commands.Reopen {
+  sealed interface Command permits Commands.Replace, Commands.Archive, Commands.Close, Commands.Open, Commands.Register, Commands.Reopen {
   }
 
-  sealed interface Event extends Domain.Event permits Events.Archived, Events.Closed, Events.Replaced, Events.Opened, Events.Registered, Events.Reopened {
+  sealed interface Event permits Events.Archived, Events.Closed, Events.Replaced, Events.Opened, Events.Registered, Events.Reopened {
   }
 
   record ID(UUID value) implements Domain.ID<UUID> {
