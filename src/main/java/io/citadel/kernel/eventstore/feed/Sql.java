@@ -3,7 +3,7 @@ package io.citadel.kernel.eventstore.feed;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.eventstore.Feed;
 import io.citadel.kernel.eventstore.Meta;
-import io.citadel.kernel.media.Json;
+import io.citadel.kernel.media.JsonMedia;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
@@ -49,7 +49,7 @@ public record Sql(EventBus eventBus, SqlClient client) implements Feed {
           "aggregateId", aggregateId.toString(),
           "aggregateName", aggregateName,
           "aggregateVersion", aggregateVersion,
-          "events", Json.array(events)
+          "events", JsonMedia.array(events)
         )
       )
       .map(Meta::fromRows)

@@ -2,11 +2,7 @@ package io.citadel;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.media.Json;
 import io.citadel.kernel.sql.Database;
-import io.vertx.config.ConfigRetriever;
-import io.vertx.config.ConfigRetrieverOptions;
-import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.jackson.DatabindCodec;
 import org.slf4j.Logger;

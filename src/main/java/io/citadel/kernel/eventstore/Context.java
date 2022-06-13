@@ -4,10 +4,12 @@ import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowablePredicate;
 
-public final class Context<M extends Record & Domain.Model<?>, E extends Domain.Event> {
+public final class Context<M extends Record & Domain.Model<?>, S extends Enum<S> & Domain.State<S, E>, E extends Domain.Event> {
   private final M model;
   private final String name;
   private final long version;
+
+  private final S state;
   private final Transaction<E> transaction;
 
   Context(M model, String name, long version, Transaction<E> transaction) {

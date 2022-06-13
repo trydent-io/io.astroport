@@ -25,11 +25,11 @@ public sealed interface Json {
     return new JsonObject(value);
   }
 
-  static <T> JsonObject fromAny(T any) {
+  static  <T> JsonObject fromAny(T any) {
     return JsonObject.mapFrom(any);
   }
 
-  static <T> JsonObject with(T any) {
+  static  <T> JsonObject with(T any) {
     return fromAny(any);
   }
 
@@ -45,11 +45,11 @@ public sealed interface Json {
     );
   }
 
-  static <T> JsonArray array(Iterable<T> itearable) {
+  static  <T> JsonArray array(Iterable<T> itearable) {
     return array(stream(itearable.spliterator(), false));
   }
 
-  static <T> JsonArray array(Stream<T> items) {
+  static  <T> JsonArray array(Stream<T> items) {
     return Json.array(items.map(Json::fromAny).toArray(JsonObject[]::new));
   }
 }

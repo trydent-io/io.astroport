@@ -1,7 +1,7 @@
 package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.media.Json;
+import io.citadel.kernel.media.JsonMedia;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -14,48 +14,39 @@ import java.util.stream.Stream;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
-sealed interface Transaction<E extends Domain.Event> {
-  static <S extends Enum<S> & Domain.State<S, E>, E extends Domain.Event> Transaction<E> open(Vertx vertx, SqlClient sqlClient, S state) {
-    return new Open<>(vertx, sqlClient, state);
+sealed interface Transaction {
+  static Transaction open(Vertx vertx, SqlClient sqlClient) {
+    return new Open(vertx, sqlClient);
   }
-  Transaction<E> log(E event);
-  <ID extends Domain.ID<?>> Future<Void> commit(ID aggregateId, String aggregateName, long aggregateVersion);
+  Transaction log(Domain.Event event);
+  Future<Void> commit(Domain.ID<?> aggregateId, String aggregateName, long aggregateVersion);
 
-  final class Open<S extends Enum<S> & Domain.State<S, E>, E extends Domain.Event> implements Transaction<E> {
+  @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
+  final class Open implements Transaction {
     private final EventBus eventBus;
     private final SqlClient sqlClient;
-    private final S state;
-    private final Stream<E> changes;
+    private final Stream<Domain.Event> changes;
 
-    private Open(Vertx vertx, SqlClient sqlClient, S state) {
-      this(vertx.eventBus(), sqlClient, state, Stream.empty());
+    private Open(Vertx vertx, SqlClient sqlClient) {
+      this(vertx.eventBus(), sqlClient, Stream.empty());
     }
-    private Open(EventBus eventBus, SqlClient sqlClient, Stream<E> changes) {
-      this(eventBus, sqlClient, null, changes);
-    }
-    private Open(EventBus eventBus, SqlClient sqlClient, S state, Stream<E> changes) {
+    private Open(EventBus eventBus, SqlClient sqlClient, Stream<Domain.Event> changes) {
       this.eventBus = eventBus;
       this.sqlClient = sqlClient;
-      this.state = state;
       this.changes = changes;
     }
 
-    private Stream<E> append(E event) {
+    private Stream<Domain.Event> append(Domain.Event event) {
       return Stream.concat(this.changes, Stream.of(event));
     }
 
     @Override
-    public Transaction<E> log(E event) {
-      return switch (state) {
-        case null -> new Open<>(eventBus, sqlClient, append(event));
-        default -> state.next(event)
-          .map(it -> new Open<>(eventBus, sqlClient, state, append(event)))
-          .orElseThrow(() -> new IllegalArgumentException("Can't log change, since state is %s and event is %s".formatted(state, event)));
-      };
+    public Transaction log(Domain.Event event) {
+      return new Open(eventBus, sqlClient, append(event));
     }
 
     @Override
-    public <ID extends Domain.ID<?>> Future<Void> commit(ID aggregateId, String aggregateName, long aggregateVersion) {
+    public Future<Void> commit(Domain.ID<?> aggregateId, String aggregateName, long aggregateVersion) {
       return SqlTemplate.forUpdate(sqlClient, """
         with events as (
           select  es -> 'event' ->> 'name' event_name,
@@ -86,7 +77,7 @@ sealed interface Transaction<E extends Domain.Event> {
             "aggregateId", aggregateId.toString(),
             "aggregateName", aggregateName,
             "aggregateVersion", aggregateVersion,
-            "events", Json.array(changes)
+            "events", JsonMedia.array(changes)
           )
         )
         .map(Meta::fromRows)
