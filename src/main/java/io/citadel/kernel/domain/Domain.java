@@ -19,17 +19,6 @@ public interface Domain {
     Future<Void> migrate();
   }
 
-  interface State<S extends Enum<S> & State<S, E>, E> {
-    @SuppressWarnings("unchecked")
-    default boolean is(S... states) {
-      var index = 0;
-      while (index < states.length && states[index] != this)
-        index++;
-      return index < states.length;
-    }
-    Optional<S> next(E event);
-  }
-
   interface Aggregate<M extends Record, E, A extends Aggregate<M, E, A>> {
     default <T> Future<A> load(ID<T> id) {
       return load(id, -1);

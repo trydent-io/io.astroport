@@ -27,7 +27,7 @@ final class Snapshots implements Lookup {
   }
 
   @Override
-  public Future<Snapshot> findSnapshot(final ID<?> aggregateId, final Name aggregateName, final Version aggregateVersion) {
+  public <T> Future<Snapshot> findSnapshot(final ID<T> aggregateId, final Name aggregateName, final Version aggregateVersion) {
     return SqlTemplate.forQuery(client, """
         with aggregate as (
           select  aggregate_version as version

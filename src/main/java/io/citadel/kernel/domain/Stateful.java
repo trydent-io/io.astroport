@@ -6,15 +6,15 @@ import io.citadel.kernel.func.ThrowableSupplier;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-public interface Stateful<S extends Domain.State<?>, T> {
-  static <S extends Domain.State<?>, T> Stateful<S, T> ofDefault() {
+public interface Stateful<S extends State<?>, T> {
+  static <S extends State<?>, T> Stateful<S, T> ofDefault() {
     return new Type.Staging<>();
   }
   Stateful<S, T> whenDefault(S next, ThrowableSupplier<T> then);
   Stateful<S, T> when(S state, S next, ThrowableFunction<T, T> then);
 
   enum Type {;
-    static final class Staging<S extends Domain.State<?>, T> implements Stateful<S, T> {
+    static final class Staging<S extends State<?>, T> implements Stateful<S, T> {
       private final S state;
       private final ThrowableSupplier<T> initializator;
       private final ThrowableFunction<T, T> operator;

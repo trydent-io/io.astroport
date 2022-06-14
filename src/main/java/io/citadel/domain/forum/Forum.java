@@ -4,7 +4,6 @@ import io.citadel.domain.forum.handler.Commands;
 import io.citadel.domain.forum.handler.Events;
 import io.citadel.domain.member.Member;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.eventstore.Context;
 import io.citadel.kernel.eventstore.Lookup;
 import io.citadel.kernel.func.ThrowableFunction;
@@ -22,7 +21,7 @@ public interface Forum extends Domain.Aggregate<Forum.ID, Forum.Model, Forum.Eve
     return new Root(lookup);
   }
 
-  enum State implements Domain.State<Forum.State, Forum.Event> {
+  enum State implements io.citadel.kernel.domain.State<State, Event> {
     Registered, Open, Closed, Archived;
 
     @Override
@@ -47,19 +46,16 @@ public interface Forum extends Domain.Aggregate<Forum.ID, Forum.Model, Forum.Eve
   sealed interface Event permits Events.Archived, Events.Closed, Events.Replaced, Events.Opened, Events.Registered, Events.Reopened {
   }
 
-  record ID(UUID value) implements Domain.ID<UUID> {
+  record ID(UUID value) {
   } // ID
-
-  record Name(String value) implements Attribute<String> {
+  record Name(String value) {
   } // part of Details
-
-  record Description(String value) implements Attribute<String> {
+  record Description(String value) {
   } // part of Details
-
   record Details(Name name, Description description) {
   } // ValueObject for Details
 
-  record Model(Forum.ID id, Forum.Details details, Member.ID registerer) implements Domain.Model<Forum.ID> {
+  record Model(Forum.ID id, Forum.Details details, Member.ID registerer) {
     public Model(Forum.ID id) {
       this(id, null, null);
     }
@@ -90,10 +86,10 @@ final class Root implements Forum {
     return context.load(model -> load(model.id()));
   }
 
-  private Future<Context<Model, Event>> context(ID id, long version) {
-    return lookup.findSnapshot(id, FORUM, version)
-      .map(it -> it.<Model, Event>normalize(Forum.event::fromJson))
-      .map(it -> it.identity(Model::new))
+  private Future<Context<Model, Event>> context(UUID forumId, long version) {
+    return lookup.findSnapshot(forumId, FORUM, version)
+      .map(it -> it.<Model, Event>deserializes(Forum.event::fromJson))
+      .map(it -> it.creates(id -> id.))
       .map(it -> it.hydrate(State.Registered, Forum.defaults::snapshot));
   }
 

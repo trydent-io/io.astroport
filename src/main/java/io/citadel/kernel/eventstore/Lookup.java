@@ -1,6 +1,6 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.domain.State;
 import io.citadel.kernel.eventstore.meta.*;
 import io.citadel.kernel.func.ThrowableBiFunction;
 import io.vertx.core.Future;
@@ -9,11 +9,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.SqlClient;
 
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collector;
+import java.util.stream.Collector.Characteristics;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
@@ -22,10 +20,12 @@ public sealed interface Lookup permits Snapshots {
   static Lookup create(Vertx vertx, SqlClient client) {
     return new Snapshots(vertx, client);
   }
+
   default <T> Future<Snapshot> findSnapshot(T aggregateId, String aggregateName, long aggregateVersion) {
     return findSnapshot(Aggregate.id(aggregateId), Aggregate.name(aggregateName), Aggregate.version(aggregateVersion));
   }
-  Future<Snapshot> findSnapshot(ID<?> aggregateId, Name name, Version version);
+
+  <T> Future<Snapshot> findSnapshot(ID<T> aggregateId, Name name, Version version);
 
   final class Snapshot {
     private final Aggregate aggregate;
@@ -36,6 +36,7 @@ public sealed interface Lookup permits Snapshots {
     public Snapshot(Vertx vertx, SqlClient sqlClient, Aggregate aggregate) {
       this(vertx, sqlClient, aggregate, Stream.empty());
     }
+
     private Snapshot(Vertx vertx, SqlClient sqlClient, Aggregate aggregate, Stream<Event> events) {
       this.aggregate = aggregate;
       this.events = events;
@@ -51,22 +52,22 @@ public sealed interface Lookup permits Snapshots {
       return new Snapshot(vertx, sqlClient, aggregate, Stream.concat(events, Stream.of(event)));
     }
 
-    public <R extends Record, E> Normalize<R, E> normalize(ThrowableBiFunction<? super String, ? super JsonObject, ? extends E> converter) {
-      return initializer -> new Archetype<>(
+    public <R extends Record, E> Transient<R, E> deserializes(ThrowableBiFunction<? super String, ? super JsonObject, ? extends E> converter) {
+      return initializer -> new Detached<>(
         initializer.apply(aggregate.id()),
         aggregate,
         events.map(event -> converter.apply(event.name(), event.data()))
       );
     }
 
-    private final class Archetype<M extends Record, E> implements Identity<M, E> {
-      private static final Set<Collector.Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
+    private final class Detached<M extends Record, E> implements Identity<M, E> {
+      private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
 
       private final M model;
       private final Aggregate aggregate;
       private final Stream<E> events;
 
-      private Archetype(M model, Aggregate aggregate, Stream<E> events) {
+      private Detached(M model, Aggregate aggregate, Stream<E> events) {
         this.model = model;
         this.aggregate = aggregate;
         this.events = events;
@@ -74,32 +75,32 @@ public sealed interface Lookup permits Snapshots {
 
 
       @Override
-      public <S extends Enum<S> & Domain.State<S, E>> Context<M, S, E> hydrate(final S initial, final ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator) {
+      public <S extends Enum<S> & State<S, E>> Context<M, S, E> hydrate(final S initial, final ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator) {
         return events.collect(asContext(initial, hydrator));
       }
 
-      private <S extends Enum<S> & Domain.State<S, E>> AsContext<S> asContext(S initial, ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator) {
+      private <S extends Enum<S> & State<S, E>> AsContext<S> asContext(S initial, ThrowableBiFunction<? super M, ? super E, ? extends M> hydrator) {
         return new AsContext<>(initial, hydrator);
       }
 
       @SuppressWarnings({"unchecked", "ConstantConditions"})
-      private final class AsContext<S extends Enum<S> & Domain.State<S, E>> implements Collector<E, AsContext<S>.Staging[], Context<M, S, E>> {
+      private final class AsContext<S extends Enum<S> & State<S, E>> implements Collector<E, AsContext<S>.Staging[], Context<M, S, E>> {
         private final class Staging {
-          private final M model;
-          private final S state;
-          private Staging(M model) {
-            this(model, null);
+          private M model;
+          private S state;
+
+          private Staging(Consumer<? super Staging> consumer) {
+            consumer.accept(this);
           }
-          private Staging(M model, S state) {
-            this.model = model;
-            this.state = state;
-          }
+
           private Staging apply(E event) {
-            return state == null
-              ? new Staging(hydrator.apply(model, event))
-              : state.next(event)
-              .map(next -> new Staging(hydrator.apply(model, event), next))
-              .orElseThrow(() -> new IllegalStateException("Can't apply event, since current state is %s and event is %s".formatted(state, event)));
+            if (state != null)
+              state
+                .next(event)
+                .map(next -> state = next)
+                .orElseThrow(() -> new IllegalStateException("Can't set state"));
+            model = hydrator.apply(model, event);
+            return this;
           }
         }
 
@@ -113,7 +114,12 @@ public sealed interface Lookup permits Snapshots {
 
         @Override
         public Supplier<Staging[]> supplier() {
-          return () -> (Staging[]) new Object[]{new Staging(model, initial)};
+          return () -> (Staging[]) new Object[]{
+            new Staging(it -> {
+              it.model = model;
+              it.state = initial;
+            })
+          };
         }
 
         @Override

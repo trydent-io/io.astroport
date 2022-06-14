@@ -1,7 +1,6 @@
 package io.citadel.domain.member;
 
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.domain.attribute.Attribute;
 import io.citadel.kernel.eventstore.Context;
 import io.vertx.core.Future;
 
@@ -13,7 +12,7 @@ public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model,
     return new Aggregate(context);
   }
 
-  enum State implements Domain.State<State, Member.Event> {
+  enum State implements io.citadel.kernel.domain.State<State, Event> {
     Registered, Onboarded, Offboarded, Unregistered;
 
     @Override
@@ -28,12 +27,12 @@ public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model,
   record ID(String value) {
   }
 
-  record FirstName(String value) implements Attribute<String> {}
-  record LastName(String value) implements Attribute<String> {}
-  record Birthdate(LocalDate value) implements Attribute<LocalDate> {}
-  record FiscalCode(String value) implements Attribute<String> {}
+  record FirstName(String value) {}
+  record LastName(String value) {}
+  record Birthdate(LocalDate value) {}
+  record FiscalCode(String value) {}
 
-  record Model(Member.ID id, FirstName firstName, LastName lastName, Birthdate birthdate, FiscalCode fiscalCode) implements Domain.Model<Member.ID> {}
+  record Model(Member.ID id, FirstName firstName, LastName lastName, Birthdate birthdate, FiscalCode fiscalCode) {}
 }
 
 final class Aggregate implements Member {
