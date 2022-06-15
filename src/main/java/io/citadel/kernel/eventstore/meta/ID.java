@@ -6,7 +6,7 @@ public record ID(String value) {
   public ID {
     assert value != null;
   }
-  public <T> T as(Function<? super String, ? extends T> converter) {
-    return value instanceof T t ? t : null;
+  public <T> T as(Function<? super String, ? extends T> deserializer) {
+    return deserializer.apply(value);
   }
 }
