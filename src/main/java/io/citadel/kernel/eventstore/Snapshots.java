@@ -27,18 +27,18 @@ final class Snapshots implements Lookup {
   }
 
   @Override
-  public <T> Future<Snapshot> findSnapshot(final ID<T> aggregateId, final Name aggregateName, final Version aggregateVersion) {
+  public <T> Future<Snapshot> find(final ID<T> aggregateId, final Name aggregateName, final Version aggregateVersion) {
     return SqlTemplate.forQuery(client, """
         with aggregate as (
           select  aggregate_version as version
           from    event_store
           where   aggregate_id = #{aggregateId}
             and   lower(aggregate_name) = lower(#{aggregateName}) or #{aggregateName} is null
-            and   aggregate_version <= #{aggregateVersion} or #{aggregateVersion} = -1
+            and   aggregate_version <= #{aggregateVersion} or #{aggregateVersion} = 0
           order by aggregate_version desc
           limit 1
         )
-        select  id, event_name, event_data, aggregate_id, aggregate_name, (select version from aggregate) as aggregate_version, persisted_at
+        select  event_name, event_data, aggregate_id, aggregate_name, (select version from aggregate) as aggregate_version, timepoint
         from    event_store
         where   aggregate_id = #{aggregateId} and (lower(aggregate_name) = lower(#{aggregateName}) or #{aggregateName} is null)
         """)
@@ -59,7 +59,6 @@ final class Snapshots implements Lookup {
     return new AsSnapshot(Aggregate.of(aggregateId, aggregateName, aggregateVersion));
   }
 
-  @SuppressWarnings({"ConstantConditions"})
   private final class AsSnapshot implements Collector<Meta.Log, Snapshot[], Snapshot> {
     private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
     private final Aggregate aggregate;
@@ -70,7 +69,7 @@ final class Snapshots implements Lookup {
 
     @Override
     public Supplier<Snapshot[]> supplier() {
-      return () -> (Snapshot[]) new Object[]{new Snapshot(vertx, client, aggregate)};
+      return () -> new Snapshot[]{new Snapshot(vertx, client, aggregate)};
     }
 
     @Override
@@ -87,7 +86,7 @@ final class Snapshots implements Lookup {
 
     @Override
     public Function<Snapshot[], Snapshot> finisher() {
-      return prototypes -> prototypes[0];
+      return snapshots -> snapshots[0];
     }
 
     @Override

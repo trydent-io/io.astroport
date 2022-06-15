@@ -21,27 +21,27 @@ public sealed interface Lookup permits Snapshots {
     return new Snapshots(vertx, client);
   }
 
-  default <T> Future<Snapshot> findSnapshot(T aggregateId, String aggregateName, long aggregateVersion) {
-    return findSnapshot(Aggregate.id(aggregateId), Aggregate.name(aggregateName), Aggregate.version(aggregateVersion));
+  default <T> Future<Snapshot> find(String aggregateName, T aggregateId, long aggregateVersion) {
+    return find(Aggregate.id(aggregateId), Aggregate.name(aggregateName), Aggregate.version(aggregateVersion));
   }
 
-  <T> Future<Snapshot> findSnapshot(ID<T> aggregateId, Name name, Version version);
+  <T> Future<Snapshot> find(ID<T> aggregateId, Name name, Version version);
 
   final class Snapshot {
-    private final Aggregate aggregate;
-    private final Stream<Event> events;
     private final Vertx vertx;
     private final SqlClient sqlClient;
+    private final Aggregate aggregate;
+    private final Stream<Event> events;
 
     public Snapshot(Vertx vertx, SqlClient sqlClient, Aggregate aggregate) {
       this(vertx, sqlClient, aggregate, Stream.empty());
     }
 
     private Snapshot(Vertx vertx, SqlClient sqlClient, Aggregate aggregate, Stream<Event> events) {
-      this.aggregate = aggregate;
-      this.events = events;
       this.vertx = vertx;
       this.sqlClient = sqlClient;
+      this.aggregate = aggregate;
+      this.events = events;
     }
 
     Snapshot aggregate(Aggregate aggregate) {

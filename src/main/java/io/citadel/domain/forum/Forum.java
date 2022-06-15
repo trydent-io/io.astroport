@@ -87,7 +87,7 @@ final class Root implements Forum {
   }
 
   private Future<Context<Model, Event>> context(UUID forumId, long version) {
-    return lookup.findSnapshot(forumId, FORUM, version)
+    return lookup.find(FORUM, forumId, version)
       .map(it -> it.<Model, Event>deserializes(Forum.event::fromJson))
       .map(it -> it.creates(id -> id.))
       .map(it -> it.hydrate(State.Registered, Forum.defaults::snapshot));

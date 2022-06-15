@@ -10,6 +10,8 @@ import io.vertx.core.json.JsonObject;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public interface Domain {
   Defaults defaults = Defaults.Companion;
@@ -24,6 +26,12 @@ public interface Domain {
       return load(id, -1);
     }
     Future<A> load(ID id, long version);
+  }
+
+  interface Model {
+    <E> Model deserialize(BiFunction<? super String, ? super JsonObject, ? extends E> deserializer);
+
+    <R extends Record> Model initialize(Function initializer);
   }
 }
 
