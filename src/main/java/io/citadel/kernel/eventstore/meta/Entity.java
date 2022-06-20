@@ -1,16 +1,16 @@
 package io.citadel.kernel.eventstore.meta;
 
-public record Aggregate(ID id, Name name, Version version) {
-  public Aggregate {
+public record Entity(ID id, Name name, Version version) {
+  public Entity {
     assert id != null && name != null && version != null;
   }
 
-  public static <T> Aggregate of(T id, String name, long version) {
-    return new Aggregate(id(id), name(name), version(version));
+  public static <T> Entity of(T id, String name, long version) {
+    return new Entity(id(id), name(name), version(version));
   }
 
-  public static <T> Aggregate of(ID id, Name name, Version version) {
-    return new Aggregate(id, name, version);
+  public static Entity of(ID id, Name name, Version version) {
+    return new Entity(id, name, version);
   }
 
   public static <T> ID id(T value) {

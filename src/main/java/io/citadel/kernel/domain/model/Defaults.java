@@ -17,7 +17,7 @@ public enum Defaults {
     return new Service(
       Migration.eventStore(vertx, database),
       Lookup.create(client),
-      EventStore.sql(
+      Lookup.sql(
         vertx.eventBus(),
         client
       )

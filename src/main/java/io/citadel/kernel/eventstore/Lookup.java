@@ -8,56 +8,53 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.SqlClient;
 
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.*;
-import java.util.stream.Collector;
 import java.util.stream.Collector.Characteristics;
 import java.util.stream.Stream;
 
-import static java.util.Objects.*;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
-public sealed interface Lookup permits Sql {
-  static Lookup create(Vertx vertx, SqlClient client) {
+public sealed interface Lookup<R> permits Sql {
+  static Lookup<Meta.Log> create(Vertx vertx, SqlClient client) {
     return new Sql(vertx, client);
   }
 
-  default <T> Future<Snapshot> find(T aggregateId, String aggregateName, long aggregateVersion) {
-    return find(Aggregate.id(aggregateId), Aggregate.name(aggregateName), Aggregate.version(aggregateVersion));
+  default <T> Future<R> find(T aggregateId, String aggregateName, long aggregateVersion) {
+    return find(Entity.id(aggregateId), Entity.name(aggregateName), Entity.version(aggregateVersion));
   }
 
-  Future<Snapshot> find(ID aggregateId, Name name, Version version);
+  Future<R> find(ID id, Name name, Version version);
 
-  final class Snapshot {
+  final class Feed {
     private final Vertx vertx;
     private final SqlClient sqlClient;
-    private final Aggregate aggregate;
+    private final Entity entity;
     private final Stream<Event> events;
 
-    public Snapshot(Vertx vertx, SqlClient sqlClient, Aggregate aggregate) {
-      this(vertx, sqlClient, aggregate, Stream.empty());
+    public Feed(Vertx vertx, SqlClient sqlClient, Entity entity) {
+      this(vertx, sqlClient, entity, Stream.empty());
     }
 
-    private Snapshot(Vertx vertx, SqlClient sqlClient, Aggregate aggregate, Stream<Event> events) {
+    private Feed(Vertx vertx, SqlClient sqlClient, Entity entity, Stream<Event> events) {
       this.vertx = vertx;
       this.sqlClient = sqlClient;
-      this.aggregate = aggregate;
+      this.entity = entity;
       this.events = events;
     }
 
-    Snapshot aggregate(Aggregate aggregate) {
-      return this.aggregate.version().isDefault() ? new Snapshot(vertx, sqlClient, aggregate, events) : this;
+    Feed aggregate(Entity entity) {
+      return this.entity.version().isDefault() ? new Feed(vertx, sqlClient, entity, events) : this;
     }
 
-    Snapshot append(Event event) {
-      return new Snapshot(vertx, sqlClient, aggregate, Stream.concat(events, Stream.of(event)));
+    Feed append(Event event) {
+      return new Feed(vertx, sqlClient, entity, Stream.concat(events, Stream.of(event)));
     }
 
     public <R extends Record, E> Transient<R, E> deserializes(ThrowableBiFunction<? super String, ? super JsonObject, ? extends E> converter) {
       return initializer -> new Detached<>(
-        initializer.apply(aggregate.id()),
-        aggregate,
+        initializer.apply(entity.id()),
+        entity,
         events.map(event -> converter.apply(event.name(), event.data()))
       );
     }
@@ -66,12 +63,12 @@ public sealed interface Lookup permits Sql {
       private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
 
       private final M model;
-      private final Aggregate aggregate;
+      private final Entity entity;
       private final Stream<E> events;
 
-      private Detached(M model, Aggregate aggregate, Stream<E> events) {
+      private Detached(M model, Entity entity, Stream<E> events) {
         this.model = model;
-        this.aggregate = aggregate;
+        this.entity = entity;
         this.events = events;
       }
 
@@ -120,7 +117,7 @@ public sealed interface Lookup permits Sql {
         }
         @Override
         public Function<Staging[], Context<M, S, E>> finisher() {
-          return stagings -> new Context<>(stagings[0].model, stagings[0].state, Transaction.open(vertx, sqlClient, aggregate));
+          return stagings -> new Context<>(stagings[0].model, stagings[0].state, Transaction.open(vertx, sqlClient, entity));
         }
       }
     }

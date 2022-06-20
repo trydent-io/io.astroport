@@ -1,5 +1,6 @@
 package io.citadel.kernel.domain.model;
 
+import io.citadel.kernel.eventstore.meta.Entity;
 import io.citadel.kernel.eventstore.meta.Meta;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.AbstractVerticle;
@@ -51,16 +52,16 @@ public final class Service extends AbstractVerticle implements Domain.Verticle {
   }
 
   private Future<Meta> seek(final JsonObject aggregate) {
-    return seek(aggregate.mapTo(io.citadel.kernel.eventstore.meta.Aggregate.class));
+    return seek(aggregate.mapTo(Entity.class));
   }
 
   @Override
-  public Future<Meta> seek(io.citadel.kernel.eventstore.meta.Aggregate aggregate) {
-    return eventStore.findPrototype(aggregate);
+  public Future<Meta> seek(Entity entity) {
+    return eventStore.findPrototype(entity);
   }
 
   @Override
-  public Future<Meta> feed(final io.citadel.kernel.eventstore.meta.Aggregate aggregate, final Stream<io.citadel.kernel.eventstore.meta.Event> events, final String by) {
+  public Future<Meta> feed(final Entity entity, final Stream<io.citadel.kernel.eventstore.meta.Event> events, final String by) {
     return null;
   }
 

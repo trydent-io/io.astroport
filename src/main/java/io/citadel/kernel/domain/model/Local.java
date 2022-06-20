@@ -1,7 +1,7 @@
 package io.citadel.kernel.domain.model;
 
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.meta.Aggregate;
+import io.citadel.kernel.eventstore.meta.Entity;
 import io.citadel.kernel.eventstore.meta.Event;
 import io.vertx.core.json.JsonObject;
 
@@ -10,17 +10,17 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class Local implements Domain.Model {
-  private final Aggregate aggregate;
+  private final Entity entity;
   private final Stream<Event> events;
 
-  public Local(Aggregate aggregate, Stream<Event> events) {
-    this.aggregate = aggregate;
+  public Local(Entity entity, Stream<Event> events) {
+    this.entity = entity;
     this.events = events;
   }
 
   @Override
   public <E> Domain.Model deserialize(BiFunction<? super String, ? super JsonObject, ? extends E> deserializer) {
-    return new Deserialized<>(aggregate, events.map(it -> deserializer.apply(it.name(), it.data())));
+    return new Deserialized<>(entity, events.map(it -> deserializer.apply(it.name(), it.data())));
   }
 
   @Override
@@ -30,11 +30,11 @@ public final class Local implements Domain.Model {
 }
 
 final class Deserialized<T> implements Domain.Model {
-  private final Aggregate aggregate;
+  private final Entity entity;
   private final Stream<T> events;
 
-  Deserialized(Aggregate aggregate, Stream<T> events) {
-    this.aggregate = aggregate;
+  Deserialized(Entity entity, Stream<T> events) {
+    this.entity = entity;
     this.events = events;
   }
 
@@ -45,7 +45,7 @@ final class Deserialized<T> implements Domain.Model {
 
   @Override
   public <R extends Record> Domain.Model initialize(Function<? super I, ? extends R> initializer) {
-    return new Initialized<>(initializer.apply(aggregate.id().value()), events);
+    return new Initialized<>(initializer.apply(entity.id().value()), events);
   }
 }
 

@@ -16,7 +16,7 @@ public interface Aggregate<ID, R, E, S extends Enum<S> & State<S, E>> {
 
   UniProvider<? super String, ? extends ID> id();
 
-  UniProvider<? super ID, ? extends R> model();
+  UniProvider<? super ID, ? extends R> entity();
 
   BiProvider<? super String, ? super JsonObject, ? extends E> event();
 
@@ -27,7 +27,7 @@ public interface Aggregate<ID, R, E, S extends Enum<S> & State<S, E>> {
   static void main(String[] args) {
     Aggregate.root(
       Forum::id,
-      Forum::model,
+      Forum::entity,
       Forum::event,
       Forum::attach,
       Forum::entry
@@ -37,7 +37,7 @@ public interface Aggregate<ID, R, E, S extends Enum<S> & State<S, E>> {
 
 record Root<ID, R, E, S extends Enum<S> & State<S, E>>(
   UniProvider<? super String, ? extends ID> id,
-  UniProvider<? super ID, ? extends R> model,
+  UniProvider<? super ID, ? extends R> entity,
   BiProvider<? super String, ? super JsonObject, ? extends E> event,
   BiProvider<? super R, ? super E, ? extends R> attach,
   Provider<? extends S> state

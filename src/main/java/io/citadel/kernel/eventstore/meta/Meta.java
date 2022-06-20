@@ -13,7 +13,11 @@ import java.util.stream.StreamSupport;
 
 public interface Meta extends Iterable<Meta.Log> {
 
-  record Log(UUID id, Aggregate aggregate, Event event, Timepoint timepoint) {
+  record Log(UUID id, Entity entity, Event event, Timepoint timepoint) {
+  }
+
+  sealed interface Aggregate {
+
   }
 
   static Meta from(JsonArray array) {

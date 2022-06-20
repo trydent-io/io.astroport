@@ -7,17 +7,13 @@ import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collector;
-
-import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
-final class Sql implements Lookup {
+final class Sql implements Lookup<Meta.Log> {
   private final Vertx vertx;
   private final SqlClient client;
 
@@ -27,60 +23,61 @@ final class Sql implements Lookup {
   }
 
   @Override
-  public Future<Snapshot> find(final ID aggregateId, final Name aggregateName, final Version aggregateVersion) {
+  public Future<Meta.Log> find(final ID id, final Name name, final Version version) {
     return SqlTemplate.forQuery(client, """
-        with aggregate as (
-          select  aggregate_version as version
+        with entity as (
+          select  entity_version as version
           from    event_store
-          where   aggregate_id = #{aggregateId}
-            and   lower(aggregate_name) = lower(#{aggregateName}) or #{aggregateName} is null
-            and   aggregate_version <= #{aggregateVersion} or #{aggregateVersion} = 0
-          order by aggregate_version desc
+          where   entity_id = #{entityId}
+            and   lower(entity_name) = lower(#{entityName}) or #{entityName} is null
+            and   entity_version <= #{entityVersion} or #{entityVersion} = 0
+          order by entity_version desc
           limit 1
         )
-        select  event_name, event_data, aggregate_id, aggregate_name, (select version from aggregate) as aggregate_version, timepoint
+        select  event_name, event_data, entity_id, entity_name, (select version from entity) as entity_version, timepoint
         from    event_store
-        where   aggregate_id = #{aggregateId} and (lower(aggregate_name) = lower(#{aggregateName}) or #{aggregateName} is null)
+        where   entity_id = #{entityId} and (lower(entity_name) = lower(#{entityName}) or #{entityName} is null)
         """)
       .mapTo(row -> row)
       .execute(
         Map.of(
-          "aggregateId", aggregateId.toString(),
-          "aggregateName", aggregateName,
-          "aggregateVersion", aggregateVersion
+          "entityId", id.toString(),
+          "entityName", name,
+          "entityVersion", version
         )
       )
-      .map(Meta::fromRows)
-      .map(Meta::stream)
-      .map(logs -> logs.collect(asSnapshotOf(aggregateId, aggregateName, aggregateVersion)))
-      .map(snapshot -> snapshot.deserializes());
+      .map(Meta::fromRows);
   }
 
-  private AsSnapshot asSnapshotOf(ID aggregateId, Name aggregateName, Version aggregateVersion) {
-    return new AsSnapshot(Aggregate.of(aggregateId, aggregateName, aggregateVersion));
+  private ToFeed toFeedEntity(ID id, Name name, Version version) {
+    return new ToFeed(Entity.of(id, name, version));
   }
 
-  private final class AsSnapshot implements Aggregator<Meta.Log, Snapshot[], Snapshot> {
-    private final Aggregate aggregate;
-
-    private AsSnapshot(Aggregate aggregate) {
-      this.aggregate = aggregate;
+  private final class ToFeed implements Aggregator<Meta.Log, Feed[], Feed> {
+    private Entity entity;
+    private Stream<Event> events;
+    private ToFeed(Entity entity) {
+      this(entity, Stream.empty());
+    }
+    private ToFeed(Entity entity, Stream<Event> events) {
+      this.entity = entity;
+      this.events = events;
     }
 
     @Override
-    public Supplier<Snapshot[]> supplier() {
-      return () -> new Snapshot[]{new Snapshot(vertx, client, aggregate)};
+    public Supplier<Feed[]> supplier() {
+      return () -> new Feed[]{new Feed(vertx, client, entity)};
     }
 
     @Override
-    public BiConsumer<Snapshot[], Meta.Log> accumulator() {
+    public BiConsumer<Feed[], Meta.Log> accumulator() {
       return (snapshots, log) -> snapshots[0] = snapshots[0]
-        .aggregate(log.aggregate())
+        .entity(log.entity())
         .append(log.event());
     }
 
     @Override
-    public Function<Snapshot[], Snapshot> finisher() {
+    public Function<Feed[], Feed> finisher() {
       return snapshots -> snapshots[0];
     }
   }

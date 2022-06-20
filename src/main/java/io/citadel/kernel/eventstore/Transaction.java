@@ -1,7 +1,6 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.meta.Aggregate;
+import io.citadel.kernel.eventstore.meta.Entity;
 import io.citadel.kernel.eventstore.meta.Event;
 import io.citadel.kernel.eventstore.meta.Meta;
 import io.citadel.kernel.media.Json;
@@ -16,8 +15,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 sealed interface Transaction {
-  static Transaction open(Vertx vertx, SqlClient sqlClient, Aggregate aggregate) {
-    return new Open(vertx.eventBus(), sqlClient, aggregate, Stream.empty());
+  static Transaction open(Vertx vertx, SqlClient sqlClient, Entity entity) {
+    return new Open(vertx.eventBus(), sqlClient, entity, Stream.empty());
   }
 
   Transaction log(Event event);
@@ -31,13 +30,13 @@ sealed interface Transaction {
   final class Open implements Transaction {
     private final EventBus eventBus;
     private final SqlClient sqlClient;
-    private final Aggregate aggregate;
+    private final Entity entity;
     private final Stream<Event> changes;
 
-    public Open(EventBus eventBus, SqlClient sqlClient, Aggregate aggregate, Stream<Event> changes) {
+    public Open(EventBus eventBus, SqlClient sqlClient, Entity entity, Stream<Event> changes) {
       this.eventBus = eventBus;
       this.sqlClient = sqlClient;
-      this.aggregate = aggregate;
+      this.entity = entity;
       this.changes = changes;
     }
 
@@ -48,7 +47,7 @@ sealed interface Transaction {
 
     @Override
     public Transaction log(Event event) {
-      return new Open(eventBus, sqlClient, aggregate, append(event));
+      return new Open(eventBus, sqlClient, entity, append(event));
     }
 
     @Override
@@ -80,9 +79,9 @@ sealed interface Transaction {
         .mapTo(row -> row)
         .execute(
           Map.of(
-            "aggregateId", aggregate.id().toString(),
-            "aggregateName", aggregate.name().value(),
-            "aggregateVersion", aggregate.version().value(),
+            "aggregateId", entity.id().toString(),
+            "aggregateName", entity.name().value(),
+            "aggregateVersion", entity.version().value(),
             "events", Json.array(changes)
           )
         )
@@ -90,7 +89,7 @@ sealed interface Transaction {
         .onSuccess(feed ->
           feed.forEach(entry ->
             eventBus.publish(entry.event().name(), entry.event().data(), new DeliveryOptions()
-              .addHeader("aggregateId", entry.aggregate().id().toString())
+              .addHeader("aggregateId", entry.entity().id().toString())
               .addHeader("timepoint", entry.timepoint().asIsoDateTime())
             )
           )

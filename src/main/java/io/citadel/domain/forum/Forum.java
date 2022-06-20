@@ -21,8 +21,8 @@ public sealed interface Forum {
   static ID id(final String value) {
     return new ID(UUID.fromString(value));
   }
-  static Forum model(ID id) {
-    return new Model(id, null, null);
+  static Forum entity(ID id) {
+    return new Entity(id, null, null);
   }
   static Event event(String name, JsonObject json) {
     return switch (Names.valueOf(name)) {
@@ -36,8 +36,8 @@ public sealed interface Forum {
   }
   static Forum attach(Forum forum, Event event) {
     return switch (event) {
-      case Registered it -> new Model(forum.id(), it.details(), null);
-      case Replaced it -> new Model(forum.id(), it.details(), null);
+      case Registered it -> new Entity(forum.id(), it.details(), null);
+      case Replaced it -> new Entity(forum.id(), it.details(), null);
       case Opened it -> forum;
       case Closed it -> forum;
       case Reopened it -> forum;
@@ -101,5 +101,5 @@ public sealed interface Forum {
   } // ValueObject for Details
 }
 
-record Model(ID id, Details details, Member.ID registeredBy) implements Forum {
+record Entity(ID id, Details details, Member.ID registeredBy) implements Forum {
 }
