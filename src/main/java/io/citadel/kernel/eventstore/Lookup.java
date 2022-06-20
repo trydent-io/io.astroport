@@ -96,7 +96,7 @@ public sealed interface Lookup permits Snapshots {
           private Staging apply(E event) {
             if (state != null)
               state
-                .next(event)
+                .transit(event)
                 .map(next -> state = next)
                 .orElseThrow(() -> new IllegalStateException("Can't set state"));
             model = hydrator.apply(model, event);

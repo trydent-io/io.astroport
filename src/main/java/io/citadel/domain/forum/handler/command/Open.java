@@ -2,9 +2,9 @@ package io.citadel.domain.forum.handler.command;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Commands;
-import io.citadel.kernel.domain.Actor;
+import io.citadel.kernel.domain.Context;
 
-public record Open() implements Actor.Behaviour<Forum.Transaction, Commands.Open> {
+public record Open() implements Context.Behaviour<Forum.Transaction, Commands.Open> {
   @Override
   public void be(Forum.Transaction aggregate, Commands.Open behaviour, String by) {
     aggregate

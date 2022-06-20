@@ -6,6 +6,7 @@ import io.vertx.core.Future;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model, Member.Event, Member> {
   static Member boundary(Context<Model, Event> context) {
@@ -16,7 +17,7 @@ public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model,
     Registered, Onboarded, Offboarded, Unregistered;
 
     @Override
-    public Optional<State> next(Event event) {
+    public Optional<State> transit(Event event) {
       return Optional.empty();
     }
   }

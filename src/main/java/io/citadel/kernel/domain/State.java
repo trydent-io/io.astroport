@@ -1,7 +1,5 @@
 package io.citadel.kernel.domain;
 
-import java.util.Optional;
-
 public interface State<S extends Enum<S> & State<S, E>, E> {
   @SuppressWarnings("unchecked")
   default boolean is(S... states) {
@@ -11,5 +9,5 @@ public interface State<S extends Enum<S> & State<S, E>, E> {
     return index < states.length;
   }
 
-  Optional<S> next(E event);
+  S transit(E event);
 }

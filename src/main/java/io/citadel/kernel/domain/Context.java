@@ -5,12 +5,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 
-public interface Actor<A extends Domain.Transaction<?, ?>> {
-  static <M extends Record & Domain.Model<?>, A extends Domain.Transaction<?, ?>> Actor<A> create(Vertx vertx, Domain.Archetype<M> archetype) {
+public interface Context<A extends Domain.Transaction<?, ?>> {
+  static <M extends Record & Domain.Model<?>, A extends Domain.Transaction<?, ?>> Context<A> create(Vertx vertx, Domain.Archetype<M> archetype) {
     return new Behavioural<>(vertx, Domain.defaults.lookup(), archetype);
   }
 
-  <R extends Record> Actor<A> be(Class<R> type, String address, Behaviour<A, R> handler);
+  <R extends Record> Context<A> be(Class<R> type, String address, Behaviour<A, R> handler);
 
   interface Behaviour<A extends Domain.Transaction<?, ?>, R extends Record> {
     default void be(Headers headers, Message<R> message, A aggregate, R behaviour, String by) {
@@ -20,7 +20,7 @@ public interface Actor<A extends Domain.Transaction<?, ?>> {
   }
 }
 
-final class Behavioural<M extends Record & Domain.Model<?>, A extends Domain.Transaction<?, ?>> implements Actor<A> {
+final class Behavioural<M extends Record & Domain.Model<?>, A extends Domain.Transaction<?, ?>> implements Context<A> {
   private final EventBus eventBus;
   private final Domain.Lookup<A> lookup;
   private final Domain.Archetype<M> archetype;
@@ -35,7 +35,7 @@ final class Behavioural<M extends Record & Domain.Model<?>, A extends Domain.Tra
   }
 
   @Override
-  public <R extends Record> Actor<A> be(Class<R> type, String address, Behaviour<A, R> behaviour) {
+  public <R extends Record> Context<A> be(Class<R> type, String address, Behaviour<A, R> behaviour) {
     eventBus
       .registerDefaultCodec(type, RecordType.codec(type))
       .<R>localConsumer(address, message ->

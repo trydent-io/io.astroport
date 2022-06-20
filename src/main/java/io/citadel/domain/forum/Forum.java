@@ -1,49 +1,79 @@
 package io.citadel.domain.forum;
 
-import io.citadel.domain.forum.handler.Commands;
-import io.citadel.domain.forum.handler.Events;
 import io.citadel.domain.member.Member;
-import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.Context;
-import io.citadel.kernel.eventstore.Lookup;
-import io.citadel.kernel.func.ThrowableFunction;
-import io.vertx.core.Future;
+import io.citadel.kernel.domain.State;
+import io.vertx.core.json.JsonObject;
 
-import java.util.Optional;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
-public interface Forum extends Domain.Aggregate<Forum.ID, Forum.Model, Forum.Event, Forum> {
-  Commands commands = Commands.Companion;
-  Events event = Events.Companion;
-  Defaults defaults = Defaults.Companion;
+public sealed interface Forum {
+  ID id();
+  Details details();
+  Member.ID registeredBy();
 
-  static Forum create(Lookup lookup) {
-    return new Root(lookup);
+  String FORUM = "forum";
+  static ID id(final String value) { return new ID(UUID.fromString(value)); }
+  static Forum model(ID id) { return new Model(id, null, null); }
+  static Event event(String name, JsonObject json) {
+    return switch (Event.Names.valueOf(name)) {
+      case Opened -> json.mapTo(Event.Opened.class);
+      case Closed -> json.mapTo(Event.Closed.class);
+      case Registered -> json.mapTo(Event.Registered.class);
+      case Reopened -> json.mapTo(Event.Reopened.class);
+      case Replaced -> json.mapTo(Event.Replaced.class);
+      case Archived -> json.mapTo(Event.Archived.class);
+    };
+  }
+  static Forum attach(Forum forum, Forum.Event event) {
+    return switch (event) {
+      case Event.Registered it ->  new Model(forum.id(), it.details(), null);
+      case Event.Replaced it -> new Model(forum.id(), it.details(), null);
+      case Event.Opened it -> forum;
+      case Event.Closed it -> forum;
+      case Event.Reopened it -> forum;
+      case Event.Archived it -> forum;
+    };
   }
 
-  enum State implements io.citadel.kernel.domain.State<State, Event> {
+  static Invariants entry() {
+    return Invariants.Registered;
+  }
+
+  enum Invariants implements State<Invariants, Event> {
     Registered, Open, Closed, Archived;
 
     @Override
-    public Optional<Forum.State> next(final Event event) {
-      return Optional.ofNullable(
-        switch (event) {
-          case Events.Registered it && this.is(Registered) -> this;
-          case Events.Replaced it && this.is(Registered, Open) -> this;
-          case Events.Opened it && this.is(Registered) -> Open;
-          case Events.Closed it && this.is(Open) -> Closed;
-          case Events.Reopened it && this.is(Closed) -> Registered;
-          case Events.Archived it && this.is(Closed) -> Archived;
-          default -> null;
-        }
-      );
+    public Invariants transit(final Event event) {
+      return switch (event) {
+          case Event.Registered it && this.is(Registered) -> this;
+          case Event.Replaced it && this.is(Registered, Open) -> this;
+          case Event.Opened it && this.is(Registered) -> Open;
+          case Event.Closed it && this.is(Open) -> Closed;
+          case Event.Reopened it && this.is(Closed) -> Registered;
+          case Event.Archived it && this.is(Closed) -> Archived;
+          default -> throw new IllegalStateException("Can't transit to next state, state %s and event %s don't satisfy invariant".formatted(this, event));
+        };
     }
   }
 
-  sealed interface Command permits Commands.Replace, Commands.Archive, Commands.Close, Commands.Open, Commands.Register, Commands.Reopen {
+  sealed interface Command {
+    record Register(Forum.Name name, Forum.Description description, LocalDateTime at) implements Forum.Command {}
+    record Open(LocalDateTime at) implements Forum.Command {}
+    record Replace(Forum.Name name, Forum.Description description) implements Forum.Command {}
+    record Close(LocalDateTime at) implements Forum.Command {}
+    record Reopen(LocalDateTime at, Member.ID memberID) implements Forum.Command {}
+    record Archive() implements Forum.Command {}
   }
 
-  sealed interface Event permits Events.Archived, Events.Closed, Events.Replaced, Events.Opened, Events.Registered, Events.Reopened {
+  sealed interface Event {
+    enum Names {Opened, Closed, Registered, Reopened, Replaced, Archived}
+    record Registered(Forum.Details details) implements Forum.Event {}
+    record Replaced(Forum.Details details) implements Forum.Event {}
+    record Opened() implements Forum.Event {}
+    record Closed() implements Forum.Event {}
+    record Reopened() implements Forum.Event {}
+    record Archived() implements Forum.Event {}
   }
 
   record ID(UUID value) {
@@ -54,48 +84,6 @@ public interface Forum extends Domain.Aggregate<Forum.ID, Forum.Model, Forum.Eve
   } // part of Details
   record Details(Name name, Description description) {
   } // ValueObject for Details
-
-  record Model(Forum.ID id, Forum.Details details, Member.ID registerer) {
-    public Model(Forum.ID id) {
-      this(id, null, null);
-    }
-  }
-
-  <T> Future<T> registeredBy(ThrowableFunction<? super Member, ? extends T> function);
 }
 
-final class Root implements Forum {
-  public static final String FORUM = "forum";
-  private final Lookup lookup;
-  private final Context<Model, Event> context;
-  private final Member member;
-
-  Root(Lookup lookup, Context<Model, Event> context, Member member) {
-    this.lookup = lookup;
-    this.context = context;
-    this.member = member;
-  }
-
-  @Override
-  public Future<Forum> load(ID id, long version) {
-    return context(id, version).map(context -> new Root(lookup, context, member));
-  }
-
-  @Override
-  public Future<Forum> reload() {
-    return context.load(model -> load(model.id()));
-  }
-
-  private Future<Context<Model, Event>> context(UUID forumId, long version) {
-    return lookup.find(FORUM, forumId, version)
-      .map(it -> it.<Model, Event>deserializes(Forum.event::fromJson))
-      .map(it -> it.creates(id -> id.))
-      .map(it -> it.hydrate(State.Registered, Forum.defaults::snapshot));
-  }
-
-  @Override
-  public <T> Future<T> registeredBy(ThrowableFunction<? super Member, ? extends T> then) {
-    return context.load(model -> member.load(model.registerer()).map(then::apply));
-  }
-}
-
+record Model(Forum.ID id, Forum.Details details, Member.ID registeredBy) implements Forum {}
