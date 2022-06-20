@@ -1,22 +1,22 @@
 package io.citadel.kernel.eventstore.meta;
 
-public record Aggregate<T>(ID<T> id, Name name, Version version) {
+public record Aggregate(ID id, Name name, Version version) {
   public Aggregate {
     assert id != null && name != null && version != null;
   }
 
-  public static <T> Aggregate<T> of(T id, String name, long version) {
-    return new Aggregate<>(id(id), name(name), version(version));
+  public static <T> Aggregate of(T id, String name, long version) {
+    return new Aggregate(id(id), name(name), version(version));
   }
 
-  public static <T> Aggregate<T> of(ID<T> id, Name name, Version version) {
-    return new Aggregate<>(id, name, version);
+  public static <T> Aggregate of(ID id, Name name, Version version) {
+    return new Aggregate(id, name, version);
   }
 
-  public static <T> ID<T> id(T value) {
+  public static <T> ID id(T value) {
     return switch (value) {
       case null -> throw new IllegalArgumentException("ID can't be null");
-      default -> new ID<>(value);
+      default -> new ID(value.toString());
     };
   }
 

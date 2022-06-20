@@ -17,17 +17,17 @@ import java.util.stream.Collector;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
 @SuppressWarnings({"SqlNoDataSourceInspection", "SqlResolve"})
-final class Snapshots implements Lookup {
+final class Sql implements Lookup {
   private final Vertx vertx;
   private final SqlClient client;
 
-  Snapshots(Vertx vertx, SqlClient client) {
+  Sql(Vertx vertx, SqlClient client) {
     this.vertx = vertx;
     this.client = client;
   }
 
   @Override
-  public <T> Future<Snapshot> find(final ID<T> aggregateId, final Name aggregateName, final Version aggregateVersion) {
+  public Future<Snapshot> find(final ID aggregateId, final Name aggregateName, final Version aggregateVersion) {
     return SqlTemplate.forQuery(client, """
         with aggregate as (
           select  aggregate_version as version
@@ -52,15 +52,15 @@ final class Snapshots implements Lookup {
       )
       .map(Meta::fromRows)
       .map(Meta::stream)
-      .map(logs -> logs.collect(asSnapshotOf(aggregateId, aggregateName, aggregateVersion)));
+      .map(logs -> logs.collect(asSnapshotOf(aggregateId, aggregateName, aggregateVersion)))
+      .map(snapshot -> snapshot.deserializes());
   }
 
-  private AsSnapshot asSnapshotOf(ID<?> aggregateId, Name aggregateName, Version aggregateVersion) {
+  private AsSnapshot asSnapshotOf(ID aggregateId, Name aggregateName, Version aggregateVersion) {
     return new AsSnapshot(Aggregate.of(aggregateId, aggregateName, aggregateVersion));
   }
 
-  private final class AsSnapshot implements Collector<Meta.Log, Snapshot[], Snapshot> {
-    private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
+  private final class AsSnapshot implements Aggregator<Meta.Log, Snapshot[], Snapshot> {
     private final Aggregate aggregate;
 
     private AsSnapshot(Aggregate aggregate) {
@@ -80,18 +80,8 @@ final class Snapshots implements Lookup {
     }
 
     @Override
-    public BinaryOperator<Snapshot[]> combiner() {
-      return (prev, next) -> prev;
-    }
-
-    @Override
     public Function<Snapshot[], Snapshot> finisher() {
       return snapshots -> snapshots[0];
-    }
-
-    @Override
-    public Set<Characteristics> characteristics() {
-      return IdentityFinish;
     }
   }
 }

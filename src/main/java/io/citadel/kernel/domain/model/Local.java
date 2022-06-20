@@ -9,11 +9,11 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public final class Local<I> implements Domain.Model {
-  private final Aggregate<I> aggregate;
+public final class Local implements Domain.Model {
+  private final Aggregate aggregate;
   private final Stream<Event> events;
 
-  public Local(Aggregate<I> aggregate, Stream<Event> events) {
+  public Local(Aggregate aggregate, Stream<Event> events) {
     this.aggregate = aggregate;
     this.events = events;
   }
@@ -22,13 +22,18 @@ public final class Local<I> implements Domain.Model {
   public <E> Domain.Model deserialize(BiFunction<? super String, ? super JsonObject, ? extends E> deserializer) {
     return new Deserialized<>(aggregate, events.map(it -> deserializer.apply(it.name(), it.data())));
   }
+
+  @Override
+  public <R extends Record> Domain.Model initialize(Function initializer) {
+    return this;
+  }
 }
 
-final class Deserialized<I, T> implements Domain.Model {
-  private final Aggregate<I> aggregate;
+final class Deserialized<T> implements Domain.Model {
+  private final Aggregate aggregate;
   private final Stream<T> events;
 
-  Deserialized(Aggregate<I> aggregate, Stream<T> events) {
+  Deserialized(Aggregate aggregate, Stream<T> events) {
     this.aggregate = aggregate;
     this.events = events;
   }

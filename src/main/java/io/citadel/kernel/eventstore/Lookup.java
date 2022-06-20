@@ -8,24 +8,26 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.SqlClient;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.*;
 import java.util.stream.Collector;
 import java.util.stream.Collector.Characteristics;
 import java.util.stream.Stream;
 
+import static java.util.Objects.*;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
-public sealed interface Lookup permits Snapshots {
+public sealed interface Lookup permits Sql {
   static Lookup create(Vertx vertx, SqlClient client) {
-    return new Snapshots(vertx, client);
+    return new Sql(vertx, client);
   }
 
-  default <T> Future<Snapshot> find(String aggregateName, T aggregateId, long aggregateVersion) {
+  default <T> Future<Snapshot> find(T aggregateId, String aggregateName, long aggregateVersion) {
     return find(Aggregate.id(aggregateId), Aggregate.name(aggregateName), Aggregate.version(aggregateVersion));
   }
 
-  <T> Future<Snapshot> find(ID<T> aggregateId, Name name, Version version);
+  Future<Snapshot> find(ID aggregateId, Name name, Version version);
 
   final class Snapshot {
     private final Vertx vertx;
@@ -84,21 +86,16 @@ public sealed interface Lookup permits Snapshots {
       }
 
       @SuppressWarnings({"unchecked", "ConstantConditions"})
-      private final class AsContext<S extends Enum<S> & State<S, E>> implements Collector<E, AsContext<S>.Staging[], Context<M, S, E>> {
+      private final class AsContext<S extends Enum<S> & State<S, E>> implements Aggregator<E, AsContext<S>.Staging[], Context<M, S, E>> {
         private final class Staging {
           private M model;
           private S state;
-
-          private Staging(Consumer<? super Staging> consumer) {
-            consumer.accept(this);
+          private Staging(M model, S initial) {
+            this.model = model;
+            this.state = initial;
           }
-
           private Staging apply(E event) {
-            if (state != null)
-              state
-                .transit(event)
-                .map(next -> state = next)
-                .orElseThrow(() -> new IllegalStateException("Can't set state"));
+            if (state != null) state = state.transit(event);
             model = hydrator.apply(model, event);
             return this;
           }
@@ -114,32 +111,16 @@ public sealed interface Lookup permits Snapshots {
 
         @Override
         public Supplier<Staging[]> supplier() {
-          return () -> (Staging[]) new Object[]{
-            new Staging(it -> {
-              it.model = model;
-              it.state = initial;
-            })
-          };
+          return () -> (Staging[]) new Object[]{ new Staging(model, initial)};
         }
 
         @Override
         public BiConsumer<Staging[], E> accumulator() {
           return (aggregates, event) -> aggregates[0] = aggregates[0].apply(event);
         }
-
-        @Override
-        public BinaryOperator<Staging[]> combiner() {
-          return (stagings, stagings2) -> stagings;
-        }
-
         @Override
         public Function<Staging[], Context<M, S, E>> finisher() {
           return stagings -> new Context<>(stagings[0].model, stagings[0].state, Transaction.open(vertx, sqlClient, aggregate));
-        }
-
-        @Override
-        public Set<Characteristics> characteristics() {
-          return IdentityFinish;
         }
       }
     }

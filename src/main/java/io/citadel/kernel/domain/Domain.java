@@ -31,7 +31,7 @@ public interface Domain {
   interface Model {
     <E> Model deserialize(BiFunction<? super String, ? super JsonObject, ? extends E> deserializer);
 
-    <R extends Record> Model initialize(Function initializer);
+    <R extends Record> Model initialize(Function<? super String, ? extends R> initializer);
   }
 }
 
