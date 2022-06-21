@@ -2,7 +2,7 @@ package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.eventstore.meta.Entity;
 import io.citadel.kernel.eventstore.meta.Event;
-import io.citadel.kernel.eventstore.meta.Meta;
+import io.citadel.kernel.eventstore.meta.Feed;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -85,7 +85,7 @@ sealed interface Transaction {
             "events", Json.array(changes)
           )
         )
-        .map(Meta::fromRows)
+        .map(Feed::fromRows)
         .onSuccess(feed ->
           feed.forEach(entry ->
             eventBus.publish(entry.event().name(), entry.event().data(), new DeliveryOptions()

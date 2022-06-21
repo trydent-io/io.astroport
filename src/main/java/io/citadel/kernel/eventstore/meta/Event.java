@@ -2,8 +2,10 @@ package io.citadel.kernel.eventstore.meta;
 
 import io.vertx.core.json.JsonObject;
 
-public record Event(String name, JsonObject data) {
-
+public record Event(Name name, JsonObject data) {
+  public static Event of(String name, JsonObject data) {
+    return new Event(name(name), data);
+  }
   public static Name name(String value) {
     return switch (value) {
       case null -> throw new IllegalArgumentException("Name can't be null");
@@ -11,5 +13,4 @@ public record Event(String name, JsonObject data) {
       default -> new Name(value);
     };
   }
-
 }

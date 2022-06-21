@@ -22,11 +22,6 @@ public final class Local implements Domain.Model {
   public <E> Domain.Model deserialize(BiFunction<? super String, ? super JsonObject, ? extends E> deserializer) {
     return new Deserialized<>(entity, events.map(it -> deserializer.apply(it.name(), it.data())));
   }
-
-  @Override
-  public <R extends Record> Domain.Model initialize(Function initializer) {
-    return this;
-  }
 }
 
 final class Deserialized<T> implements Domain.Model {

@@ -15,9 +15,6 @@ import java.util.UUID;
 
 public sealed interface Forum {
   String FORUM = "forum";
-  ID id();
-  Details details();
-  Member.ID registeredBy();
   static ID id(final String value) {
     return new ID(UUID.fromString(value));
   }
@@ -44,7 +41,7 @@ public sealed interface Forum {
       case Archived it -> forum;
     };
   }
-  static State entry() {
+  static State entryPoint() {
     return State.Registered;
   }
   enum State implements io.citadel.kernel.domain.State<State, Event> {
@@ -99,6 +96,10 @@ public sealed interface Forum {
   } // part of Details
   record Details(Name name, Description description) {
   } // ValueObject for Details
+
+  ID id();
+  Details details();
+  Member.ID registeredBy();
 }
 
 record Entity(ID id, Details details, Member.ID registeredBy) implements Forum {

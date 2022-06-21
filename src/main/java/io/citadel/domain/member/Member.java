@@ -1,16 +1,14 @@
 package io.citadel.domain.member;
 
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.Context;
 import io.vertx.core.Future;
 
 import java.time.LocalDate;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model, Member.Event, Member> {
-  static Member boundary(Context<Model, Event> context) {
-    return new Aggregate(context);
+  static Member boundary(io.citadel.kernel.eventstore.Aggregate<Model, Event> aggregate) {
+    return new Aggregate(aggregate);
   }
 
   enum State implements io.citadel.kernel.domain.State<State, Event> {
@@ -37,14 +35,14 @@ public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model,
 }
 
 final class Aggregate implements Member {
-  private final Context<Member.Model, Member.State, Member.Event> context;
+  private final io.citadel.kernel.eventstore.Aggregate<Model, State, Event> aggregate;
 
-  Aggregate(Context<Model, Event> context) {
-    this.context = context;
+  Aggregate(io.citadel.kernel.eventstore.Aggregate<Model, Event> aggregate) {
+    this.aggregate = aggregate;
   }
 
   @Override
-  public Future<Context<Model, Event>> load(ID id, long version) {
+  public Future<io.citadel.kernel.eventstore.Aggregate<Model, Event>> load(ID id, long version) {
     return null;
   }
 }

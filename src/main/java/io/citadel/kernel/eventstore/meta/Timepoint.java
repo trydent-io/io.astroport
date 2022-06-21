@@ -12,4 +12,11 @@ public record Timepoint(LocalDateTime value) {
   public String asIsoDateTime() {
     return value.format(ISO_DATE_TIME);
   }
+
+  public static Timepoint of(LocalDateTime value) {
+    return switch (value) {
+      case null -> throw new IllegalArgumentException("Value can't be null");
+      default -> new Timepoint(value);
+    };
+  }
 }

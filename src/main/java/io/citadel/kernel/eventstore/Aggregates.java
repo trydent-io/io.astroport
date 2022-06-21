@@ -1,13 +1,9 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.domain.Aggregate;
+import io.citadel.kernel.domain.Descriptor;
 import io.citadel.kernel.domain.State;
-import io.citadel.kernel.eventstore.Feed.Event;
-import io.citadel.kernel.eventstore.meta.Entity;
-import io.citadel.kernel.eventstore.meta.ID;
-import io.citadel.kernel.eventstore.meta.Meta;
-import io.citadel.kernel.eventstore.meta.Name;
-import io.citadel.kernel.eventstore.meta.Version;
+import io.citadel.kernel.eventstore.meta.*;
+import io.citadel.kernel.eventstore.meta.Feed;
 import io.vertx.core.Future;
 
 import java.util.Set;
@@ -16,71 +12,54 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import java.util.stream.Stream;
 
-final class Aggregates<I, R, E, S extends Enum<S> & State<S, E>> implements Lookup<R> {
-  private final Aggregate<I, R, E, S> aggregate;
-  private final Lookup<Meta> lookup;
+final class Aggregates<I, R, E, S extends Enum<S> & State<S, E>> implements Lookup<Context<R, E>> {
+  private final Descriptor<I, R, E, S> descriptor;
+  private final Lookup<Feed> lookup;
 
-  Aggregates(Aggregate<I, R, E, S> aggregate, Lookup<Meta> lookup) {
-    this.aggregate = aggregate;
+  Aggregates(Descriptor<I, R, E, S> descriptor, Lookup<Feed> lookup) {
+    this.descriptor = descriptor;
     this.lookup = lookup;
   }
 
   @Override
-  public Future<R> find(ID id, Name name, Version version) {
+  public Future<Context<R, E>> find(ID id, Name name, Version version) {
     return lookup.find(id, name, version)
-      .map(Meta::stream)
-      .map(logs -> logs.collect(new Aggregator(Entity.of(id, name, version), logs.map(it -> it.event()), aggregate.state())));
+      .map(Feed::stream)
+      .map(logs -> logs.collect(new Aggregator(descriptor.entry(), descriptor.entity(descriptor.id(id.value())))));
   }
 
-  @SuppressWarnings("unchecked")
-  private final class Aggregator implements Collector<Meta.Log, R, Object> {
-    private final Entity entity;
-    private final Stream<Event> events;
-    private R record;
+  private final class Aggregator implements Collector<Feed.Log, R, Context<R, E>> {
+    private R[] entity;
     private S state;
-
-    Aggregator(Entity entity, Stream<Event> events, S state) {
-      this.entity = entity;
-      this.events = events;
+    private Entity logged;
+    @SafeVarargs
+    private Aggregator(S state, R... entity) {
       this.state = state;
+      this.entity = entity;
     }
-
     @Override
     public Supplier<R> supplier() {
-      return () -> {
-        record = aggregate
-          .entity()
-          .apply(
-            aggregate
-              .id()
-              .apply(entity.toString())
-          );
-
-        return record;
-      };
+      return () -> entity[0];
     }
-
     @Override
-    public BiConsumer<R, Meta.Log> accumulator() {
-      return (r, log) -> {
-        final E event = aggregate.event().apply(log.event().name(), log.event().data());
-        if (state != null) state = state.transit(event);
-        record = aggregate.attach().apply(r, event);
-      };
+    public BiConsumer<R, Feed.Log> accumulator() {
+      return this::accumulate;
     }
-
+    private void accumulate(R current, Feed.Log log) {
+      final var event = descriptor.event(log.event().name().value(), log.event().data());
+      if (state != null) state = state.transit(event);
+      entity[0] = descriptor.attach(current, event);
+      logged = log.entity();
+    }
     @Override
     public BinaryOperator<R> combiner() {
       return (prev, next) -> prev;
     }
-
     @Override
-    public Function<R, Object> finisher() {
-      return null;
+    public Function<R, Context<R, E>> finisher() {
+      return Context.of(entity, state, Transaction.open(vertx, sqlClient, logged));
     }
-
     @Override
     public Set<Characteristics> characteristics() {
       return null;

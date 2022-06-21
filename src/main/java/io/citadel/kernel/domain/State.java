@@ -10,4 +10,8 @@ public interface State<S extends Enum<S> & State<S, E>, E> {
   }
 
   S transit(E event);
+
+  default boolean transitable(E event) {
+    return transit(event) != null;
+  }
 }
