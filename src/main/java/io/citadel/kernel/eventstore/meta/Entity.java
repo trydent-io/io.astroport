@@ -1,9 +1,6 @@
 package io.citadel.kernel.eventstore.meta;
 
-public record Entity(ID id, Name name, Version version) {
-  public Entity {
-    assert id != null && name != null && version != null;
-  }
+public sealed interface Entity {
 
   public static <T> Entity of(T id, String name, long version) {
     return new Entity(id(id), name(name), version(version));
@@ -20,12 +17,8 @@ public record Entity(ID id, Name name, Version version) {
     };
   }
 
-  public static Name name(String value) {
-    return switch (value) {
-      case null -> throw new IllegalArgumentException("Name can't be null");
-      case String it && (it.isEmpty() || it.isBlank()) -> throw new IllegalArgumentException("Name can't be empty or blank");
-      default -> new Name(value);
-    };
+  static Name name(String value) {
+    return Name.of(value);
   }
 
   public static Version version(Long value) {
@@ -35,4 +28,10 @@ public record Entity(ID id, Name name, Version version) {
       default -> new Version(value);
     };
   }
+
+  Aggregate<R> aggregate()
+}
+
+final class Meta implements Entity {
+
 }

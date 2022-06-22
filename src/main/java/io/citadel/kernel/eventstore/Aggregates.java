@@ -13,18 +13,18 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-final class Aggregates<I, R, E, S extends Enum<S> & State<S, E>> implements Lookup<Context<R, E>> {
+final class Aggregates<I, R, E, S extends Enum<S> & State<S, E>> implements Metadata<Context<R, E>> {
   private final Descriptor<I, R, E, S> descriptor;
-  private final Lookup<Feed> lookup;
+  private final Metadata<Feed> metadata;
 
-  Aggregates(Descriptor<I, R, E, S> descriptor, Lookup<Feed> lookup) {
+  Aggregates(Descriptor<I, R, E, S> descriptor, Metadata<Feed> metadata) {
     this.descriptor = descriptor;
-    this.lookup = lookup;
+    this.metadata = metadata;
   }
 
   @Override
-  public Future<Context<R, E>> find(ID id, Name name, Version version) {
-    return lookup.find(id, name, version)
+  public Future<Context<R, E>> lookup(ID id, Name name, Version version) {
+    return metadata.lookup(id, name, version)
       .map(Feed::stream)
       .map(logs -> logs.collect(new Aggregator(descriptor.entry(), descriptor.entity(descriptor.id(id.value())))));
   }

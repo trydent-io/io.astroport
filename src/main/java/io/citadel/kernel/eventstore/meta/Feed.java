@@ -23,7 +23,7 @@ public interface Feed {
   }
 
   static Feed fromLogs(RowSet<Log> rows) {
-    return new Local(stream(rows.spliterator(), false));
+    return new Meta(stream(rows.spliterator(), false));
   }
 
   <ID, R extends Record, E, S extends Enum<S> & State<S, E>> Aggregate<R, E> aggregate(Vertx vertx, Descriptor<ID, R, E, S> descriptor);

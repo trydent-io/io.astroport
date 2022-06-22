@@ -214,28 +214,28 @@
           </volumes>
           <images>
             <image>
-              <alias>citadel</alias>
+              <alias>eventstore</alias>
               <name>postgres</name>
               <run>
                 <namingStrategy>none</namingStrategy>
                 <volumes>
                   <bind>
-                    <volume>${user.home}/sdk/docker/volume/citadel:/var/lib/postgresql/data</volume>
+                    <volume>${user.home}/sdk/dbms/eventstore:/var/lib/postgresql/data</volume>
                   </bind>
                 </volumes>
                 <env>
-                  <POSTGRES_USER>citadel</POSTGRES_USER>
+                  <POSTGRES_USER>eventstore</POSTGRES_USER>
                   <POSTGRES_PASSWORD>docker</POSTGRES_PASSWORD>
-                  <POSTGRES_DB>citadel</POSTGRES_DB>
+                  <POSTGRES_DB>eventstore</POSTGRES_DB>
                 </env>
                 <ports>
-                  <port>5433:5432</port>
+                  <port>5533:5432</port>
                 </ports>
                 <wait>
                   <time>10000</time>
                 </wait>
                 <log>
-                  <prefix>citadeldb » .</prefix>
+                  <prefix>eventstore » .</prefix>
                   <enabled>true</enabled>
                   <color>yellow</color>
                 </log>
