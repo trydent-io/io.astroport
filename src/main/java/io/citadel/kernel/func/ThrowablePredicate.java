@@ -9,7 +9,7 @@ public interface ThrowablePredicate<A> extends Predicate<A> {
     try {
       return tryTest(a);
     } catch (Throwable e) {
-      throw new FunctionalException("Can't test predicate", e);
+      throw new LambdaException("Can't test predicate", e);
     }
   }
 

@@ -12,7 +12,7 @@ public interface ThrowableFunction<T, R> extends Function<T, R> {
     try {
       return tryApply(t);
     } catch (Throwable e) {
-      throw new FunctionalException("Can't apply function", e);
+      throw new LambdaException("Can't apply function", e);
     }
   }
 

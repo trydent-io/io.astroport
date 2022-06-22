@@ -9,7 +9,7 @@ public interface ThrowableSupplier<A> extends Supplier<A> {
     try {
       return tryGet();
     } catch (Throwable e) {
-      throw new FunctionalException("Can't get from supplier", e);
+      throw new LambdaException("Can't get from supplier", e);
     }
   }
 

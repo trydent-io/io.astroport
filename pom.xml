@@ -28,7 +28,7 @@
     <exec-plugin.version>3.0.0</exec-plugin.version>
     <vertx-plugin.version>1.0.23</vertx-plugin.version>
     <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
-    <flyway.version>8.5.10</flyway.version>
+    <flyway.version>8.5.12</flyway.version>
     <hikaricp.version>5.0.1</hikaricp.version>
     <postgresql.version>42.3.4</postgresql.version>
   </properties>
@@ -243,6 +243,35 @@
             </image>
           </images>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <version>${flyway.version}</version>
+        <executions>
+          <execution>
+            <id>migration</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>migrate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <url>jdbc:postgresql://localhost:5533/eventstore</url>
+          <user>eventstore</user>
+          <password>docker</password>
+          <locations>
+            <location>filesystem:${project.basedir}/src/main/resources/migration/eventstore</location>
+          </locations>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
     </plugins>
   </build>

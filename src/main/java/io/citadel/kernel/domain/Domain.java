@@ -21,11 +21,7 @@ public interface Domain {
     Future<Void> migrate();
   }
 
-  interface Aggregate<M extends Record, E, A extends Aggregate<M, E, A>> {
-    default <T> Future<A> load(ID<T> id) {
-      return load(id, -1);
-    }
-    Future<A> load(ID id, long version);
+  interface Aggregate<M extends Record, E> {
   }
 
   interface Model {

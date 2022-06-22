@@ -1,7 +1,5 @@
 package io.citadel.kernel.func;
 
-import io.citadel.kernel.domain.Domain;
-
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 
@@ -14,7 +12,7 @@ public interface ThrowableBiFunction<A, B, R> extends BiFunction<A, B, R> {
     try {
       return tryApply(a, b);
     } catch (Throwable e) {
-      throw new FunctionalException("Can't apply function", e);
+      throw new LambdaException("Can't apply function", e);
     }
   }
 

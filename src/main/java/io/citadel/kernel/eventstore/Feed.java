@@ -9,9 +9,9 @@ import io.vertx.sqlclient.SqlClient;
 
 import java.util.stream.Stream;
 
-public sealed interface Feed permits Sql {
+public sealed interface Feed permits Lookup {
   static Feed create(Vertx vertx, SqlClient client) {
-    return new Sql(vertx.eventBus(), client);
+    return new Lookup(vertx.eventBus(), client);
   }
 
   <ID extends Domain.ID<?>> Future<io.citadel.kernel.eventstore.meta.Feed> log(ID aggregateId, String aggregateName, long aggregateVersion, Stream<Event> events, String by);

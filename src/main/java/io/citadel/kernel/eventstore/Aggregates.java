@@ -23,8 +23,8 @@ final class Aggregates<I, R, E, S extends Enum<S> & State<S, E>> implements Meta
   }
 
   @Override
-  public Future<Context<R, E>> lookup(ID id, Name name, Version version) {
-    return metadata.lookup(id, name, version)
+  public Future<Context<R, E>> findEntity(ID id, Name name, Version version) {
+    return metadata.findEntity(id, name, version)
       .map(Feed::stream)
       .map(logs -> logs.collect(new Aggregator(descriptor.entry(), descriptor.entity(descriptor.id(id.value())))));
   }

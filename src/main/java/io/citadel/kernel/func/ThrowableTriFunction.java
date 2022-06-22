@@ -8,7 +8,7 @@ public interface ThrowableTriFunction<A, B, C, R> {
     try {
       return tryApply(a, b, c);
     } catch (Throwable e) {
-      throw new FunctionalException("Can't apply function", e);
+      throw new LambdaException("Can't apply function", e);
     }
   }
 }

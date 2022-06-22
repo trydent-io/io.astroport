@@ -1,7 +1,6 @@
 package io.citadel.kernel.eventstore.meta;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 

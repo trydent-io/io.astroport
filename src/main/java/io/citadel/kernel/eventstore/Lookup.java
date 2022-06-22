@@ -8,15 +8,15 @@ import io.vertx.sqlclient.templates.SqlTemplate;
 
 import java.util.Map;
 
-final class Sql implements Metadata<Feed> {
+final class Lookup implements Metadata {
   private final SqlClient client;
 
-  Sql(SqlClient client) {
+  Lookup(SqlClient client) {
     this.client = client;
   }
 
   @Override
-  public Future<Feed> lookup(final ID id, final Name name, final Version version) {
+  public Future<Entity> findEntity(final ID id, final Name name, final Version version) {
     return SqlTemplate.forQuery(client, """
         with entity as (
           select  entity_version as version, entity_state as state, entity_id as id
@@ -39,7 +39,16 @@ final class Sql implements Metadata<Feed> {
                 data as entity_data
         from    entity, aggregated
         """)
-      .mapTo(Feed.Log::fromRow)
+      .mapTo(row ->
+        Entity.found(
+          client,
+          Entity.id(row.getString("entity_id")),
+          Entity.name(row.getString("entity_name")),
+          Entity.version(row.getLong("entity_version")),
+          Entity.state(row.getString("entity_state")),
+          Entity.data(row.getJsonObject("entity_data"))
+        )
+      )
       .execute(
         Map.of(
           "entityId", id.toString(),

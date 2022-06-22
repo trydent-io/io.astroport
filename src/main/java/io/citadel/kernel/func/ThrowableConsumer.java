@@ -9,7 +9,7 @@ public interface ThrowableConsumer<A> extends Consumer<A> {
     try {
       tryAccept(a);
     } catch (Throwable e) {
-      throw new FunctionalException("Can't accept consumer", e);
+      throw new LambdaException("Can't accept consumer", e);
     }
   }
 

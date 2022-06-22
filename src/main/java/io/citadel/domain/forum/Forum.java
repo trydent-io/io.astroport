@@ -41,8 +41,8 @@ public sealed interface Forum {
       case Archived it -> forum;
     };
   }
-  static State entryPoint() {
-    return State.Registered;
+  static State state(String value) {
+    return Forum.State.valueOf(value);
   }
   enum State implements io.citadel.kernel.domain.State<State, Event> {
     Registered, Open, Closed, Archived;

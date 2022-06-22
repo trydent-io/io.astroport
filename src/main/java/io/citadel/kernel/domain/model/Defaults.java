@@ -16,7 +16,7 @@ public enum Defaults {
     Actors.register(() -> )
     return new Service(
       Migration.eventStore(vertx, database),
-      Metadata.create(),
+      Metadata.lookup(),
       Metadata.sql(
         vertx.eventBus(),
         client

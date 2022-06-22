@@ -10,18 +10,3 @@ create table if not exists metadata (
   primary key (id),
   unique (event_name, entity_id, entity_name, entity_version)
 );
-/*
-with entity_events as (select ent.id, data
-                       from entities ent
-                              left join events evt on ent.id = evt.entity_id
-                       where ent.identification = ''
-                         and ent.name = ''
-                       order by evt.timepoint),
-     aggregate as (select ee.id, jsonb_object_agg(datum.key, datum.value)
-                   from entity_events ee,
-                        jsonb_each(ee.data) as datum(key, value)
-                   group by ee.id)
-select identification as entity_id, name as entity_name, enti, entity_data
-from entities
-       left join versions aggregate on entities.id = aggregate.id
-*/
