@@ -3,12 +3,17 @@ package io.citadel.kernel.eventstore;
 import io.citadel.kernel.eventstore.meta.*;
 import io.citadel.kernel.eventstore.meta.Feed;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
 
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
-final class Lookup implements Metadata {
+import static java.util.stream.StreamSupport.stream;
+
+@SuppressWarnings("DuplicateBranchesInSwitch")
+final class Lookup implements EventStore {
   private final SqlClient client;
 
   Lookup(SqlClient client) {
@@ -16,47 +21,49 @@ final class Lookup implements Metadata {
   }
 
   @Override
-  public Future<Entity> findEntity(final ID id, final Name name, final Version version) {
+  public Future<Aggregate> aggregate(final ID id, final Name name, final Version version) {
     return SqlTemplate.forQuery(client, """
-        with entity as (
-          select  entity_version as version, entity_state as state, entity_id as id
+        with aggregate as (
+          select  aggregate_version as version, aggregate_state as state, aggregate_id as id, aggregate_name as name
           from    metadata
-          where   entity_id = #{entityId}
-            and   lower(entity_name) = lower(#{entityName}) or #{entityName} is null
-            and   entity_version <= #{entityVersion} or #{entityVersion} = 0
-          order by entity_version desc
+          where   aggregate_id = #{aggregateId}
+            and   lower(aggregate_name) = lower(#{aggregateName}) or #{aggregateName} is null
+            and   aggregate_version <= #{aggregateVersion} or #{aggregateVersion} = 0
+          order by aggregate_version desc
           limit 1
         ), aggregated as (
-          select jsonb_object_agg(json.key, json.value) as data
-          from metadata, jsonb_each(event_data) as json(key, value)
-          where   entity_id = entity.id
-            and   entity_name = entity.name
-            and   entity_version <= entity.version
-          order by timepoint
+          select aggregate_id, jsonb_object_agg(json.key, json.value) as data
+          from (select aggregate_id, event_data, aggregate_name, aggregate_version from metadata order by timepoint) as meta, jsonb_each(event_data) as json(key, value)
+          where   aggregate_id = aggregate.id
+            and   aggregate_name = aggregate.name
+            and   aggregate_version <= aggregate.version
+          group by aggregate_id
         )
-        select  version as entity_version,
-                state as entity_state,
-                data as entity_data
-        from    entity, aggregated
+        select  id, name, version, state, data
+        from    aggregate inner join aggregated
+              on aggregate.id = aggregated.aggregate_id
         """)
       .mapTo(row ->
-        Entity.found(
-          client,
-          Entity.id(row.getString("entity_id")),
-          Entity.name(row.getString("entity_name")),
-          Entity.version(row.getLong("entity_version")),
-          Entity.state(row.getString("entity_state")),
-          Entity.data(row.getJsonObject("entity_data"))
-        )
+        switch (row.getJsonObject("data")) {
+          case null -> Aggregate.identity(id);
+          case JsonObject it && it.isEmpty() -> Aggregate.identity(id);
+          default -> Aggregate.entity(
+            id,
+            Aggregate.version(row.getLong("version")),
+            Aggregate.state(row.getString("state")),
+            Aggregate.data(row.getJsonObject("data"))
+          );
+        }
       )
       .execute(
         Map.of(
-          "entityId", id.toString(),
-          "entityName", name,
-          "entityVersion", version
+          "aggregateId", id.toString(),
+          "aggregateName", name,
+          "aggregateVersion", version
         )
       )
-      .map(Feed::fromRows);
+      .map(rows -> stream(rows.spliterator(), false))
+      .map(stream -> stream.findFirst().orElseGet(() -> Aggregate.identity(id)));
   }
 
 }

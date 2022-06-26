@@ -1,5 +1,6 @@
 package io.citadel.kernel.eventstore.meta;
 
+import io.citadel.kernel.func.ThrowableFunction;
 import io.vertx.core.json.JsonObject;
 
 import java.util.function.Consumer;
@@ -14,8 +15,8 @@ public record Data(JsonObject value) {
     };
   }
 
-  public <R extends Record> R as(Class<R> type) {
-    return value.mapTo(type);
+  public <R extends Record> R as(ThrowableFunction<? super JsonObject, ? extends R> converter) {
+    return converter.apply(value);
   }
 
   public Data with(Consumer<? super JsonObject> wither) {

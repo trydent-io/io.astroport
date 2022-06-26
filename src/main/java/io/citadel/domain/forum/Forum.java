@@ -2,45 +2,33 @@ package io.citadel.domain.forum;
 
 import io.citadel.domain.forum.Forum.Event.Archived;
 import io.citadel.domain.forum.Forum.Event.Closed;
-import io.citadel.domain.forum.Forum.Event.Names;
 import io.citadel.domain.forum.Forum.Event.Opened;
 import io.citadel.domain.forum.Forum.Event.Registered;
 import io.citadel.domain.forum.Forum.Event.Reopened;
 import io.citadel.domain.forum.Forum.Event.Replaced;
+import io.citadel.domain.forum.Forum.Forums;
 import io.citadel.domain.member.Member;
+import io.citadel.kernel.eventstore.EventStore;
+import io.citadel.kernel.eventstore.meta.Aggregate;
+import io.citadel.kernel.eventstore.meta.Version;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import static io.citadel.kernel.eventstore.meta.Aggregate.*;
+import static io.citadel.kernel.eventstore.meta.Aggregate.name;
 
 public sealed interface Forum {
   String FORUM = "forum";
   static ID id(final String value) {
     return new ID(UUID.fromString(value));
   }
-  static Forum entity(ID id) {
-    return new Entity(id, null, null);
+  static Entity entity(JsonObject json) {
+    return json.mapTo(Entity.class);
   }
-  static Event event(String name, JsonObject json) {
-    return switch (Names.valueOf(name)) {
-      case Opened -> json.mapTo(Opened.class);
-      case Closed -> json.mapTo(Closed.class);
-      case Registered -> json.mapTo(Registered.class);
-      case Reopened -> json.mapTo(Reopened.class);
-      case Replaced -> json.mapTo(Replaced.class);
-      case Archived -> json.mapTo(Archived.class);
-    };
-  }
-  static Forum attach(Forum forum, Event event) {
-    return switch (event) {
-      case Registered it -> new Entity(forum.id(), it.details(), null);
-      case Replaced it -> new Entity(forum.id(), it.details(), null);
-      case Opened it -> forum;
-      case Closed it -> forum;
-      case Reopened it -> forum;
-      case Archived it -> forum;
-    };
-  }
+
   static State state(String value) {
     return Forum.State.valueOf(value);
   }
@@ -97,10 +85,34 @@ public sealed interface Forum {
   record Details(Name name, Description description) {
   } // ValueObject for Details
 
-  ID id();
-  Details details();
-  Member.ID registeredBy();
+  record Entity(Details details, Member.ID registeredBy) {
+  }
+
+  sealed interface Forums {
+    Future<Forum> lookup(Forum.ID id);
+  }
 }
 
-record Entity(ID id, Details details, Member.ID registeredBy) implements Forum {
+final class Metadata implements Forums {
+  private final EventStore eventStore;
+
+  Metadata(EventStore eventStore) {
+    this.eventStore = eventStore;
+  }
+
+  @Override
+  public Future<Forum> lookup(Forum.ID id) {
+    return eventStore.aggregate(id, Forum.FORUM)
+      .map(aggregate -> switch (aggregate) {
+        case Identity it -> Forum.aggregate(id, it.version());
+        case Entity it -> Forum.aggregate(
+          it.id().as(Forum::id),
+          it.version(),
+          it.data().as(Forum::entity),
+          it.state().as(Forum::state)
+        );
+      });
+  }
 }
+
+

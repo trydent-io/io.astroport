@@ -1,14 +1,15 @@
 package io.citadel.kernel.eventstore.meta;
 
 public record Version(long value) {
-  private static final Version DEFAULT = new Version(0);
+  public static final Version Zero = new Version(0);
+  public static final Version Last = new Version(Long.MAX_VALUE);
 
   public Version {
     assert value >= 0;
   }
 
   public boolean isDefault() {
-    return this.equals(DEFAULT);
+    return this.equals(Zero);
   }
 
   static Version of(Long value) {
