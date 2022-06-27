@@ -55,7 +55,7 @@ sealed interface Transaction {
       return SqlTemplate.forUpdate(sqlClient, """
           with events as (
             select  es -> 'event' ->> 'name' event_name,
-                    es -> 'event' ->> 'data' event_data
+                    es -> 'event' ->> 'model' event_data
             from json_array_elements(#{events}) es
           ),
           last_version as (
@@ -88,7 +88,7 @@ sealed interface Transaction {
         .map(Feed::fromRows)
         .onSuccess(feed ->
           feed.forEach(entry ->
-            eventBus.publish(entry.event().name(), entry.event().data(), new DeliveryOptions()
+            eventBus.publish(entry.event().name(), entry.event().model(), new DeliveryOptions()
               .addHeader("aggregateId", entry.entity().id().toString())
               .addHeader("timepoint", entry.timepoint().asIsoDateTime())
             )

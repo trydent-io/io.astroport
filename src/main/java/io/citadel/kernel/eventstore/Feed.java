@@ -9,7 +9,7 @@ import io.vertx.sqlclient.SqlClient;
 
 import java.util.stream.Stream;
 
-public sealed interface Feed permits Lookup {
+public interface Feed {
   static Feed create(Vertx vertx, SqlClient client) {
     return new Lookup(vertx.eventBus(), client);
   }

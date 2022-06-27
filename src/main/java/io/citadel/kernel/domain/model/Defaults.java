@@ -1,7 +1,7 @@
 package io.citadel.kernel.domain.model;
 
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.EventStore;
+import io.citadel.kernel.eventstore.Metadata;
 import io.citadel.kernel.sql.Database;
 import io.citadel.kernel.sql.Migration;
 import io.vertx.core.Vertx;
@@ -16,8 +16,8 @@ public enum Defaults {
     Actors.register(() -> )
     return new Service(
       Migration.eventStore(vertx, database),
-      EventStore.lookup(),
-      EventStore.sql(
+      Metadata.lookup(),
+      Metadata.sql(
         vertx.eventBus(),
         client
       )

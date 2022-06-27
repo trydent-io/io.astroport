@@ -6,19 +6,16 @@ import io.citadel.domain.forum.Forum.Event.Opened;
 import io.citadel.domain.forum.Forum.Event.Registered;
 import io.citadel.domain.forum.Forum.Event.Reopened;
 import io.citadel.domain.forum.Forum.Event.Replaced;
-import io.citadel.domain.forum.Forum.Forums;
 import io.citadel.domain.member.Member;
-import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.eventstore.meta.Aggregate;
-import io.citadel.kernel.eventstore.meta.Version;
+import io.citadel.kernel.eventstore.Metadata;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.SqlClient;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static io.citadel.kernel.eventstore.meta.Aggregate.*;
-import static io.citadel.kernel.eventstore.meta.Aggregate.name;
 
 public sealed interface Forum {
   String FORUM = "forum";
@@ -88,31 +85,36 @@ public sealed interface Forum {
   record Entity(Details details, Member.ID registeredBy) {
   }
 
-  sealed interface Forums {
-    Future<Forum> lookup(Forum.ID id);
-  }
+  Future<Forum> load(Forum.ID id);
 }
 
-final class Metadata implements Forums {
-  private final EventStore eventStore;
+final class Lookup implements Forum, Metadata {
+  private final SqlClient client;
 
-  Metadata(EventStore eventStore) {
-    this.eventStore = eventStore;
+  Lookup(SqlClient client) {
+    this.client = client;
   }
 
   @Override
-  public Future<Forum> lookup(Forum.ID id) {
-    return eventStore.aggregate(id, Forum.FORUM)
+  public Future<Forum> load(Forum.ID id) {
+    return aggregate(client, id, Forum.FORUM)
       .map(aggregate -> switch (aggregate) {
         case Identity it -> Forum.aggregate(id, it.version());
         case Entity it -> Forum.aggregate(
           it.id().as(Forum::id),
           it.version(),
-          it.data().as(Forum::entity),
+          it.model().as(Forum::entity),
           it.state().as(Forum::state)
         );
       });
   }
+}
+
+final class Aggregate implements Forum, Metadata {
+  private final Forum.ID id;
+  private final Forum.Entity entity;
+  private final Forum.State state;
+
 }
 
 

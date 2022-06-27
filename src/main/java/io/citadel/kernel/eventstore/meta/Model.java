@@ -5,13 +5,13 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.function.Consumer;
 
-public record Data(JsonObject value) {
-  public Data { assert value != null; }
+public record Model(JsonObject value) {
+  public Model { assert value != null; }
 
-  static Data of(JsonObject value) {
+  static Model of(JsonObject value) {
     return switch (value) {
       case null -> throw new IllegalArgumentException("Data can't be null");
-      default -> new Data(value);
+      default -> new Model(value);
     };
   }
 
@@ -19,7 +19,7 @@ public record Data(JsonObject value) {
     return converter.apply(value);
   }
 
-  public Data with(Consumer<? super JsonObject> wither) {
+  public Model with(Consumer<? super JsonObject> wither) {
     wither.accept(value);
     return this;
   }
