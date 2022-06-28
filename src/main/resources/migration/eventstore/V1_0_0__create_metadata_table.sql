@@ -8,6 +8,5 @@ create table if not exists metadata
   aggregate_version integer                  default 0,
   aggregate_state   text,
   timepoint         timestamp with time zone default (current_timestamp at time zone 'utc'),
-  primary key (id),
-  unique (event_name, aggregate_id, aggregate_name, aggregate_version)
+  primary key (id)
 );

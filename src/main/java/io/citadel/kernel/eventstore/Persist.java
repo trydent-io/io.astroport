@@ -20,11 +20,10 @@ import java.util.stream.Stream;
 
 import static java.util.stream.StreamSupport.stream;
 
-interface Persist {
-  SqlClient persistClient();
-
-  default Future<Void> unit(ID id, Name name, Version version, State state, Stream<Event> events) {
-    return SqlTemplate.forUpdate(persistClient(), """
+sealed interface Persist permits EventStore.Client {
+  default Future<Void> unit(ID id, Name name, Version version, State state, Stream<Event> changes) {
+    return switch (this) {
+      case EventStore.Client it -> SqlTemplate.forUpdate(it.client(), """
           with events as (
             select  es -> 'event' ->> 'name' event_name,
                     es -> 'event' ->> 'data' event_data
@@ -44,29 +43,33 @@ interface Persist {
                   #{aggregateId},
                   #{aggregateName},
                   #{aggregateVersion} + 1
-          from  event_store
-          where #{aggregateVersion} = last_version or (#{aggregateVersion} = 0 and not exists(select id from event_store where aggregate_id = #{aggregateId}))
-          returning *
+          from  metadata
+          where #{aggregateVersion} = last_version or (#{aggregateVersion} = 0 and not exists(select id from metadata where aggregate_id = #{aggregateId}))
+          returning aggregate_id, aggregate_name, event_name, event_data, timepoint
           """)
-      .mapTo(row -> row)
-      .execute(
-        Map.of(
-          "aggregateId", entity.id().toString(),
-          "aggregateName", entity.name().value(),
-          "aggregateVersion", entity.version().value(),
-          "events", Json.array(changes)
-        )
-      )
-      .map(Feed::fromRows)
-      .onSuccess(feed ->
-        feed.forEach(entry ->
-          eventBus.publish(entry.event().name(), entry.event().model(), new DeliveryOptions()
-            .addHeader("aggregateId", entry.entity().id().toString())
-            .addHeader("timepoint", entry.timepoint().asIsoDateTime())
+        .mapTo(Event::fromRow)
+        .execute(
+          Map.of(
+            "aggregateId", id.value(),
+            "aggregateName", name.value(),
+            "aggregateVersion", version.value(),
+            "aggregateState", state.value(),
+            "events", Json.array(changes)
           )
         )
-      )
-      .mapEmpty();;
+        .map(events -> stream(events.spliterator(), false))
+        .onSuccess(events ->
+          events.forEach(event ->
+            it.eventBus().publish(event.name(), event.data(), new DeliveryOptions()
+              .addHeader("aggregateId", event.entity().id().toString())
+              .addHeader("timepoint", event.timepoint().asIsoDateTime())
+            )
+          )
+        )
+        .mapEmpty();
+      ;
+
+    }
   }
 
   @SuppressWarnings("DuplicateBranchesInSwitch")

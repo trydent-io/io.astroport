@@ -191,7 +191,6 @@
             <phase>clean</phase>
             <goals>
               <goal>stop</goal>
-              <goal>remove</goal>
               <goal>volume-remove</goal>
             </goals>
           </execution>

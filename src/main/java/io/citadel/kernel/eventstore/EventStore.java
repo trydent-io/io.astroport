@@ -23,20 +23,15 @@ public sealed interface EventStore {
   Future<Aggregate> query(ID id, Name name, Version version);
   Future<Void> persist(ID id, Name name, Version version, Stream<Event> events);
 
-  final class Client implements EventStore, Query {
-    private final EventBus eventBus;
-    private final SqlClient client;
-
-    private Client(EventBus eventBus, SqlClient client) {
-      this.eventBus = eventBus;
-      this.client = client;
-    }
-
-    public SqlClient sqlClient() { return client; }
+  record Client(EventBus eventBus, SqlClient client) implements EventStore, Query, Persist {
+    public SqlClient queryClient() { return client; }
+    public SqlClient persistClient() { return client; }
 
     @Override
     public Future<Aggregate> query(ID id, Name name, Version version) {
-      return aggregates(id, name, version).map(aggregates -> aggregates.findFirst().orElseGet(() -> Aggregate.identity(id, name)));
+      return aggregates(id, name, version)
+        .map(Stream::findFirst)
+        .map(found -> found.orElseGet(() -> Aggregate.identity(id, name)));
     }
 
     @Override
