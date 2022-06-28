@@ -31,20 +31,20 @@ final class Client implements EventStorePool, Query, Update {
   public Future<Aggregate> query(ID id, Name name, Version version) {
     return SqlTemplate.forQuery(client, queryTemplate)
       .mapTo(row -> switch (row.getJsonObject("data")) {
-        case null -> Aggregate.identity(id, name);
-        case JsonObject it && it.isEmpty() -> Aggregate.identity(id, name);
-        default -> Aggregate.entity(
+        case null -> Aggregate.zero(id, name);
+        case JsonObject it && it.isEmpty() -> Aggregate.zero(id, name);
+        default -> Aggregate.last(
           Aggregate.id(row.getString("id")),
           Aggregate.name(row.getString("name")),
           Aggregate.version(row.getLong("version")),
           Aggregate.state(row.getString("state")),
-          Aggregate.model(row.getJsonObject("model"))
+          Aggregate.model(row.getJsonObject("entity"))
         );
       })
       .execute(params(id, name, version))
       .map(rows -> stream(rows.spliterator(), false))
       .map(Stream::findFirst)
-      .map(found -> found.orElseGet(() -> Aggregate.identity(id, name)));
+      .map(found -> found.orElseGet(() -> Aggregate.zero(id, name)));
   }
 
   @Override

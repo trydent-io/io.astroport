@@ -16,7 +16,7 @@ public sealed interface Headers extends Iterable<Map.Entry<String, String>> {
 
   <T> Optional<T> find(String key, ThrowableFunction<? super String, ? extends T> then);
 
-  default <I extends Domain.ID<?>> Optional<I> aggregateId(ThrowableFunction<? super String, ? extends I> then) {return find("aggregateId", then);}
+  default <ID> ID id(ThrowableFunction<? super String, ? extends ID> then) {return find("aggregateId", then).orElseThrow();}
 
   enum Type {
     ;

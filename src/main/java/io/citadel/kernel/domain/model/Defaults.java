@@ -1,30 +1,28 @@
 package io.citadel.kernel.domain.model;
 
+import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.eventstore.EventStorePool;
 import io.citadel.kernel.eventstore.Metadata;
 import io.citadel.kernel.sql.Database;
 import io.citadel.kernel.sql.Migration;
 import io.vertx.core.Vertx;
-import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.PoolOptions;
 
 public enum Defaults {
   Companion;
 
   public Domain.Verticle service(Vertx vertx, Database database) {
-    final var client = PgPool.pool(vertx, database.asPgOptions(), new PoolOptions().setMaxSize(10));
-    Actors.register(() -> )
     return new Service(
       Migration.eventStore(vertx, database),
-      Metadata.lookup(),
-      Metadata.sql(
-        vertx.eventBus(),
-        client
-      )
+      EventStorePool.client(vertx, database.asPgOptions()),
+      Domain.<Forum.ID, Forum.Entity, Forum.Event, Forum.State>model(Forum.NAME)
+        .aggregate(
+          Forum::id,
+          Forum::entity,
+          () -> Forum.State.Registered,
+          Forum::state
+        )
+        .handle()
     );
-  }
-
-  interface Actors {
-    static <A extends Actor<
   }
 }

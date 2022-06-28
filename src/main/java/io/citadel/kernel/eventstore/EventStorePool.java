@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 public sealed interface EventStorePool permits Client {
   static EventStorePool client(Vertx vertx, SqlConnectOptions options) {
-    return new Client(vertx.eventBus(), PgPool.client(vertx, PgConnectOptions.wrap(options), new PoolOptions()));
+    return new Client(vertx.eventBus(), PgPool.client(vertx, PgConnectOptions.wrap(options), new PoolOptions().setMaxSize(10)));
   }
   Future<Aggregate> query(ID id, Name name, Version version);
   default <T> Future<Aggregate> query(T id, String name, long version) {

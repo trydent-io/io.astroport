@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.kernel.vertx.RecordType;
+import io.citadel.kernel.vertx.Codec;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
@@ -37,7 +37,7 @@ final class Behavioural<M extends Record & Domain.Model<?>, A extends Domain.Tra
   @Override
   public <R extends Record> Context<A> be(Class<R> type, String address, Behaviour<A, R> behaviour) {
     eventBus
-      .registerDefaultCodec(type, RecordType.codec(type))
+      .registerDefaultCodec(type, Codec.forRecord(type))
       .<R>localConsumer(address, message ->
         {
           final var headers = Headers.of(message.headers());

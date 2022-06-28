@@ -9,34 +9,32 @@ import io.citadel.domain.forum.Forum.Event.Replaced;
 import io.citadel.domain.member.Member;
 import io.citadel.kernel.eventstore.EventStorePool;
 import io.citadel.kernel.eventstore.Metadata;
-import io.citadel.kernel.eventstore.metadata.Change;
+import io.citadel.kernel.eventstore.metadata.Aggregate;
 import io.citadel.kernel.eventstore.metadata.Version;
-import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static io.citadel.kernel.eventstore.metadata.Aggregate.*;
 
 public sealed interface Forum {
-  String FORUM = "forum";
+  public static String NAME = "forum";
 
   static ID id(final String value) {
     return new ID(UUID.fromString(value));
   }
 
-  static Model model(JsonObject json) {
-    return json.mapTo(Model.class);
+  static Entity entity(JsonObject json) {
+    return json.mapTo(Entity.class);
   }
 
   static State state(String value) {
     return Forum.State.valueOf(value);
   }
+
+  record Entity(Details details, Member.ID registerer) {}
 
   enum State implements io.citadel.kernel.domain.State<State, Event> {
     Registered, Open, Closed, Archived;
@@ -108,77 +106,22 @@ public sealed interface Forum {
 
   record Details(Name name, Description description) {
   } // ValueObject for Details
-
-  record Model(Details details, Member.ID registeredBy) {
-  }
-
-  default Future<Forum> load(Forum.ID id) {
-    return Future.succeededFuture(this);
-  }
-  default Future<Forum> has(Predicate<? super Model> predicate) {
-    return Future.succeededFuture(this);
-  }
-  default Future<Forum> log(Function<? super Model, ? extends Forum.Event> function) {
-    return Future.succeededFuture(this);
-  }
-
-  static Forum aggregate(Forum.ID id, Version version) {
-    return new Aggregate(id, null, State.Registered, version, Stream.empty());
-  }
-  static Forum aggregate(Forum.ID id, Forum.Model model, Forum.State state, Version version) {
-    return new Aggregate(id, model, state, version, Stream.empty());
-  }
 }
 
 final class Lookup implements Forum {
-  private final EventStorePool client;
+  private final EventStorePool pool;
 
-  Lookup(EventStorePool client) {
-    this.client = client;
+  Lookup(EventStorePool pool) {
+    this.pool = pool;
   }
 
   @Override
   public Future<Forum> load(Forum.ID id) {
-    return client.query(id, Forum.FORUM, Version.Last.value()).map(aggregate ->
+    return pool.query(id, Forum.NAME).map(aggregate ->
       switch (aggregate) {
-        case Empty it -> Forum.aggregate(it.id().as(Forum::id), it.version());
-        case Entity it -> Forum.aggregate(
-          it.id().as(Forum::id),
-          it.model().as(Forum::model),
-          it.state().as(Forum::state),
-          it.version()
-        );
+        case Zero zero -> Aggregate.root(zero.id().as(Forum::id), null, State.Registered, Version.Zero);
+        case Last last -> Aggregate.root(last.id().as(Forum::id), last.entity().as(Forum::entity), last.state().as(Forum::state), last.version());
       }
     );
   }
 }
-
-final class Aggregate implements Forum, Task {
-  private final Forum.ID id;
-  private final Forum.Model model;
-  private final Forum.State state;
-  private final Version version;
-  private final Stream<Change> changes;
-  Aggregate(ID id, Model model, State state, Version version, Stream<Change> changes) {
-    this.id = id;
-    this.model = model;
-    this.state = state;
-    this.version = version;
-    this.changes = changes;
-  }
-  @Override
-  public Future<Forum> load(ID id) { return success(this); }
-
-  @Override
-  public Future<Forum> has(Predicate<? super Model> predicate) {
-    return predicate.test(model) ? success(this) : failure("Can't validate condition");
-  }
-
-  @Override
-  public Future<Forum> log(Function<? super Model, ? extends Event> function) {
-    return model != null
-      ? new Aggregate(id, model, state, version, Stream.concat(changes, Stream.of(Change.of(id.value().toString(),  )))) function.apply(model);
-  }
-}
-
-
