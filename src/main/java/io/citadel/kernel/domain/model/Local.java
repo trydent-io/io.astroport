@@ -1,8 +1,8 @@
 package io.citadel.kernel.domain.model;
 
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.meta.Entity;
-import io.citadel.kernel.eventstore.meta.Event;
+import io.citadel.kernel.eventstore.metadata.Change;
+import io.citadel.kernel.eventstore.metadata.Entity;
 import io.vertx.core.json.JsonObject;
 
 import java.util.function.BiFunction;
@@ -11,9 +11,9 @@ import java.util.stream.Stream;
 
 public final class Local implements Domain.Model {
   private final Entity entity;
-  private final Stream<Event> events;
+  private final Stream<Change> events;
 
-  public Local(Entity entity, Stream<Event> events) {
+  public Local(Entity entity, Stream<Change> events) {
     this.entity = entity;
     this.events = events;
   }

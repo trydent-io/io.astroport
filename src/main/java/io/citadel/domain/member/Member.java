@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model, Member.Event, Member> {
-  static Member boundary(io.citadel.kernel.eventstore.meta.Aggregate<Model, Event> aggregate) {
+  static Member boundary(io.citadel.kernel.eventstore.metadata.Aggregate<Model, Event> aggregate) {
     return new Aggregate(aggregate);
   }
 
@@ -35,14 +35,14 @@ public sealed interface Member extends Domain.Aggregate<Member.ID, Member.Model,
 }
 
 final class Aggregate implements Member {
-  private final io.citadel.kernel.eventstore.meta.Aggregate<Model, State, Event> aggregate;
+  private final io.citadel.kernel.eventstore.metadata.Aggregate<Model, State, Event> aggregate;
 
-  Aggregate(io.citadel.kernel.eventstore.meta.Aggregate<Model, Event> aggregate) {
+  Aggregate(io.citadel.kernel.eventstore.metadata.Aggregate<Model, Event> aggregate) {
     this.aggregate = aggregate;
   }
 
   @Override
-  public Future<io.citadel.kernel.eventstore.meta.Aggregate<Model, Event>> load(ID id, long version) {
+  public Future<io.citadel.kernel.eventstore.metadata.Aggregate<Model, Event>> load(ID id, long version) {
     return null;
   }
 }

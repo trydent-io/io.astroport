@@ -1,17 +1,17 @@
-package io.citadel.kernel.eventstore.meta;
+package io.citadel.kernel.eventstore.metadata;
 
 import io.citadel.kernel.func.ThrowableFunction;
 import io.vertx.core.json.JsonObject;
 
 import java.util.function.Consumer;
 
-public record Model(JsonObject value) {
-  public Model { assert value != null; }
+public record Data(JsonObject value) {
+  public Data { assert value != null; }
 
-  static Model of(JsonObject value) {
+  static Data of(JsonObject value) {
     return switch (value) {
       case null -> throw new IllegalArgumentException("Data can't be null");
-      default -> new Model(value);
+      default -> new Data(value);
     };
   }
 
@@ -19,7 +19,7 @@ public record Model(JsonObject value) {
     return converter.apply(value);
   }
 
-  public Model with(Consumer<? super JsonObject> wither) {
+  public Data with(Consumer<? super JsonObject> wither) {
     wither.accept(value);
     return this;
   }

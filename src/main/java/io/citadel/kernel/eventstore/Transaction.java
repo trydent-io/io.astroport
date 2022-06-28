@@ -1,8 +1,7 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.eventstore.meta.Entity;
-import io.citadel.kernel.eventstore.meta.Event;
-import io.citadel.kernel.eventstore.meta.Feed;
+import io.citadel.kernel.eventstore.metadata.Change;
+import io.citadel.kernel.eventstore.metadata.Entity;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -19,10 +18,10 @@ sealed interface Transaction {
     return new Open(vertx.eventBus(), sqlClient, entity, Stream.empty());
   }
 
-  Transaction log(Event event);
+  Transaction log(Change change);
 
-  default <R extends Record> Transaction log(R event) {
-    return log(new Event(event.getClass().getSimpleName(), Json.fromAny(event)));
+  default <R extends Record> Transaction log(R change) {
+    return log(new Change(change.getClass().getSimpleName(), Json.fromAny(change)));
   }
   Future<Void> commit();
 
@@ -31,9 +30,9 @@ sealed interface Transaction {
     private final EventBus eventBus;
     private final SqlClient sqlClient;
     private final Entity entity;
-    private final Stream<Event> changes;
+    private final Stream<Change> changes;
 
-    public Open(EventBus eventBus, SqlClient sqlClient, Entity entity, Stream<Event> changes) {
+    public Open(EventBus eventBus, SqlClient sqlClient, Entity entity, Stream<Change> changes) {
       this.eventBus = eventBus;
       this.sqlClient = sqlClient;
       this.entity = entity;
@@ -41,21 +40,21 @@ sealed interface Transaction {
     }
 
 
-    private Stream<Event> append(Event event) {
-      return Stream.concat(this.changes, Stream.of(event));
+    private Stream<Change> append(Change change) {
+      return Stream.concat(this.changes, Stream.of(change));
     }
 
     @Override
-    public Transaction log(Event event) {
-      return new Open(eventBus, sqlClient, entity, append(event));
+    public Transaction log(Change change) {
+      return new Open(eventBus, sqlClient, entity, append(change));
     }
 
     @Override
     public Future<Void> commit() {
       return SqlTemplate.forUpdate(sqlClient, """
           with events as (
-            select  es -> 'event' ->> 'name' event_name,
-                    es -> 'event' ->> 'model' event_data
+            select  es -> 'change' ->> 'name' event_name,
+                    es -> 'change' ->> 'model' event_data
             from json_array_elements(#{events}) es
           ),
           last_version as (
@@ -88,7 +87,7 @@ sealed interface Transaction {
         .map(Feed::fromRows)
         .onSuccess(feed ->
           feed.forEach(entry ->
-            eventBus.publish(entry.event().name(), entry.event().model(), new DeliveryOptions()
+            eventBus.publish(entry.change().name(), entry.change().model(), new DeliveryOptions()
               .addHeader("aggregateId", entry.entity().id().toString())
               .addHeader("timepoint", entry.timepoint().asIsoDateTime())
             )

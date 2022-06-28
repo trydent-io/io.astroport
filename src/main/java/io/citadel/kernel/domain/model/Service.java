@@ -1,7 +1,7 @@
 package io.citadel.kernel.domain.model;
 
-import io.citadel.kernel.eventstore.meta.Entity;
-import io.citadel.kernel.eventstore.meta.Feed;
+import io.citadel.kernel.eventstore.metadata.Change;
+import io.citadel.kernel.eventstore.metadata.Entity;
 import io.citadel.kernel.domain.Domain;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -61,7 +61,7 @@ public final class Service extends AbstractVerticle implements Domain.Verticle {
   }
 
   @Override
-  public Future<Feed> feed(final Entity entity, final Stream<io.citadel.kernel.eventstore.meta.Event> events, final String by) {
+  public Future<Feed> feed(final Entity entity, final Stream<Change> events, final String by) {
     return null;
   }
 

@@ -18,7 +18,7 @@ public interface Descriptor<ID, R, E, S extends Enum<S> & State<S, E>> {
   static void main(String[] args) {
     aggregate(
       Forum::id,
-      Forum::entity,
+      Forum::model,
       Forum::state
     );
   }

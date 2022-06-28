@@ -1,4 +1,4 @@
-package io.citadel.kernel.eventstore.meta;
+package io.citadel.kernel.eventstore.metadata;
 
 import io.vertx.core.json.JsonObject;
 

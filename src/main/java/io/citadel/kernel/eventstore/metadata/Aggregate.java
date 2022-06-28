@@ -1,4 +1,4 @@
-package io.citadel.kernel.eventstore.meta;
+package io.citadel.kernel.eventstore.metadata;
 
 import io.vertx.core.json.JsonObject;
 
@@ -8,7 +8,7 @@ public sealed interface Aggregate {
   }
 
   static Aggregate identity(ID id, Name name) {
-    return new Identity(id, name, Version.Zero);
+    return new Empty(id, name, Version.Zero);
   }
 
   static <T> ID id(T value) { return ID.of(value.toString()); }
@@ -18,5 +18,6 @@ public sealed interface Aggregate {
   static Model model(JsonObject json) { return Model.of(json); }
 
   record Entity(ID id, Name name, Version version, State state, Model model) implements Aggregate {}
-  record Identity(ID id, Name name, Version version) implements Aggregate {}
+  record Empty(ID id, Name name, Version version) implements Aggregate {}
+  record Persisted(ID id, Name name, Version version, State state) implements Aggregate {}
 }

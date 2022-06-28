@@ -1,7 +1,7 @@
 package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.domain.State;
-import io.citadel.kernel.eventstore.meta.Event;
+import io.citadel.kernel.eventstore.metadata.Change;
 import io.citadel.kernel.media.Json;
 
 import java.util.function.Function;
@@ -39,7 +39,7 @@ final class Invariant<R, E, S extends Enum<S> & State<S, E>> implements Context<
   @Override
   public Context<R, E> log(Function<? super R, ? extends E> eventually) {
     final var event = eventually.apply(entity);
-    if (state.transitable(event)) transaction.log(Event.of(event.getClass().getSimpleName(), Json.fromAny(event)));
+    if (state.transitable(event)) transaction.log(Change.of(event.getClass().getSimpleName(), Json.fromAny(event)));
     return this;
   }
 }
