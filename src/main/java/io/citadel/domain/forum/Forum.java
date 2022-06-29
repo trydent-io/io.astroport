@@ -108,20 +108,3 @@ public sealed interface Forum {
   } // ValueObject for Details
 }
 
-final class Lookup implements Forum {
-  private final EventStorePool pool;
-
-  Lookup(EventStorePool pool) {
-    this.pool = pool;
-  }
-
-  @Override
-  public Future<Forum> load(Forum.ID id) {
-    return pool.query(id, Forum.NAME).map(aggregate ->
-      switch (aggregate) {
-        case Zero zero -> Aggregate.root(zero.id().as(Forum::id), null, State.Registered, Version.Zero);
-        case Last last -> Aggregate.root(last.id().as(Forum::id), last.entity().as(Forum::entity), last.state().as(Forum::state), last.version());
-      }
-    );
-  }
-}

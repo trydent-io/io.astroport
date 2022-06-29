@@ -2,7 +2,6 @@ package io.citadel.domain.forum.handler.command;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.handler.Commands;
-import io.citadel.kernel.domain.Context;
 
 public record Open() implements Context.Behaviour<Forum.Transaction, Commands.Open> {
   @Override

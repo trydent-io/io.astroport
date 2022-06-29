@@ -2,7 +2,7 @@ package io.citadel.kernel.domain.model;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.domain.Migration;
+import io.citadel.kernel.domain.Model;
 import io.citadel.kernel.eventstore.EventStorePool;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;

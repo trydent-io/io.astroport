@@ -4,9 +4,7 @@ import io.citadel.domain.forum.Forum;
 import io.citadel.domain.forum.aggregate.Forums;
 import io.citadel.domain.forum.handler.Commands;
 import io.citadel.kernel.domain.Headers;
-import io.citadel.kernel.vertx.Behaviours;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
 
 public record Reopen(Forums forums) implements Forum.Handler<Commands.Reopen> {
   @Override

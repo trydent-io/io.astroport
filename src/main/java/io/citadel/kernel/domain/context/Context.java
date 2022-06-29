@@ -8,7 +8,6 @@ import io.citadel.kernel.func.ThrowablePredicate;
 
 import java.util.concurrent.Future;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public sealed interface Context<A> {
