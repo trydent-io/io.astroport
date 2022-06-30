@@ -1,6 +1,7 @@
 package io.citadel.kernel.vertx;
 
 import io.citadel.CitadelException;
+import io.citadel.kernel.domain.Headers;
 import io.citadel.kernel.func.ThrowablePredicate;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
@@ -28,8 +29,12 @@ public interface Task {
     return it -> it == null ? failure(error) : success(it);
   }
 
-  interface Handler<R extends java.lang.Record> extends io.vertx.core.Handler<Message<R>> {
-    Behaviours bind(Behaviours behaviours);
-  }
+  interface Handler<R extends Record> extends io.vertx.core.Handler<Message<R>> {
+    @Override
+    default void handle(Message<R> message) {
+      handle(Headers.of(message.headers()), message);
+    }
 
+    void handle(Headers headers, Message<R> message);
+  }
 }

@@ -1,37 +1,43 @@
 package io.citadel.domain.forum;
 
-import io.citadel.domain.forum.Forum.Event.Archived;
-import io.citadel.domain.forum.Forum.Event.Closed;
-import io.citadel.domain.forum.Forum.Event.Opened;
-import io.citadel.domain.forum.Forum.Event.Registered;
-import io.citadel.domain.forum.Forum.Event.Reopened;
-import io.citadel.domain.forum.Forum.Event.Replaced;
+import io.citadel.domain.forum.Forum.Event.*;
+import io.citadel.domain.forum.handler.command.Register;
 import io.citadel.domain.member.Member;
-import io.citadel.kernel.eventstore.EventStorePool;
-import io.citadel.kernel.eventstore.Metadata;
-import io.citadel.kernel.eventstore.metadata.Aggregate;
-import io.citadel.kernel.eventstore.metadata.Version;
+import io.citadel.kernel.domain.Aggregate;
+import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.eventstore.EventPool;
+import io.citadel.kernel.eventstore.metadata.MetaAggregate;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static io.citadel.kernel.eventstore.metadata.Aggregate.*;
-
 public sealed interface Forum {
-  public static String NAME = "forum";
+  String NAME = "forum";
 
   static ID id(final String value) {
     return new ID(UUID.fromString(value));
   }
 
-  static Entity entity(JsonObject json) {
+  private static Entity entity(JsonObject json) {
     return json.mapTo(Entity.class);
   }
 
-  static State state(String value) {
+  private static State state(String value) {
     return Forum.State.valueOf(value);
+  }
+
+  static Aggregate<Forum> root(EventPool pool) {
+    return Aggregate.root(pool, NAME, Forum::zero, Forum::last);
+  }
+
+  private static Forum zero(EventPool pool, MetaAggregate.Zero zero) {
+    return new Root(zero.id(Forum::id), null, State.Registered, Aggregate.root(pool, "member", it -> null, it -> null));
+  }
+
+  private static Forum last(EventPool pool, MetaAggregate.Last last) {
+    return new Root(last.id(Forum::id), last.entity(Forum::entity), last.state(Forum::state), Aggregate.root(pool, "member", it -> null, it -> null));
   }
 
   record Entity(Details details, Member.ID registerer) {}
@@ -106,5 +112,28 @@ public sealed interface Forum {
 
   record Details(Name name, Description description) {
   } // ValueObject for Details
+
+  sealed interface Handler<C extends Record & Command> extends Domain.Handler<Forum, C> permits Register {}
+
+  Future<Member> registeredBy();
+
+  final class Root implements Forum {
+    private final Forum.ID id;
+    private final Forum.Entity entity;
+    private final Forum.State state;
+    private final Aggregate<Member> member;
+
+    private Root(ID id, Entity entity, State state, Aggregate<Member> member) {
+      this.id = id;
+      this.entity = entity;
+      this.state = state;
+      this.member = member;
+    }
+
+    @Override
+    public Future<Member> registeredBy() {
+      return member.aggregate(entity.registerer.value());
+    }
+  }
 }
 

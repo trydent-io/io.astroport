@@ -1,13 +1,13 @@
 package io.citadel.kernel.domain;
 
 import io.citadel.kernel.domain.context.Context;
-import io.citadel.kernel.eventstore.EventStorePool;
-import io.citadel.kernel.eventstore.metadata.Aggregate;
+import io.citadel.kernel.eventstore.EventPool;
+import io.citadel.kernel.eventstore.metadata.MetaAggregate;
 import io.citadel.kernel.eventstore.metadata.Name;
 import io.citadel.kernel.eventstore.metadata.Version;
 import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowableSupplier;
-import io.citadel.kernel.vertx.Codec;
+import io.citadel.kernel.vertx.RecordType;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
@@ -25,22 +25,22 @@ sealed public interface Model<T, R extends Record, F, N extends Enum<N> & State<
     ThrowableFunction<? super String, ? extends N> asState
   );
 
-  EventStorePool bind(EventStorePool pool);
+  EventPool bind(EventPool pool);
 
-  final class Impl<T, R extends Record, F, N extends Enum<N> & State<N, F>> implements io.citadel.kernel.domain.Model<T, R, F, N> {
+  final class Local<T, R extends Record, F, N extends Enum<N> & State<N, F>> implements io.citadel.kernel.domain.Model<T, R, F, N> {
     private final Vertx vertx;
     private final Name name;
-    private final EventStorePool pool;
+    private final EventPool pool;
     private final ThrowableFunction<? super String, ? extends T> aggregateId;
     private final ThrowableFunction<? super JsonObject, ? extends R> aggregateEntity;
     private final ThrowableSupplier<? extends N> initialState;
     private final ThrowableFunction<? super String, ? extends N> aggregateState;
 
-    public Impl(Vertx vertx, Name name, EventStorePool pool) {
+    public Local(Vertx vertx, Name name, EventPool pool) {
       this(vertx, name, pool, null, null, null, null);
     }
 
-    private Impl(Vertx vertx, Name name, EventStorePool pool, ThrowableFunction<? super String, ? extends T> aggregateId, ThrowableFunction<? super JsonObject, ? extends R> aggregateEntity, ThrowableSupplier<? extends N> initialState, ThrowableFunction<? super String, ? extends N> aggregateState) {
+    private Local(Vertx vertx, Name name, EventPool pool, ThrowableFunction<? super String, ? extends T> aggregateId, ThrowableFunction<? super JsonObject, ? extends R> aggregateEntity, ThrowableSupplier<? extends N> initialState, ThrowableFunction<? super String, ? extends N> aggregateState) {
       this.vertx = vertx;
       this.name = name;
       this.pool = pool;
@@ -52,19 +52,22 @@ sealed public interface Model<T, R extends Record, F, N extends Enum<N> & State<
 
     @Override
     public <B extends Record> io.citadel.kernel.domain.Model<T, R, F, N> handle(Class<B> type, Handler<T, R, F, N, B> handler) {
-      vertx.eventBus().registerDefaultCodec(type, Codec.forRecord(type)).localConsumer("%s.%s".formatted(name, type.getSimpleName()), local(handler));
+      vertx
+        .eventBus()
+        .registerDefaultCodec(type, RecordType.codec(type))
+        .localConsumer("%s.%s".formatted(name, type.getSimpleName())).han, local(handler));
       return this;
     }
 
     private <B extends Record> io.vertx.core.Handler<Message<B>> local(Handler<T, R, F, N, B> handler) {
-      return message -> pool.query(Aggregate.id(Headers.of(message.headers()).id(aggregateId)), name)
+      return message -> pool.query(MetaAggregate.id(Headers.of(message.headers()).id(aggregateId)), name)
         .map(asAggregateRoot())
         .map(asContext(handler, message))
         .onSuccess(context -> context.commit())
         .onFailure(throwable -> message.fail(500, error(message, throwable)));
     }
 
-    private <B extends Record> Function<Aggregate, Context<Aggregate.Root<T, R, F, N>>> asContext(Handler<T, R, F, N, B> handler, Message<B> message) {
+    private <B extends Record> Function<MetaAggregate, Context<MetaAggregate.Root<T, R, F, N>>> asContext(Handler<T, R, F, N, B> handler, Message<B> message) {
       return aggregate ->
         handler.handle(
           Headers.of(message.headers()),
@@ -74,13 +77,31 @@ sealed public interface Model<T, R extends Record, F, N extends Enum<N> & State<
         );
     }
 
-    private Function<Aggregate, Aggregate> asAggregateRoot() {
+    private Function<MetaAggregate, MetaAggregate> asAggregateRoot() {
       return aggregate ->
         switch (aggregate) {
-          case Aggregate.Zero zero -> Aggregate.root(zero.id().as(aggregateId), null, initialState.get(), Version.Zero);
-          case Aggregate.Last last -> Aggregate.root(last.id().as(aggregateId), last.entity().as(aggregateEntity), last.state().as(aggregateState), last.version());
+          case MetaAggregate.Zero zero -> aggregateRoot(zero);
+          case MetaAggregate.Last last -> aggregateRoot(last);
           default -> throw new IllegalStateException("Can't transform an aggregate-root to itself");
         };
+    }
+
+    private MetaAggregate aggregateRoot(MetaAggregate.Last last) {
+      return MetaAggregate.root(
+        last.id().as(aggregateId),
+        last.entity().as(aggregateEntity),
+        last.state().as(aggregateState),
+        last.version()
+      );
+    }
+
+    private MetaAggregate aggregateRoot(MetaAggregate.Zero zero) {
+      return MetaAggregate.root(
+        zero.id().as(aggregateId),
+        null,
+        initialState.get(),
+        Version.Zero
+      );
     }
 
     @Override
@@ -89,7 +110,7 @@ sealed public interface Model<T, R extends Record, F, N extends Enum<N> & State<
     }
 
     @Override
-    public EventStorePool bind(EventStorePool pool) {
+    public EventPool bind(EventPool pool) {
       return null;
     }
   }

@@ -1,3 +1,3 @@
 package io.citadel.kernel.eventstore.metadata;
 
-public record Metadata(ID id, Aggregate aggregate, Event event, Timepoint timepoint) {}
+public record Metadata(ID id, MetaAggregate aggregate, Event event, Timepoint timepoint) {}

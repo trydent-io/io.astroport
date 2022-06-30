@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain.context;
 
-import io.citadel.kernel.eventstore.EventStorePool;
+import io.citadel.kernel.eventstore.EventPool;
 import io.citadel.kernel.eventstore.metadata.Change;
 import io.citadel.kernel.func.ThrowableBiConsumer;
 import io.citadel.kernel.func.ThrowableBiFunction;
@@ -59,7 +59,7 @@ public sealed interface Context<A> {
 
 enum Empty implements Context<Object, Object, Object> { Default }
 record Bounded<ID, A, E>(ID id, A aggregate) implements Context<ID, A, E> {}
-record Transactional<ID, A, E>(Context<ID, A, E> context, Stream<Change> changes, EventStorePool pool) implements Context<ID, A, E> {
+record Transactional<ID, A, E>(Context<ID, A, E> context, Stream<Change> changes, EventPool pool) implements Context<ID, A, E> {
   Future<Void> commit() {
     return pool.update();
   }

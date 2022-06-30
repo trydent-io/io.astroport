@@ -1,11 +1,9 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.kernel.domain.context.Context;
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
-import io.citadel.kernel.eventstore.metadata.Aggregate.Root;
 import io.citadel.kernel.eventstore.metadata.Name;
-import io.vertx.core.eventbus.Message;
+import io.vertx.core.Future;
 
 public interface Domain {
   Defaults defaults = Defaults.Companion;
@@ -14,11 +12,11 @@ public interface Domain {
   }
 
   static <T, R extends Record, F, N extends Enum<N> & State<N, F>> Model<T, R, F, N> model(String name) {
-    return new Model.Impl<>(Name.of(name));
+    return new Model.Local<>(Name.of(name));
   }
 
-  interface Handler<ID, M extends Record, E, S extends Enum<S> & State<S, E>, R extends Record> {
-    Context<Root<ID, M, E, S>> handle(Headers headers, Message<R> message, Context<Root<ID, M, E, S>> context, R command);
+  interface Handler<A, R extends Record> {
+    Future<Void> handle(A aggregate, R record);
   }
 }
 

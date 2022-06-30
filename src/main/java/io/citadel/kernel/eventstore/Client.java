@@ -1,6 +1,6 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.eventstore.metadata.Aggregate;
+import io.citadel.kernel.eventstore.metadata.MetaAggregate;
 import io.citadel.kernel.eventstore.metadata.Change;
 import io.citadel.kernel.eventstore.metadata.ID;
 import io.citadel.kernel.eventstore.metadata.Name;
@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.StreamSupport.stream;
 
-final class Client implements EventStorePool, Query, Update {
+final class Client implements EventPool, Query, Update {
   private final EventBus eventBus;
   private final SqlClient client;
 
@@ -28,23 +28,23 @@ final class Client implements EventStorePool, Query, Update {
 
   @SuppressWarnings("DuplicateBranchesInSwitch")
   @Override
-  public Future<Aggregate> query(ID id, Name name, Version version) {
+  public Future<MetaAggregate> query(ID id, Name name, Version version) {
     return SqlTemplate.forQuery(client, queryTemplate)
       .mapTo(row -> switch (row.getJsonObject("data")) {
-        case null -> Aggregate.zero(id, name);
-        case JsonObject it && it.isEmpty() -> Aggregate.zero(id, name);
-        default -> Aggregate.last(
-          Aggregate.id(row.getString("id")),
-          Aggregate.name(row.getString("name")),
-          Aggregate.version(row.getLong("version")),
-          Aggregate.state(row.getString("state")),
-          Aggregate.model(row.getJsonObject("entity"))
+        case null -> MetaAggregate.zero(id, name);
+        case JsonObject it && it.isEmpty() -> MetaAggregate.zero(id, name);
+        default -> MetaAggregate.last(
+          MetaAggregate.id(row.getString("id")),
+          MetaAggregate.name(row.getString("name")),
+          MetaAggregate.version(row.getLong("version")),
+          MetaAggregate.state(row.getString("state")),
+          MetaAggregate.model(row.getJsonObject("entity"))
         );
       })
       .execute(params(id, name, version))
       .map(rows -> stream(rows.spliterator(), false))
       .map(Stream::findFirst)
-      .map(found -> found.orElseGet(() -> Aggregate.zero(id, name)));
+      .map(found -> found.orElseGet(() -> MetaAggregate.zero(id, name)));
   }
 
   @Override

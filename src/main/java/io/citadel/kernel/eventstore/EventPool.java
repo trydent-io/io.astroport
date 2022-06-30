@@ -1,6 +1,6 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.eventstore.metadata.Aggregate;
+import io.citadel.kernel.eventstore.metadata.MetaAggregate;
 import io.citadel.kernel.eventstore.metadata.Change;
 import io.citadel.kernel.eventstore.metadata.ID;
 import io.citadel.kernel.eventstore.metadata.Name;
@@ -15,18 +15,18 @@ import io.vertx.sqlclient.SqlConnectOptions;
 
 import java.util.stream.Stream;
 
-public sealed interface EventStorePool permits Client {
-  static EventStorePool client(Vertx vertx, SqlConnectOptions options) {
+public sealed interface EventPool permits Client {
+  static EventPool client(Vertx vertx, SqlConnectOptions options) {
     return new Client(vertx.eventBus(), PgPool.client(vertx, PgConnectOptions.wrap(options), new PoolOptions().setMaxSize(10)));
   }
-  Future<Aggregate> query(ID id, Name name, Version version);
-  default <T> Future<Aggregate> query(T id, String name, long version) {
-    return query(Aggregate.id(id), Aggregate.name(name), Aggregate.version(version));
+  Future<MetaAggregate> query(ID id, Name name, Version version);
+  default <T> Future<MetaAggregate> query(T id, String name, long version) {
+    return query(MetaAggregate.id(id), MetaAggregate.name(name), MetaAggregate.version(version));
   }
-  default <T> Future<Aggregate> query(T id, String name) {
-    return query(Aggregate.id(id), Aggregate.name(name), Version.Last);
+  default <T> Future<MetaAggregate> query(T id, String name) {
+    return query(MetaAggregate.id(id), MetaAggregate.name(name), Version.Last);
   }
-  default Future<Aggregate> query(ID id, Name name) {
+  default Future<MetaAggregate> query(ID id, Name name) {
     return query(id, name, Version.Last);
   }
 
