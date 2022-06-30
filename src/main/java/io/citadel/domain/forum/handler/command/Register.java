@@ -8,6 +8,6 @@ public record Register() implements Forum.Handler<Command.Register> {
 
   @Override
   public Future<Void> handle(Forum forum, Command.Register register) {
-    return null;
+    return forum.register(register.name(), register.description()).commit();
   }
 }
