@@ -5,14 +5,12 @@ import io.citadel.domain.forum.handler.command.Register;
 import io.citadel.domain.member.Member;
 import io.citadel.kernel.domain.Aggregate;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.eventstore.EventPool;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
-import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
