@@ -8,6 +8,8 @@ public record State(String value) {
     return new State(value);
   }
 
+  public static <E extends Enum<E>> State from(E enumeration) { return new State(enumeration.name());}
+
   public <E extends Enum<E>> E as(ThrowableFunction<? super String, ? extends E> converter) {
     try {
       return value != null ? converter.apply(value) : null;

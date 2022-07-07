@@ -3,8 +3,10 @@ package io.citadel.domain.forum;
 import io.citadel.domain.forum.Forum.Event.*;
 import io.citadel.domain.forum.handler.command.Register;
 import io.citadel.domain.member.Member;
-import io.citadel.kernel.domain.Aggregate;
+import io.citadel.kernel.domain.Committable;
 import io.citadel.kernel.domain.Domain;
+import io.citadel.kernel.domain.Lookup;
+import io.citadel.kernel.domain.Transaction;
 import io.citadel.kernel.eventstore.EventPool;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate;
 import io.citadel.kernel.vertx.Task;
@@ -14,7 +16,7 @@ import io.vertx.core.json.JsonObject;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public sealed interface Forum {
+public sealed interface Forum extends Committable {
   String NAME = "forum";
 
   static ID id(final String value) {
@@ -29,22 +31,23 @@ public sealed interface Forum {
     return Forum.State.valueOf(value);
   }
 
-  static Aggregate<Forum> root(EventPool pool) {
-    return Aggregate.root(pool, NAME, Forum::zero, Forum::last);
+  static Lookup<Forum> root(EventPool pool) {
+    return Lookup.aggregate(pool, NAME, Forum::zero, Forum::last);
   }
 
   private static Forum zero(EventPool pool, MetaAggregate.Zero zero) {
-    return new Root(zero.id(Forum::id), null, State.Registered, Aggregate.root(pool, "member", it -> null, it -> null));
+    return new Aggregate(zero.id(Forum::id), null, State.Registered, Lookup.aggregate(pool, "member", it -> null, it -> null));
   }
 
   private static Forum last(EventPool pool, MetaAggregate.Last last) {
-    return new Root(last.id(Forum::id), last.entity(Forum::entity), last.state(Forum::state), Aggregate.root(pool, "member", it -> null, it -> null));
+    return new Aggregate(last.id(Forum::id), last.entity(Forum::entity), last.state(Forum::state), Lookup.aggregate(pool, "member", it -> null, it -> null));
   }
 
   Forum register(Name name, Description description);
 
-  record Entity(Details details, Member.ID registerer) {
-  }
+  Future<Member> registeredBy();
+
+  record Entity(Details details, Member.ID registeredBy) {}
 
   enum State implements io.citadel.kernel.domain.State<State, Event> {
     Registered, Open, Closed, Archived;
@@ -64,23 +67,12 @@ public sealed interface Forum {
   }
 
   sealed interface Command {
-    record Register(Name name, Description description, LocalDateTime at) implements Command {
-    }
-
-    record Open(LocalDateTime at) implements Command {
-    }
-
-    record Replace(Name name, Description description) implements Command {
-    }
-
-    record Close(LocalDateTime at) implements Command {
-    }
-
-    record Reopen(LocalDateTime at, Member.ID memberID) implements Command {
-    }
-
-    record Archive() implements Command {
-    }
+    record Register(Name name, Description description, LocalDateTime at) implements Command {}
+    record Open(LocalDateTime at) implements Command {}
+    record Replace(Name name, Description description) implements Command {}
+    record Close(LocalDateTime at) implements Command {}
+    record Reopen(LocalDateTime at, Member.ID memberID) implements Command {}
+    record Archive() implements Command {}
   }
 
   sealed interface Event {
@@ -119,31 +111,35 @@ public sealed interface Forum {
 
   sealed interface Handler<C extends Record & Command> extends Domain.Handler<Forum, C> permits Register {
   }
+}
 
-  Future<Member> registeredBy();
+final class Aggregate implements Forum, Task {
+  private final Forum.ID id;
+  private final Forum.Entity entity;
+  private final Lookup<Member> member;
+  private final Transaction<Forum.Event> transaction;
 
-  final class Root implements Forum, Task {
-    private final Forum.ID id;
-    private final Forum.Entity entity;
-    private final Forum.State state;
-    private final Aggregate<Member> member;
+  private Aggregate(ID id, Entity entity, Lookup<Member> member, Transaction<Event> transaction) {
+    this.id = id;
+    this.entity = entity;
+    this.member = member;
+    this.transaction = transaction;
+  }
 
-    private Root(ID id, Entity entity, State state, Aggregate<Member> member) {
-      this.id = id;
-      this.entity = entity;
-      this.state = state;
-      this.member = member;
-    }
+  @Override
+  public Forum register(Name name, Description description) {
+    return new Aggregate(id, entity, member, transaction.log(new Registered(new Details(name, description))));
+  }
 
-    @Override
-    public Forum register(Name name, Description description) {
-      return new Root(id, entity, state, member, transaction.log(new Registered(new Details(name, description))));
-    }
+  @Override
+  public Future<Member> registeredBy() {
+    return member.aggregate(entity.registeredBy().value());
+  }
 
-    @Override
-    public Future<Member> registeredBy() {
-      return member.aggregate(entity.registerer.value());
-    }
+  @Override
+  public Future<Void> commit() {
+    return transaction.commit();
   }
 }
+
 

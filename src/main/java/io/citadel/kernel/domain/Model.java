@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.kernel.domain.context.Context;
+import io.citadel.kernel.domain.context.Bounded;
 import io.citadel.kernel.eventstore.EventPool;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate;
 import io.citadel.kernel.eventstore.metadata.Name;
@@ -63,16 +63,16 @@ sealed public interface Model<T, R extends Record, F, N extends Enum<N> & State<
       return message -> pool.query(MetaAggregate.id(Headers.of(message.headers()).id(aggregateId)), name)
         .map(asAggregateRoot())
         .map(asContext(handler, message))
-        .onSuccess(context -> context.commit())
+        .onSuccess(bounded -> bounded.commit())
         .onFailure(throwable -> message.fail(500, error(message, throwable)));
     }
 
-    private <B extends Record> Function<MetaAggregate, Context<MetaAggregate.Root<T, R, F, N>>> asContext(Handler<T, R, F, N, B> handler, Message<B> message) {
+    private <B extends Record> Function<MetaAggregate, Bounded<MetaAggregate.Root<T, R, F, N>>> asContext(Handler<T, R, F, N, B> handler, Message<B> message) {
       return aggregate ->
         handler.handle(
           Headers.of(message.headers()),
           message,
-          Context.open(Transaction.of() aggregate),
+          Bounded.open(Transaction.of() aggregate),
           message.body()
         );
     }

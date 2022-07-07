@@ -10,7 +10,7 @@ import static java.util.stream.StreamSupport.stream;
 
 sealed interface Query permits Client {
   String queryTemplate = """
-    with aggregate as (
+    with lookup as (
       select  aggregate_version as version, aggregate_state as state, aggregate_id as id, aggregate_name as name
       from    metadata
       where   aggregate_id = #{aggregateId}
@@ -21,14 +21,14 @@ sealed interface Query permits Client {
     ), aggregated as (
       select aggregate_id, jsonb_object_agg(json.key, json.value) as model
       from (select aggregate_id, event_data, aggregate_name, aggregate_version from metadata order by timepoint) as meta, jsonb_each(event_data) as json(key, value)
-      where   aggregate_id = aggregate.id
-        and   aggregate_name = aggregate.name
-        and   aggregate_version <= aggregate.version
+      where   aggregate_id = lookup.id
+        and   aggregate_name = lookup.name
+        and   aggregate_version <= lookup.version
       group by aggregate_id
     )
     select  id, name, version, state, model
-    from    aggregate inner join aggregated
-          on aggregate.id = aggregated.aggregate_id
+    from    lookup inner join aggregated
+          on lookup.id = aggregated.aggregate_id
     """;
 
   default Map<String, Object> params(ID id, Name name, Version version) {
