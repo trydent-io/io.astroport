@@ -31,7 +31,7 @@ public sealed interface Forum extends Committable {
     return Forum.State.valueOf(value);
   }
 
-  static Lookup<Forum> root(EventPool pool) {
+  static Lookup<Forum> aggregate(EventPool pool) {
     return Lookup.aggregate(pool, NAME, Forum::zero, Forum::last);
   }
 

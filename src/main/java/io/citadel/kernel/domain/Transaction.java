@@ -5,12 +5,12 @@ import io.citadel.kernel.eventstore.metadata.Change;
 import io.citadel.kernel.eventstore.metadata.ID;
 import io.citadel.kernel.eventstore.metadata.Name;
 import io.citadel.kernel.eventstore.metadata.Version;
-import io.citadel.kernel.lang.Streamed;
+import io.citadel.kernel.lang.stream.Streamed;
 import io.vertx.core.Future;
 
 import java.util.stream.Stream;
 
-public sealed interface Transaction<E> {
+public sealed interface Transaction<E> extends Committable {
   record Aggregate(ID id, Name name, Version version) {}
   static <S extends Enum<S> & State<S, E>, E> Transaction<E> open(EventPool pool, Aggregate aggregate, S state) {
     return new Open<>(pool, aggregate, state, Stream.empty());
@@ -18,9 +18,8 @@ public sealed interface Transaction<E> {
 
   <T extends Enum<T> & State<T, F>, F> Transaction<F> fork(Aggregate aggregate, T state);
   Transaction<E> log(E event);
-  Future<Void> commit();
-
   final class Open<S extends Enum<S> & State<S, E>, E> implements Transaction<E>, Streamed<Change> {
+
     private final EventPool pool;
     private final Aggregate aggregate;
     private final S state;
