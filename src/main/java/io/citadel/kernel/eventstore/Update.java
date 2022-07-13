@@ -1,10 +1,10 @@
 package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.eventstore.metadata.Change;
-import io.citadel.kernel.eventstore.metadata.ID;
-import io.citadel.kernel.eventstore.metadata.Name;
+import io.citadel.kernel.eventstore.audit.ID;
+import io.citadel.kernel.eventstore.audit.Name;
 import io.citadel.kernel.eventstore.metadata.State;
-import io.citadel.kernel.eventstore.metadata.Version;
+import io.citadel.kernel.eventstore.audit.Version;
 import io.citadel.kernel.media.Json;
 
 import java.util.Map;

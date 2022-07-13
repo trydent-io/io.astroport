@@ -3,16 +3,16 @@ package io.citadel.kernel.domain.model;
 import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.domain.Model;
-import io.citadel.kernel.eventstore.EventPool;
+import io.citadel.kernel.eventstore.Entities;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 
 public final class Service extends AbstractVerticle implements Domain.Verticle {
   private final Migration migration;
-  private final EventPool pool;
+  private final Entities pool;
   private final Model<Forum.ID, Forum.Entity, Forum.Event, Forum.State> forum;
 
-  public Service(Migration migration, EventPool pool, Model<Forum.ID, Forum.Entity, Forum.Event, Forum.State> forum) {
+  public Service(Migration migration, Entities pool, Model<Forum.ID, Forum.Entity, Forum.Event, Forum.State> forum) {
     this.migration = migration;
     this.pool = pool;
     this.forum = forum;

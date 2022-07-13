@@ -1,5 +1,8 @@
 package io.citadel.kernel.eventstore.metadata;
 
+import io.citadel.kernel.eventstore.audit.ID;
+import io.citadel.kernel.eventstore.audit.Name;
+import io.citadel.kernel.eventstore.audit.Version;
 import io.vertx.core.json.JsonObject;
 
 import java.util.function.Function;

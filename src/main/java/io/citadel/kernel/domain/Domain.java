@@ -2,7 +2,7 @@ package io.citadel.kernel.domain;
 
 import io.citadel.kernel.domain.model.Defaults;
 import io.citadel.kernel.domain.model.Service;
-import io.citadel.kernel.eventstore.metadata.Name;
+import io.citadel.kernel.eventstore.audit.Name;
 import io.vertx.core.Future;
 
 public interface Domain {

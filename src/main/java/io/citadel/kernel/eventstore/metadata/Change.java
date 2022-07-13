@@ -1,5 +1,9 @@
 package io.citadel.kernel.eventstore.metadata;
 
+import io.citadel.kernel.eventstore.audit.Data;
+import io.citadel.kernel.eventstore.audit.ID;
+import io.citadel.kernel.eventstore.audit.Name;
+import io.citadel.kernel.eventstore.audit.Timepoint;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 

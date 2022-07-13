@@ -1,4 +1,4 @@
-package io.citadel.kernel.eventstore.metadata;
+package io.citadel.kernel.eventstore.audit;
 
 public record Name(String value) {
   public Name {

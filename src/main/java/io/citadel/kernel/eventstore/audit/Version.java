@@ -1,4 +1,4 @@
-package io.citadel.kernel.eventstore.metadata;
+package io.citadel.kernel.eventstore.audit;
 
 public record Version(long value) {
   public static final Version Zero = new Version(0);
