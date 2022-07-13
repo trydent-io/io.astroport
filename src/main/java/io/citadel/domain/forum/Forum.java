@@ -31,16 +31,16 @@ public sealed interface Forum extends Committable {
     return Forum.State.valueOf(value);
   }
 
-  static Lookup<Forum> aggregate(EventPool pool) {
+  static Lookup<Forum> forums(EventPool pool) {
     return Lookup.aggregate(pool, NAME, Forum::zero, Forum::last);
   }
 
   private static Forum zero(EventPool pool, MetaAggregate.Zero zero) {
-    return new Aggregate(zero.id(Forum::id), null, State.Registered, Lookup.aggregate(pool, "member", it -> null, it -> null));
+    return new Aggregate(zero.id(Forum::id), null, State.Registered);
   }
 
   private static Forum last(EventPool pool, MetaAggregate.Last last) {
-    return new Aggregate(last.id(Forum::id), last.entity(Forum::entity), last.state(Forum::state), Lookup.aggregate(pool, "member", it -> null, it -> null));
+    return new Aggregate(last.id(Forum::id), last.entity(Forum::entity), last.state(Forum::state));
   }
 
   Forum register(Name name, Description description);
@@ -116,24 +116,17 @@ public sealed interface Forum extends Committable {
 final class Aggregate implements Forum, Task {
   private final Forum.ID id;
   private final Forum.Entity entity;
-  private final Lookup<Member> member;
   private final Transaction<Forum.Event> transaction;
 
-  private Aggregate(ID id, Entity entity, Lookup<Member> member, Transaction<Event> transaction) {
+  private Aggregate(ID id, Entity entity, Transaction<Event> transaction) {
     this.id = id;
     this.entity = entity;
-    this.member = member;
     this.transaction = transaction;
   }
 
   @Override
   public Forum register(Name name, Description description) {
-    return new Aggregate(id, entity, member, transaction.log(new Registered(new Details(name, description))));
-  }
-
-  @Override
-  public Future<Member> registeredBy() {
-    return member.aggregate(entity.registeredBy().value());
+    return new Aggregate(id, entity, transaction.log(new Registered(new Details(name, description))));
   }
 
   @Override
