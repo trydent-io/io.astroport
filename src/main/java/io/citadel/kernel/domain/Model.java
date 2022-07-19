@@ -7,7 +7,7 @@ import io.citadel.kernel.eventstore.audit.Name;
 import io.citadel.kernel.eventstore.audit.Version;
 import io.citadel.kernel.func.ThrowableFunction;
 import io.citadel.kernel.func.ThrowableSupplier;
-import io.citadel.kernel.vertx.RecordType;
+import io.citadel.kernel.vertx.RecordCodec;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
@@ -54,7 +54,7 @@ sealed public interface Model<T, R extends Record, F, N extends Enum<N> & State<
     public <B extends Record> io.citadel.kernel.domain.Model<T, R, F, N> handle(Class<B> type, Handler<T, R, F, N, B> handler) {
       vertx
         .eventBus()
-        .registerDefaultCodec(type, RecordType.codec(type))
+        .registerDefaultCodec(type, RecordCodec.of(type))
         .localConsumer("%s.%s".formatted(name, type.getSimpleName())).han, local(handler));
       return this;
     }
