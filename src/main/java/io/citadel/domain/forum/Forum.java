@@ -7,7 +7,7 @@ import io.citadel.kernel.domain.Committable;
 import io.citadel.kernel.domain.Domain;
 import io.citadel.kernel.domain.Lookup;
 import io.citadel.kernel.domain.Transaction;
-import io.citadel.kernel.eventstore.Entities;
+import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
@@ -31,15 +31,15 @@ public sealed interface Forum extends Committable {
     return Forum.State.valueOf(value);
   }
 
-  static Lookup<Forum> forums(Entities pool) {
+  static Lookup<Forum> forums(EventStore pool) {
     return Lookup.aggregate(pool, NAME, Forum::zero, Forum::last);
   }
 
-  private static Forum zero(Entities pool, MetaAggregate.Zero zero) {
+  private static Forum zero(EventStore pool, MetaAggregate.Zero zero) {
     return new Aggregate(zero.id(Forum::id), null, State.Registered);
   }
 
-  private static Forum last(Entities pool, MetaAggregate.Last last) {
+  private static Forum last(EventStore pool, MetaAggregate.Last last) {
     return new Aggregate(last.id(Forum::id), last.entity(Forum::entity), last.state(Forum::state));
   }
 

@@ -1,10 +1,7 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.eventstore.metadata.Change;
-import io.citadel.kernel.eventstore.audit.ID;
-import io.citadel.kernel.eventstore.audit.Name;
-import io.citadel.kernel.eventstore.metadata.State;
-import io.citadel.kernel.eventstore.audit.Version;
+import io.citadel.kernel.eventstore.event.Entity;
+import io.citadel.kernel.eventstore.event.Event;
 import io.citadel.kernel.media.Json;
 
 import java.util.Map;
@@ -13,36 +10,35 @@ import java.util.stream.Stream;
 sealed interface Update permits Client {
   String updateTemplate = """
     with events as (
-      select  es -> 'change' ->> 'name' event_name,
-              es -> 'change' ->> 'data' event_data
+      select  es -> 'event' ->> 'name' event_name,
+              es -> 'event' ->> 'data' event_data
       from json_array_elements(#{events}) es
     ),
     last_version as (
-      select  e.aggregate_version
-      from    metadata e
-      where   aggregate_id = #{aggregateId}
-        and   aggregate_name = #{aggregateName}
-      order by e.aggregate_version desc
+      select  e.entity_version
+      from    entity_events e
+      where   entity_id = #{entityId}
+        and   entity_name = #{entityName}
+      order by e.entity_version desc
       limit 1
     )
-    insert into metadata(event_name, event_data, aggregate_id, aggregate_name, aggregate_version)
+    insert into entity_events(event_name, event_data, entity_id, entity_name, entity_version)
     select  event_name,
             event_data,
-            #{aggregateId},
-            #{aggregateName},
-            #{aggregateVersion} + 1
-    from  metadata
-    where #{aggregateVersion} = last_version or (#{aggregateVersion} = 0 and not exists(select id from metadata where aggregate_id = #{aggregateId}))
-    returning aggregate_id, aggregate_name, event_name, event_data, timepoint
+            #{entityId},
+            #{entityName},
+            #{entityVersion} + 1
+    from  entity_events
+    where #{entityVersion} = last_version or (#{entityVersion} = 0 and not exists(select event_id from entity_events where entity_id = #{entityId}))
+    returning event_id, event_name, event_data, event_timepoint
     """;
 
-  default Map<String, Object> params(ID id, Name name, Version version, State state, Stream<Change> changes) {
+  default Map<String, Object> params(Entity.ID id, Entity.Name name, Entity.Version version, Stream<Event> events) {
     return Map.of(
-      "aggregateId", id.value(),
-      "aggregateName", name.value(),
-      "aggregateVersion", version.value(),
-      "aggregateState", state.value(),
-      "events", Json.array(changes)
+      "entityId", id.value(),
+      "entityName", name.value(),
+      "entityVersion", version.value(),
+      "events", Json.array(events)
     );
   }
 

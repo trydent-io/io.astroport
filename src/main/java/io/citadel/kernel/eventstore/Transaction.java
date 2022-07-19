@@ -1,7 +1,7 @@
 package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.eventstore.metadata.Change;
-import io.citadel.kernel.eventstore.audit.Entity;
+import io.citadel.kernel.eventstore.event.Entity;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;

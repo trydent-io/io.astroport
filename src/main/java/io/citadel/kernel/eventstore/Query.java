@@ -1,8 +1,9 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.eventstore.audit.ID;
-import io.citadel.kernel.eventstore.audit.Name;
-import io.citadel.kernel.eventstore.audit.Version;
+import io.citadel.kernel.eventstore.event.Entity;
+import io.citadel.kernel.eventstore.event.ID;
+import io.citadel.kernel.eventstore.event.Name;
+import io.citadel.kernel.eventstore.event.Version;
 
 import java.util.Map;
 
@@ -31,7 +32,7 @@ sealed interface Query permits Client {
           on lookup.id = aggregated.aggregate_id
     """;
 
-  default Map<String, Object> params(ID id, Name name, Version version) {
+  default Map<String, Object> params(Entity.ID id, Entity.Name name, Entity.Version version) {
     return Map.of(
       "aggregateId", id.toString(),
       "aggregateName", name,

@@ -2,7 +2,7 @@ package io.citadel.kernel.domain.model;
 
 import io.citadel.domain.forum.Forum;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.eventstore.Entities;
+import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.eventstore.Metadata;
 import io.citadel.kernel.sql.Database;
 import io.citadel.kernel.sql.Migration;
@@ -14,7 +14,7 @@ public enum Defaults {
   public Domain.Verticle service(Vertx vertx, Database database) {
     return new Service(
       Migration.eventStore(vertx, database),
-      Entities.client(vertx, database.asPgOptions()),
+      EventStore.client(vertx, database.asPgOptions()),
       Domain.<Forum.ID, Forum.Entity, Forum.Event, Forum.State>model(Forum.NAME)
         .aggregate(
           Forum::id,
