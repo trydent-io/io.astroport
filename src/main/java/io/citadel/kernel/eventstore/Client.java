@@ -3,12 +3,10 @@ package io.citadel.kernel.eventstore;
 import io.citadel.kernel.eventstore.event.Entity;
 import io.citadel.kernel.eventstore.event.EntityEvent;
 import io.citadel.kernel.eventstore.event.Event;
-import io.citadel.kernel.eventstore.metadata.Change;
-import io.citadel.kernel.eventstore.metadata.State;
+import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.templates.SqlTemplate;
 
@@ -16,7 +14,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.StreamSupport.stream;
 
-final class Client implements EventStore, Query, Update {
+final class Client implements EventStore, Query, Update, Task {
   private final EventBus eventBus;
   private final SqlClient client;
 
@@ -25,18 +23,13 @@ final class Client implements EventStore, Query, Update {
     this.client = client;
   }
 
-  @SuppressWarnings("DuplicateBranchesInSwitch")
   @Override
   public Future<Stream<EntityEvent>> restore(Entity.ID id, Entity.Name name) {
-    return SqlTemplate.forQuery(client, queryTemplate).mapTo(row ->
-        switch (row.getJsonObject("data")) {
-          case null -> EntityEvent.zero(id, name);
-          case JsonObject it && it.isEmpty() -> EntityEvent.zero(id, name);
-          default -> EntityEvent.last(row);
-        }
-      )
-      .execute(params(id, name, Entity.version(0)))
-      .map(rows -> stream(rows.spliterator(), false));
+    return SqlTemplate.forQuery(client, queryTemplate)
+      .mapTo(EntityEvent::last)
+      .execute(params(id, name, Entity.versionZero()))
+      .map(rows -> stream(rows.spliterator(), false))
+      .compose(filter(it -> it.findAny().isPresent(), Stream.of(EntityEvent.zero(id, name))));
   }
 
   @Override

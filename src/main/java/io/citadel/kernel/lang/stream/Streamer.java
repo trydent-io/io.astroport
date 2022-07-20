@@ -6,7 +6,7 @@ import io.citadel.kernel.func.ThrowableSupplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-public interface Streamed<T> {
+public interface Streamer<T> {
   @SuppressWarnings("unchecked")
   default Stream<T> append(Stream<T> origin, T... items) {
     return Stream.concat(origin, Stream.of(items));

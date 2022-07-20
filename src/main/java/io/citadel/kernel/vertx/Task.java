@@ -21,6 +21,10 @@ public interface Task {
     return filter("Can't solve predicate", predicate);
   }
 
+  default <T> Function<T, Future<T>> filter(ThrowablePredicate<? super T> predicate, T otherwise) {
+    return it -> predicate.test(it) ? success(it) : success(otherwise);
+  }
+
   default <T> Function<T, Future<T>> filter(String error, ThrowablePredicate<? super T> predicate) {
     return it -> predicate.test(it) ? success(it) : failure(error);
   }

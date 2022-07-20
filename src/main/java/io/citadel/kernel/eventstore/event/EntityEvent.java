@@ -4,21 +4,21 @@ import io.vertx.sqlclient.Row;
 
 public sealed interface EntityEvent {
   static EntityEvent zero(Entity.ID id, Entity.Name name) {
-    return new Zero(Entity.none(id, name));
+    return new Zero(new Entity.None(id, name));
   }
 
   static EntityEvent last(Row row) {
     return new Last(
-      new Entity.Done(
-        Entity.id(row.getString("entity_id")),
-        Entity.name(row.getString("entity_name")),
-        Entity.version(row.getLong("entity_version"))
+      Entity.one(
+        row.getString("entity_id"),
+        row.getString("entity_name"),
+        row.getLong("entity_version")
       ),
-      new Event.Saved(
-        Event.id(row.getUUID("event_id")),
-        Event.name(row.getString("event_name")),
-        Event.data(row.getJsonObject("event_data")),
-        Event.timepoint(row.getLocalDateTime("event_timepoint"))
+      Event.saved(
+        row.getUUID("event_id"),
+        row.getString("event_name"),
+        row.getJsonObject("event_data"),
+        row.getLocalDateTime("event_timepoint")
       )
     );
   }

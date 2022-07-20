@@ -1,16 +1,11 @@
 package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.eventstore.event.Entity;
-import io.citadel.kernel.eventstore.event.ID;
-import io.citadel.kernel.eventstore.event.Name;
-import io.citadel.kernel.eventstore.event.Version;
 
 import java.util.Map;
 
-import static java.util.stream.StreamSupport.stream;
-
 sealed interface Query permits Client {
-  String queryTemplate = """
+  String modelTemplate = """
     with lookup as (
       select  aggregate_version as version, aggregate_state as state, aggregate_id as id, aggregate_name as name
       from    metadata
@@ -32,11 +27,29 @@ sealed interface Query permits Client {
           on lookup.id = aggregated.aggregate_id
     """;
 
+  String queryTemplate = """
+    with last as (
+      select  entity_id as id, entity_name as name, entity_version as version
+      from    entity_events
+      where   entity_id = #{entityId}
+        and   lower(entity_name) = lower(#{entityName}) or #{entityName} is null
+        and   entity_version <= #{entityVersion} or #{entityVersion} = 0
+      order by entity_version desc
+      limit 1
+    )
+    select  event_id, event_name, event_data, event_timepoint, entity_id, entity_name, entity_version
+    from    entity_events
+    where   entity_id = last.id
+      and   entity_name = last.name
+      and   entity_version <= last.version
+    order by event_timepoint;
+    """;
+
   default Map<String, Object> params(Entity.ID id, Entity.Name name, Entity.Version version) {
     return Map.of(
-      "aggregateId", id.toString(),
-      "aggregateName", name,
-      "aggregateVersion", version
+      "entityId", id.toString(),
+      "entityName", name,
+      "entityVersion", version
     );
   }
 }

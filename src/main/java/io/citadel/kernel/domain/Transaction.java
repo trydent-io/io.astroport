@@ -5,7 +5,7 @@ import io.citadel.kernel.eventstore.metadata.Change;
 import io.citadel.kernel.eventstore.event.ID;
 import io.citadel.kernel.eventstore.event.Name;
 import io.citadel.kernel.eventstore.event.Version;
-import io.citadel.kernel.lang.stream.Streamed;
+import io.citadel.kernel.lang.stream.Streamer;
 import io.vertx.core.Future;
 
 import java.util.stream.Stream;
@@ -18,7 +18,7 @@ public sealed interface Transaction<E> extends Committable {
 
   <T extends Enum<T> & State<T, F>, F> Transaction<F> fork(Aggregate aggregate, T state);
   Transaction<E> log(E event);
-  final class Open<S extends Enum<S> & State<S, E>, E> implements Transaction<E>, Streamed<Change> {
+  final class Open<S extends Enum<S> & State<S, E>, E> implements Transaction<E>, Streamer<Change> {
 
     private final EventStore pool;
     private final Aggregate aggregate;

@@ -1,30 +1,35 @@
 package io.citadel.kernel.domain;
 
 import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.eventstore.event.ID;
+import io.citadel.kernel.eventstore.event.Entity;
+import io.citadel.kernel.eventstore.event.EntityEvent;
+import io.citadel.kernel.eventstore.event.Event;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate.Last;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate.Zero;
-import io.citadel.kernel.eventstore.event.Name;
+import io.citadel.kernel.func.ThrowableBiFunction;
+import io.citadel.kernel.func.ThrowableSupplier;
+import io.citadel.kernel.lang.stream.Streamer;
+import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 public sealed interface Lookup<A> {
-  static <A> Lookup<A> aggregate(EventStore pool, String name, BiFunction<? super EventStore, ? super Zero, ? extends A> zero, BiFunction<? super EventStore, ? super Last, ? extends A> last) {
-    return new Once<>(new Aggregate<>(pool, Name.of(name), zero, last));
+  static <A> Lookup<A> aggregate(EventStore eventStore, String name, BiFunction<? super EventStore, ? super Zero, ? extends A> zero, BiFunction<? super EventStore, ? super Last, ? extends A> last) {
+    return new Once<>(new Repository<>(eventStore, Entity.name(name), zero, last));
   }
 
   Future<A> aggregate(String id);
 
-  final class Aggregate<A> implements Lookup<A> {
-    private final EventStore pool;
-    private final Name name;
-    private final BiFunction<? super EventStore, ? super Zero, ? extends A> zero;
-    private final BiFunction<? super EventStore, ? super Last, ? extends A> last;
+  final class Repository<A> implements Lookup<A>, Task, Streamer<EntityEvent> {
+    private final EventStore eventStore;
+    private final Entity.Name name;
+    private final ThrowableSupplier<A> zero;
+    private final ThrowableBiFunction<? super A, ? super Event, ? extends A> last;
 
-    private Aggregate(EventStore pool, Name name, BiFunction<? super EventStore, ? super Zero, ? extends A> zero, BiFunction<? super EventStore, ? super Last, ? extends A> last) {
-      this.pool = pool;
+    private Repository(EventStore eventStore, Entity.Name name, ThrowableSupplier<A> zero, ThrowableBiFunction<? super A, ? super Event, ? extends A> last) {
+      this.eventStore = eventStore;
       this.name = name;
       this.zero = zero;
       this.last = last;
@@ -32,12 +37,16 @@ public sealed interface Lookup<A> {
 
     @Override
     public Future<A> aggregate(String id) {
-      return pool.query(ID.of(id), name)
-        .map(aggregate -> switch (aggregate) {
-          case Zero it -> zero.apply(pool, it);
-          case Last it -> last.apply(pool, it);
-          default -> throw new IllegalStateException("Unexpected value: " + aggregate);
-        });
+      return eventStore.restore(Entity.id(id), name)
+        .map(events -> events.collect(
+            folding(zero, (acc, event) ->
+              switch (event) {
+                case EntityEvent.Zero ignored -> acc;
+                case EntityEvent.Last it -> last.apply(acc, it.event());
+              }
+            )
+          )
+        );
     }
   }
 
