@@ -1,7 +1,7 @@
 package io.citadel.kernel.lang.stream;
 
-import io.citadel.kernel.func.ThrowableBiFunction;
-import io.citadel.kernel.func.ThrowableSupplier;
+import io.citadel.kernel.func.TryBiFunction;
+import io.citadel.kernel.func.TrySupplier;
 
 import java.util.stream.Collector;
 import java.util.stream.Stream;
@@ -12,7 +12,7 @@ public interface Streamer<T> {
     return Stream.concat(origin, Stream.of(items));
   }
 
-  default <R> Collector<T, R, R> folding(ThrowableSupplier<? extends R> initializer, ThrowableBiFunction<? super R, ? super T, ? extends R> accumulator) {
+  default <R> Collector<T, R, R> folding(TrySupplier<? extends R> initializer, TryBiFunction<? super R, ? super T, ? extends R> accumulator) {
     return Fold.of(initializer, accumulator);
   }
 }

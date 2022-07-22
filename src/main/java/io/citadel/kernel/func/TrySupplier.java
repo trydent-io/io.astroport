@@ -3,7 +3,7 @@ package io.citadel.kernel.func;
 import java.util.function.Supplier;
 
 @FunctionalInterface
-public interface ThrowableSupplier<A> extends Supplier<A> {
+public interface TrySupplier<A> extends Supplier<A> {
   @Override
   default A get() {
     try {

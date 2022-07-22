@@ -3,13 +3,15 @@ package io.citadel.kernel.eventstore.event;
 import io.vertx.sqlclient.Row;
 
 public sealed interface EntityEvent {
-  static EntityEvent zero(Entity.ID id, Entity.Name name) {
-    return new Zero(new Entity.None(id, name));
+  static EntityEvent identity(Entity.ID id, Entity.Name name) {
+    return new Identity(new Entity.Unversioned(id, name));
   }
 
+  static EntityEvent change(Entity entity, Event event) { return new Change(entity, event); }
+
   static EntityEvent last(Row row) {
-    return new Last(
-      Entity.one(
+    return new Change(
+      Entity.versioned(
         row.getString("entity_id"),
         row.getString("entity_name"),
         row.getLong("entity_version")
@@ -23,8 +25,8 @@ public sealed interface EntityEvent {
     );
   }
 
-  record Zero(Entity entity) implements EntityEvent {
+  record Identity(Entity entity) implements EntityEvent {
   }
-  record Last(Entity entity, Event event) implements EntityEvent {
+  record Change(Entity entity, Event event) implements EntityEvent {
   }
 }

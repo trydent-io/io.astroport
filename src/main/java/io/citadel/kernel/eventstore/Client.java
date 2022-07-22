@@ -29,7 +29,7 @@ final class Client implements EventStore, Query, Update, Task {
       .mapTo(EntityEvent::last)
       .execute(params(id, name, Entity.versionZero()))
       .map(rows -> stream(rows.spliterator(), false))
-      .compose(filter(it -> it.findAny().isPresent(), Stream.of(EntityEvent.zero(id, name))));
+      .compose(filter(it -> it.findAny().isPresent(), Stream.of(EntityEvent.identity(id, name))));
   }
 
   @Override

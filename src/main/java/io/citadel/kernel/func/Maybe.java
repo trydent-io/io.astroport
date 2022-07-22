@@ -28,7 +28,7 @@ public sealed interface Maybe<T> {
     };
   }
 
-  default <R> Maybe<R> map(ThrowableSupplier<? extends R> supplier) {
+  default <R> Maybe<R> map(TrySupplier<? extends R> supplier) {
     return switch (this) {
       case Empty ignored -> empty();
       case Right<T> ignored -> new Right<>(supplier.get());
@@ -74,14 +74,14 @@ public sealed interface Maybe<T> {
     };
   }
 
-  default Maybe<T> or(ThrowableSupplier<? extends T> supplier) {
+  default Maybe<T> or(TrySupplier<? extends T> supplier) {
     return switch (this) {
       case Right<T> ignored -> this;
       default -> Maybe.of(supplier.get());
     };
   }
 
-  default T otherwise(ThrowableSupplier<? extends T> supplier) {
+  default T otherwise(TrySupplier<? extends T> supplier) {
     return switch (this) {
       case Right<T> right -> right.value;
       default -> supplier.get();

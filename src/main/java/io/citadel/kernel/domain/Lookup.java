@@ -6,8 +6,8 @@ import io.citadel.kernel.eventstore.event.EntityEvent;
 import io.citadel.kernel.eventstore.event.Event;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate.Last;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate.Zero;
-import io.citadel.kernel.func.ThrowableBiFunction;
-import io.citadel.kernel.func.ThrowableSupplier;
+import io.citadel.kernel.func.TryBiFunction;
+import io.citadel.kernel.func.TrySupplier;
 import io.citadel.kernel.lang.stream.Streamer;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
@@ -25,10 +25,10 @@ public sealed interface Lookup<A> {
   final class Repository<A> implements Lookup<A>, Task, Streamer<EntityEvent> {
     private final EventStore eventStore;
     private final Entity.Name name;
-    private final ThrowableSupplier<A> zero;
-    private final ThrowableBiFunction<? super A, ? super Event, ? extends A> last;
+    private final TrySupplier<A> zero;
+    private final TryBiFunction<? super A, ? super Event, ? extends A> last;
 
-    private Repository(EventStore eventStore, Entity.Name name, ThrowableSupplier<A> zero, ThrowableBiFunction<? super A, ? super Event, ? extends A> last) {
+    private Repository(EventStore eventStore, Entity.Name name, TrySupplier<A> zero, TryBiFunction<? super A, ? super Event, ? extends A> last) {
       this.eventStore = eventStore;
       this.name = name;
       this.zero = zero;
@@ -41,8 +41,8 @@ public sealed interface Lookup<A> {
         .map(events -> events.collect(
             folding(zero, (acc, event) ->
               switch (event) {
-                case EntityEvent.Zero ignored -> acc;
-                case EntityEvent.Last it -> last.apply(acc, it.event());
+                case EntityEvent.Identity ignored -> acc;
+                case EntityEvent.Change it -> last.apply(acc, it.event());
               }
             )
           )

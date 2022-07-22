@@ -1,7 +1,7 @@
 package io.citadel.kernel.lang.stream;
 
-import io.citadel.kernel.func.ThrowableBiFunction;
-import io.citadel.kernel.func.ThrowableSupplier;
+import io.citadel.kernel.func.TryBiFunction;
+import io.citadel.kernel.func.TrySupplier;
 
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -17,16 +17,16 @@ final class Fold<T, R> implements Collector<T, R, R> {
   private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
 
   private final R[] reference;
-  private final ThrowableSupplier<? extends R> initializer;
-  private final ThrowableBiFunction<? super R, ? super T, ? extends R> folder;
+  private final TrySupplier<? extends R> initializer;
+  private final TryBiFunction<? super R, ? super T, ? extends R> folder;
 
-  private Fold(R[] reference, ThrowableSupplier<? extends R> initializer, ThrowableBiFunction<? super R, ? super T, ? extends R> folder) {
+  private Fold(R[] reference, TrySupplier<? extends R> initializer, TryBiFunction<? super R, ? super T, ? extends R> folder) {
     this.reference = reference;
     this.initializer = initializer;
     this.folder = folder;
   }
 
-  static <T, R> Fold<T, R> of(ThrowableSupplier<? extends R> initializer, ThrowableBiFunction<? super R, ? super T, ? extends R> folder) {
+  static <T, R> Fold<T, R> of(TrySupplier<? extends R> initializer, TryBiFunction<? super R, ? super T, ? extends R> folder) {
     return new Fold<>((R[]) new Object[1], initializer, folder);
   }
 

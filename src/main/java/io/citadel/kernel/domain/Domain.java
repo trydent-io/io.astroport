@@ -11,8 +11,8 @@ public interface Domain {
   sealed interface Verticle extends Domain, io.vertx.core.Verticle permits Service {
   }
 
-  static <T, R extends Record, F, N extends Enum<N> & State<N, F>> Model<T, R, F, N> model(String name) {
-    return new Model.Local<>(Name.of(name));
+  static <T, R extends Record, F, N extends Enum<N> & State<N, F>> Aggregator<T, R, F, N> model(String name) {
+    return new Aggregator.Local<>(Name.of(name));
   }
 
   interface Handler<A, R extends Record> {
