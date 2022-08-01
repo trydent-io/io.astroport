@@ -37,7 +37,7 @@ sealed interface Query permits Client {
       order by entity_version desc
       limit 1
     )
-    select  event_id, event_name, event_data, event_timepoint, entity_id, entity_name, entity_version
+    select  entity_id, entity_name, entity_version, event_id, event_name, event_data, event_timepoint
     from    entity_events
     where   entity_id = last.id
       and   entity_name = last.name
@@ -45,7 +45,7 @@ sealed interface Query permits Client {
     order by event_timepoint;
     """;
 
-  default Map<String, Object> params(Entity.ID id, Entity.Name name, Entity.Version version) {
+  default Map<String, Object> with(Entity.ID id, Entity.Name name, Entity.Version version) {
     return Map.of(
       "entityId", id.toString(),
       "entityName", name,

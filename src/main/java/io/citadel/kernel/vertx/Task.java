@@ -17,15 +17,15 @@ public interface Task {
     return Future.failedFuture(new CitadelException(message));
   }
 
-  default <T> Function<T, Future<T>> filter(ThrowablePredicate<? super T> predicate) {
-    return filter("Can't solve predicate", predicate);
+  default <T> Function<T, Future<T>> when(ThrowablePredicate<? super T> predicate) {
+    return when("Can't solve predicate", predicate);
   }
 
-  default <T> Function<T, Future<T>> filter(ThrowablePredicate<? super T> predicate, T otherwise) {
-    return it -> predicate.test(it) ? success(it) : success(otherwise);
+  default <T> Function<T, Future<T>> when(ThrowablePredicate<? super T> predicate, T then) {
+    return it -> predicate.test(it) ? success(then) : success(it);
   }
 
-  default <T> Function<T, Future<T>> filter(String error, ThrowablePredicate<? super T> predicate) {
+  default <T> Function<T, Future<T>> when(String error, ThrowablePredicate<? super T> predicate) {
     return it -> predicate.test(it) ? success(it) : failure(error);
   }
 

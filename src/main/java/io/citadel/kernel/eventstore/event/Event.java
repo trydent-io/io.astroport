@@ -2,32 +2,45 @@ package io.citadel.kernel.eventstore.event;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.Row;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public sealed interface Event {
-  record Unsaved(Name name, Data data) implements Event {}
-  record Saved(ID id, Name name, Data data, Timepoint timepoint) implements Event {}
-
-  static Event unsaved(String name, JsonObject data) {
-    return new Unsaved(name(name), data(data));
+public record Event(ID id, Name name, Data data, Timepoint timepoint) {
+  public Event(Name name, Data data) { this(null, name, data, null); }
+  static Event uncommitted(String name, JsonObject data) {
+    return new Event(null, name(name), data(data), null);
   }
   @JsonCreator
-  static Event saved(UUID id, String name, JsonObject data, LocalDateTime timepoint) {
-    return new Saved(id(id), name(name), data(data), timepoint(timepoint));
+  public static Event committed(UUID id, String name, JsonObject data, LocalDateTime timepoint) {
+    return new Event(id(id), name(name), data(data), timepoint(timepoint));
   }
-  static ID id(UUID value) { return new ID(value); }
-  static Name name(String value) {
+
+  public static Event fromRow(Row row) {
+    return new Event(
+      id(row.getUUID("event_id")),
+      name(row.getString("event_name")),
+      data(row.getJsonObject("event_data")),
+      timepoint(row.getLocalDateTime("event_timepoint"))
+    );
+  }
+
+  public static ID id(UUID value) { return new ID(value); }
+  public static Name name(String value) {
     return new Name(value);
   }
-  static Data data(JsonObject value) {
+  public static Data data(JsonObject value) {
     return new Data(value);
   }
-  static Timepoint timepoint(LocalDateTime value) { return new Timepoint(value); }
+  public static Timepoint timepoint(LocalDateTime value) { return new Timepoint(value); }
 
-  record ID(UUID value) {}
-  record Name(String value) {}
-  record Data(JsonObject value) {}
-  record Timepoint(LocalDateTime value) {}
+  public static Event of(Name name, Data data) {
+    return new Event(name, data);
+  }
+
+  public record ID(UUID value) { public ID { assert value != null; } }
+  public record Name(String value) { public Name { assert value != null; } }
+  public record Data(JsonObject value) { public Data { assert value != null; } }
+  public record Timepoint(LocalDateTime value) { public Timepoint { assert value != null; } }
 }

@@ -2,7 +2,7 @@ package io.citadel.kernel.domain;
 
 import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.eventstore.event.Entity;
-import io.citadel.kernel.eventstore.event.EntityEvent;
+import io.citadel.kernel.eventstore.event.Audit;
 import io.citadel.kernel.eventstore.event.Event;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate.Last;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate.Zero;
@@ -22,7 +22,7 @@ public sealed interface Lookup<A> {
 
   Future<A> aggregate(String id);
 
-  final class Repository<A> implements Lookup<A>, Task, Streamer<EntityEvent> {
+  final class Repository<A> implements Lookup<A>, Task, Streamer<Audit> {
     private final EventStore eventStore;
     private final Entity.Name name;
     private final TrySupplier<A> zero;
@@ -41,8 +41,8 @@ public sealed interface Lookup<A> {
         .map(events -> events.collect(
             folding(zero, (acc, event) ->
               switch (event) {
-                case EntityEvent.Identity ignored -> acc;
-                case EntityEvent.Change it -> last.apply(acc, it.event());
+                case Audit.Identity ignored -> acc;
+                case Audit.Applied it -> last.apply(acc, it.event());
               }
             )
           )

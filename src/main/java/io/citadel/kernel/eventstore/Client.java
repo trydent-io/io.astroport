@@ -1,8 +1,7 @@
 package io.citadel.kernel.eventstore;
 
+import io.citadel.kernel.eventstore.event.Audit;
 import io.citadel.kernel.eventstore.event.Entity;
-import io.citadel.kernel.eventstore.event.EntityEvent;
-import io.citadel.kernel.eventstore.event.Event;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -24,31 +23,28 @@ final class Client implements EventStore, Query, Update, Task {
   }
 
   @Override
-  public Future<Stream<EntityEvent>> restore(Entity.ID id, Entity.Name name) {
+  public Future<Stream<Audit>> restore(Entity.ID id, Entity.Name name) {
     return SqlTemplate.forQuery(client, queryTemplate)
-      .mapTo(EntityEvent::last)
-      .execute(params(id, name, Entity.versionZero()))
-      .map(rows -> stream(rows.spliterator(), false))
-      .compose(filter(it -> it.findAny().isPresent(), Stream.of(EntityEvent.identity(id, name))));
+      .mapTo(Audit::fromRow)
+      .execute(with(id, name, Entity.Version.zero()))
+      .map(rows -> stream(rows.spliterator(), false));
   }
 
   @Override
-  public Future<Void> store(Entity.ID id, Entity.Name name, Entity.Version version, Stream<Event> events) {
-    return SqlTemplate.forUpdate(client, updateTemplate).mapTo(row ->
-        Event.saved(
-          row.getUUID("event_id"),
-          row.getString("event_name"),
-          row.getJsonObject("event_data"),
-          row.getLocalDateTime("event_timepoint")
-        )
-      )
-      .execute(params(id, name, version, events))
-      .map(events -> stream(events.spliterator(), false))
-      .onSuccess(events ->
-        events.forEach(change ->
-          eventBus.publish(change.eventName().value(), change.eventData().value(), new DeliveryOptions()
-            .addHeader("aggregateId", change.aggregateId().value())
-            .addHeader("timepoint", change.timepoint().asIsoDateTime())
+  public Future<Void> store(Stream<Audit> audits) {
+    return SqlTemplate.forUpdate(client, updateTemplate)
+      .mapTo(Audit::fromRow)
+      .execute(with(audits))
+      .map(it -> stream(it.spliterator(), false))
+      .onSuccess(changes ->
+        changes.forEach(change ->
+          eventBus.publish(
+            change.event().name().value(),
+            change.event().data().value(),
+            new DeliveryOptions()
+              .addHeader("entityId", change.entity().id().value())
+              .addHeader("timepoint", change.event().timepoint().value().toString())
+              .addHeader("eventId", change.event().id().value().toString())
           )
         )
       )
