@@ -1,17 +1,17 @@
 package io.citadel.kernel.domain;
 
-public interface State<S extends Enum<S> & State<S, E>, E> {
+public interface State<STATE extends Enum<STATE> & State<STATE, EVENT>, EVENT extends Record> {
   @SuppressWarnings("unchecked")
-  default boolean is(S... states) {
+  default boolean is(STATE... states) {
     var index = 0;
-    while (index < states.length && states[index] != this)
-      index++;
+    //noinspection StatementWithEmptyBody
+    while (index < states.length && states[index++] != this);
     return index < states.length;
   }
 
-  S transit(E event);
+  STATE transit(EVENT event);
 
-  default boolean transitable(E event) {
+  default boolean transitable(EVENT event) {
     return transit(event) != null;
   }
 }

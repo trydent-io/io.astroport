@@ -8,7 +8,7 @@ public record Entity(ID id, Name name, Version version) {
     return new Entity(id, name, new Version(0));
   }
   static Entity versioned(String id, String name, long version) {
-    return new Versioned(id(id), name(name), version(version));
+    return new Entity(id(id), name(name), version(version));
   }
 
   public static Entity fromRow(Row row) {

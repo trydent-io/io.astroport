@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 @FunctionalInterface
-public interface ThrowableFunction<T, R> extends Function<T, R> {
+public interface TryFunction<T, R> extends Function<T, R> {
   R tryApply(T t) throws Throwable;
 
   @Override
@@ -16,12 +16,12 @@ public interface ThrowableFunction<T, R> extends Function<T, R> {
     }
   }
 
-  default <V> ThrowableFunction<T, V> then(ThrowableFunction<? super R, ? extends V> after) {
+  default <V> TryFunction<T, V> then(TryFunction<? super R, ? extends V> after) {
     Objects.requireNonNull(after);
     return (T t) -> after.apply(apply(t));
   }
 
-  static <T> ThrowableFunction<T, T> identity() {
+  static <T> TryFunction<T, T> identity() {
     return t -> t;
   }
 }

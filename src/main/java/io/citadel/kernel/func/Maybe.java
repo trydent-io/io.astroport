@@ -20,7 +20,7 @@ public sealed interface Maybe<T> {
     return new Left<>(throwable);
   }
 
-  default <R> Maybe<R> map(ThrowableFunction<? super T, ? extends R> function) {
+  default <R> Maybe<R> map(TryFunction<? super T, ? extends R> function) {
     return switch (this) {
       case Empty ignored -> empty();
       case Right<T> right -> new Right<>(function.apply(right.value));
@@ -36,7 +36,7 @@ public sealed interface Maybe<T> {
     };
   }
 
-  default <R> Maybe<R> flatMap(ThrowableFunction<? super T, ? extends Maybe<? extends R>> function) {
+  default <R> Maybe<R> flatMap(TryFunction<? super T, ? extends Maybe<? extends R>> function) {
     return switch (this) {
       case Empty ignored -> empty();
       case Right<T> right -> (Maybe<R>) function.apply(right.value);
@@ -44,7 +44,7 @@ public sealed interface Maybe<T> {
     };
   }
 
-  default Maybe<T> filter(ThrowablePredicate<? super T> predicate) {
+  default Maybe<T> filter(TryPredicate<? super T> predicate) {
     return switch (this) {
       case Right<T> right -> predicate.test(right.value) ? this : empty();
       default -> this;

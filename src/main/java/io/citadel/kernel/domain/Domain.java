@@ -15,8 +15,8 @@ public interface Domain {
     return new Aggregator.Local<>(Name.of(name));
   }*/
 
-  interface Handler<A, R extends Record> {
-    Future<Void> handle(A aggregate, R record);
+  interface Handler<AGGREGATE, R extends Record> {
+    Future<Void> handle(AGGREGATE aggregate, R record);
   }
 }
 

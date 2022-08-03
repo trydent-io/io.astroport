@@ -3,7 +3,7 @@ package io.citadel.kernel.func;
 import java.util.function.Predicate;
 
 @FunctionalInterface
-public interface ThrowablePredicate<A> extends Predicate<A> {
+public interface TryPredicate<A> extends Predicate<A> {
   @Override
   default boolean test(A a) {
     try {
