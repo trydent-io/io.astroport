@@ -1,10 +1,6 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.eventstore.event.Entity;
-
-import java.util.Map;
-
-sealed interface Query permits Client {
+interface Query {
   String modelTemplate = """
     with lookup as (
       select  aggregate_version as version, aggregate_state as state, aggregate_id as id, aggregate_name as name
@@ -44,12 +40,4 @@ sealed interface Query permits Client {
       and   entity_version <= last.version
     order by event_timepoint;
     """;
-
-  default Map<String, Object> with(Entity.ID id, Entity.Name name, Entity.Version version) {
-    return Map.of(
-      "entityId", id.toString(),
-      "entityName", name,
-      "entityVersion", version
-    );
-  }
 }

@@ -5,7 +5,7 @@ import io.citadel.domain.forum.handler.command.Register;
 import io.citadel.domain.member.Member;
 import io.citadel.kernel.domain.Committable;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.domain.Lookup;
+import io.citadel.kernel.domain.Aggregates;
 import io.citadel.kernel.domain.Transaction;
 import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.eventstore.metadata.MetaAggregate;
@@ -31,15 +31,15 @@ public sealed interface Forum extends Committable {
     return Forum.State.valueOf(value);
   }
 
-  static Lookup<Forum> forums(EventStore pool) {
-    return Lookup.aggregate(pool, NAME, Forum::zero, Forum::last);
+  static Aggregates<Forum> forums(EventStore pool) {
+    return Aggregates.lookup(pool, NAME, Forum::zero, Forum::last);
   }
 
-  private static Forum zero(EventStore pool, MetaAggregate.Zero zero) {
+  private static Forum zero(EventStore eventStore, MetaAggregate.Zero zero) {
     return new Aggregate(zero.id(Forum::id), null, State.Registered);
   }
 
-  private static Forum last(EventStore pool, MetaAggregate.Last last) {
+  private static Forum last(EventStore eventStore, MetaAggregate.Last last) {
     return new Aggregate(last.id(Forum::id), last.entity(Forum::entity), last.state(Forum::state));
   }
 

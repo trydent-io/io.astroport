@@ -1,7 +1,6 @@
 package io.citadel.kernel.eventstore;
 
 import io.citadel.kernel.eventstore.metadata.Change;
-import io.citadel.kernel.eventstore.event.Entity;
 import io.citadel.kernel.media.Json;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -14,7 +13,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 sealed interface Transaction {
-  static Transaction open(Vertx vertx, SqlClient sqlClient, Entity entity) {
+  static Transaction open(Vertx vertx, SqlClient sqlClient, Audit.Entity entity) {
     return new Open(vertx.eventBus(), sqlClient, entity, Stream.empty());
   }
 
@@ -29,10 +28,10 @@ sealed interface Transaction {
   final class Open implements Transaction {
     private final EventBus eventBus;
     private final SqlClient sqlClient;
-    private final Entity entity;
+    private final Audit.Entity entity;
     private final Stream<Change> changes;
 
-    public Open(EventBus eventBus, SqlClient sqlClient, Entity entity, Stream<Change> changes) {
+    public Open(EventBus eventBus, SqlClient sqlClient, Audit.Entity entity, Stream<Change> changes) {
       this.eventBus = eventBus;
       this.sqlClient = sqlClient;
       this.entity = entity;

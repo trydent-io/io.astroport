@@ -1,12 +1,6 @@
 package io.citadel.kernel.eventstore;
 
-import io.citadel.kernel.eventstore.event.Audit;
-import io.citadel.kernel.media.Json;
-
-import java.util.Map;
-import java.util.stream.Stream;
-
-sealed interface Update permits Client {
+interface Update {
   String updateTemplate = """
     with events as (
       select  es -> 'entity' ->> 'id' entity_id,
@@ -34,9 +28,4 @@ sealed interface Update permits Client {
       or    (es.entity_version = 0 and not exists(select ee.event_id from entity_events ee where ee.entity_id = es.entity_id))
     returning event_id, event_name, event_data, event_timepoint
     """;
-
-  default Map<String, Object> with(Stream<Audit> events) {
-    return Map.of("events", Json.array(events));
-  }
-
 }

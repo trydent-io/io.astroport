@@ -1,67 +1,46 @@
 package io.citadel.kernel.domain;
 
-import io.citadel.kernel.eventstore.event.Entity;
-import io.citadel.kernel.eventstore.event.Audit;
-import io.citadel.kernel.eventstore.event.Event;
+import io.citadel.kernel.eventstore.Audit;
+import io.citadel.kernel.eventstore.EventStore;
 import io.citadel.kernel.lang.Arrayable;
-import io.citadel.kernel.media.Json;
+import io.vertx.core.Future;
 
-import java.util.Iterator;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import static io.citadel.kernel.eventstore.event.Event.data;
-import static io.citadel.kernel.eventstore.event.Event.name;
 
 @SuppressWarnings("unchecked")
-public sealed interface Changes<EVENT> extends Iterable<Audit> {
-  static <EVENT, STATE extends Enum<STATE> & State<STATE, EVENT>> Changes<EVENT> of(Entity entity, STATE current) {
-    return new Stateful<>(entity, current);
+public interface Changes<EVENT extends Record> {
+  static <EVENT extends Record, STATE extends Enum<STATE> & State<STATE, EVENT>> Changes<EVENT> of(EventStore eventStore, Audit.Entity entity, STATE current) {
+    return new Stateful<>(eventStore, entity, current);
   }
 
   Changes<EVENT> append(EVENT event);
+  Future<Void> apply();
 
-  default Stream<Audit> stream() {
-    return StreamSupport.stream(spliterator(), false);
-  }
+  final class Stateful<EVENT extends Record, STATE extends Enum<STATE> & State<STATE, EVENT>> implements Changes<EVENT>, Arrayable<EVENT> {
+    private final EventStore eventStore;
+    private final Audit.Entity entity;
+    private final STATE state;
+    private final EVENT[] events;
 
-  record Stateful<EVENT, STATE extends Enum<STATE> & State<STATE, EVENT>>(Entity entity, STATE state, EVENT... events) implements Changes<EVENT>, Arrayable<EVENT>, Events<EVENT> {
-    @Override
-    public Iterator<Audit> iterator() {
-      return iter();
+    Stateful(EventStore eventStore, Audit.Entity entity, STATE state, EVENT... events) {
+      this.eventStore = eventStore;
+      this.entity = entity;
+      this.state = state;
+      this.events = events;
     }
+
     @SuppressWarnings("unchecked")
     @Override
     public Changes<EVENT> append(EVENT event) {
       if (!state.transitable(event)) throw new IllegalStateException("Can't transit state %s with event %s".formatted(state, event));
 
-      return new Stateful<>(entity, state.transit(event), append(events, event));
+      return new Stateful<>(eventStore, entity, state.transit(event), append(events, event));
     }
-  }
-  record Stateless<E>(Entity entity, E... events) implements Changes<E>, Arrayable<E>, Events<E> {
+
     @Override
-    public Changes<E> append(E event) {
-      return new Stateless<>(entity, append(events, event));
+    public Future<Void> apply() {
+      return eventStore.store(Stream.of(events).map(event -> Audit.of(entity, Audit.Event.from(event))));
     }
-    @Override
-    public Iterator<Audit> iterator() {
-      return iter();
-    }
-  }
-}
-interface Events<EVENT> {
-  EVENT[] events();
-  Entity entity();
-  default Iterator<Audit> iter() {
-    return Stream.of(events())
-      .map(it ->
-        Event.of(
-          name(it.getClass().getSimpleName()),
-          data(Json.fromAny(it))
-        )
-      )
-      .map(event -> Audit.of(entity(), event))
-      .iterator();
   }
 }
 
