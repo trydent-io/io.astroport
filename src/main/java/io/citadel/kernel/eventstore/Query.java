@@ -23,6 +23,7 @@ interface Query {
           on lookup.id = aggregated.aggregate_id
     """;
 
+  //language=PostgreSQL
   String queryTemplate = """
     with last as (
       select  entity_id as id, entity_name as name, entity_version as version

@@ -65,7 +65,7 @@ public record Audit(Entity entity, Event event) {
         );
     }
 
-    public static <EVENT extends Record> Event from(EVENT event) {
+    public static <EVENT> Event from(EVENT event) {
       return new Event(null, event.getClass().getSimpleName(), Json.fromAny(event), null);
     }
   }

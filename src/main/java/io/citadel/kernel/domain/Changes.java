@@ -8,15 +8,15 @@ import io.vertx.core.Future;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unchecked")
-public interface Changes<EVENT extends Record> {
+public interface Changes<EVENT> {
   static <EVENT extends Record, STATE extends Enum<STATE> & State<STATE, EVENT>> Changes<EVENT> of(EventStore eventStore, Audit.Entity entity, STATE current) {
     return new Stateful<>(eventStore, entity, current);
   }
 
-  Changes<EVENT> append(EVENT event);
+  <DOMAIN_EVENT extends EVENT> Changes<EVENT> append(DOMAIN_EVENT event);
   Future<Void> apply();
 
-  final class Stateful<EVENT extends Record, STATE extends Enum<STATE> & State<STATE, EVENT>> implements Changes<EVENT>, Arrayable<EVENT> {
+  final class Stateful<EVENT, STATE extends Enum<STATE> & State<STATE, EVENT>> implements Changes<EVENT>, Arrayable<EVENT> {
     private final EventStore eventStore;
     private final Audit.Entity entity;
     private final STATE state;
@@ -31,7 +31,7 @@ public interface Changes<EVENT extends Record> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Changes<EVENT> append(EVENT event) {
+    public <DOMAIN_EVENT extends EVENT> Changes<EVENT> append(DOMAIN_EVENT event) {
       if (!state.transitable(event)) throw new IllegalStateException("Can't transit state %s with event %s".formatted(state, event));
 
       return new Stateful<>(eventStore, entity, state.transit(event), append(events, event));

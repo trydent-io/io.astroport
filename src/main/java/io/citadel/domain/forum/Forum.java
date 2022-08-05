@@ -31,8 +31,8 @@ public sealed interface Forum extends Committable {
     return Forum.State.valueOf(value);
   }
 
-  static Aggregates<Forum> forums(EventStore pool) {
-    return Aggregates.lookup(pool, NAME, Forum::zero, Forum::last);
+  static Hydration lookup(EventStore eventStore) {
+    return Aggregates.repository(eventStore, NAME, Forum::zero, Forum::last);
   }
 
   private static Forum zero(EventStore eventStore, MetaAggregate.Zero zero) {

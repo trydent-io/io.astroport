@@ -1,6 +1,6 @@
 package io.citadel.kernel.domain;
 
-public interface State<STATE extends Enum<STATE> & State<STATE, EVENT>, EVENT extends Record> {
+public interface State<STATE extends Enum<STATE> & State<STATE, EVENT>, EVENT> {
   @SuppressWarnings("unchecked")
   default boolean is(STATE... states) {
     var index = 0;
