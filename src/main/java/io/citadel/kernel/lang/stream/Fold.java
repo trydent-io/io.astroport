@@ -13,8 +13,7 @@ import java.util.stream.Collector;
 
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
-@SuppressWarnings("unchecked")
-final class Fold<MAPPED, SOURCE, PRETARGET, TARGET> implements Collector<SOURCE, Fold.Folded<SOURCE, PRETARGET>, TARGET> {
+final class Fold<TRANSFORMED, SOURCE, PRETARGET, TARGET> implements Collector<SOURCE, Fold.Folded<SOURCE, PRETARGET>, TARGET> {
   record Folded<SOURCE, PRETARGET>(SOURCE source, PRETARGET pretarget) {
   }
 
@@ -24,14 +23,14 @@ final class Fold<MAPPED, SOURCE, PRETARGET, TARGET> implements Collector<SOURCE,
   private volatile Folded<SOURCE, PRETARGET> reference;
   private final TrySupplier<? extends PRETARGET> initializer;
 
-  private final TryFunction<? super SOURCE, ? extends MAPPED> mapper;
-  private final TryBiFunction<? super PRETARGET, ? super MAPPED, ? extends PRETARGET> accumulator;
+  private final TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer;
+  private final TryBiFunction<? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator;
 
   private final TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher;
 
-  private Fold(TrySupplier<? extends PRETARGET> initializer, TryFunction<? super SOURCE, ? extends MAPPED> mapper, TryBiFunction<? super PRETARGET, ? super MAPPED, ? extends PRETARGET> accumulator, TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher) {
+  private Fold(TrySupplier<? extends PRETARGET> initializer, TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer, TryBiFunction<? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator, TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher) {
     this.initializer = initializer;
-    this.mapper = mapper;
+    this.transformer = transformer;
     this.accumulator = accumulator;
     this.finisher = finisher;
   }
@@ -40,8 +39,12 @@ final class Fold<MAPPED, SOURCE, PRETARGET, TARGET> implements Collector<SOURCE,
     return new Fold<>(initializer, TryFunction.identity(), folder, (folded, pre) -> pre);
   }
 
-  static <SOURCE, MAPPED, TARGET> Fold<MAPPED, SOURCE, TARGET> of(TrySupplier<? extends TARGET> initializer, TryFunction<? super SOURCE, ? extends MAPPED> mapper, TryBiFunction<? super TARGET, ? super MAPPED, ? extends TARGET> folder) {
-    return new Fold<>(initializer, mapper, folder, finisher);
+  static <SOURCE, TRANSFORMED, PRETARGET, TARGET> Fold<TRANSFORMED, SOURCE, PRETARGET, TARGET> of(
+    TrySupplier<? extends PRETARGET> initializer,
+    TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer,
+    TryBiFunction<? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator,
+    TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher) {
+    return new Fold<>(initializer, transformer, accumulator, finisher);
   }
 
   @Override
@@ -60,7 +63,7 @@ final class Fold<MAPPED, SOURCE, PRETARGET, TARGET> implements Collector<SOURCE,
   public BiConsumer<Folded<SOURCE, PRETARGET>, SOURCE> accumulator() {
     return (acc, elem) -> {
       synchronized (lock) {
-        reference = new Folded<>(elem, accumulator.apply(acc.pretarget, mapper.apply(elem)));
+        reference = new Folded<>(elem, accumulator.apply(acc.pretarget, transformer.apply(elem)));
       }
     };
   }
