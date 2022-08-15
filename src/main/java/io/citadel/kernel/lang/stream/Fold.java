@@ -13,7 +13,8 @@ import java.util.stream.Collector;
 
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
-final class Fold<TRANSFORMED, SOURCE, PRETARGET, TARGET> implements Collector<SOURCE, Fold.Folded<SOURCE, PRETARGET>, TARGET> {
+@SuppressWarnings("SwitchStatementWithTooFewBranches")
+final class Fold<SOURCE, TRANSFORMED, PRETARGET, TARGET> implements Collector<SOURCE, Fold.Folded<SOURCE, PRETARGET>, TARGET> {
   record Folded<SOURCE, PRETARGET>(SOURCE source, PRETARGET pretarget) {
   }
 
@@ -28,7 +29,7 @@ final class Fold<TRANSFORMED, SOURCE, PRETARGET, TARGET> implements Collector<SO
 
   private final TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher;
 
-  private Fold(TrySupplier<? extends PRETARGET> initializer, TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer, TryBiFunction<? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator, TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher) {
+  Fold(TrySupplier<? extends PRETARGET> initializer, TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer, TryBiFunction<? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator, TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher) {
     this.initializer = initializer;
     this.transformer = transformer;
     this.accumulator = accumulator;
@@ -37,14 +38,6 @@ final class Fold<TRANSFORMED, SOURCE, PRETARGET, TARGET> implements Collector<SO
 
   static <SOURCE, TARGET> Fold<SOURCE, SOURCE, TARGET, TARGET> of(TrySupplier<? extends TARGET> initializer, TryBiFunction<? super TARGET, ? super SOURCE, ? extends TARGET> folder) {
     return new Fold<>(initializer, TryFunction.identity(), folder, (folded, pre) -> pre);
-  }
-
-  static <SOURCE, TRANSFORMED, PRETARGET, TARGET> Fold<TRANSFORMED, SOURCE, PRETARGET, TARGET> of(
-    TrySupplier<? extends PRETARGET> initializer,
-    TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer,
-    TryBiFunction<? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator,
-    TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher) {
-    return new Fold<>(initializer, transformer, accumulator, finisher);
   }
 
   @Override
