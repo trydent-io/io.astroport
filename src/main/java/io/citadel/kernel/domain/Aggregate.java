@@ -3,24 +3,25 @@ package io.citadel.kernel.domain;
 import io.citadel.kernel.func.TryPredicate;
 import io.citadel.kernel.func.TryFunction;
 import io.citadel.kernel.func.TrySupplier;
+import io.vertx.core.Future;
 
 public sealed interface Aggregate<ENTITY extends Record, EVENT> {
-  static <ENTITY extends Record, EVENT extends Record> Aggregate<ENTITY, EVENT> node(ENTITY entity, Changes<EVENT> changes) {
+  static <ENTITY extends Record, EVENT> Aggregate<ENTITY, EVENT> node(ENTITY entity, Changes<EVENT> changes) {
     return new Node<>(entity, changes);
   }
 
   @SuppressWarnings("unchecked")
   static <ENTITY extends Record, EVENT> Aggregate<ENTITY, EVENT> empty() {
-    return (Aggregate<ENTITY, EVENT>) Empty.Default;
+    return (Aggregate<ENTITY, EVENT>) Empty.Companion;
   }
 
   default Aggregate<ENTITY, EVENT> when(TryPredicate<? super ENTITY> testify) { return this; }
   default <DOMAIN_EVENT extends EVENT> Aggregate<ENTITY, EVENT> then(TryFunction<? super ENTITY, ? extends DOMAIN_EVENT> apply) { return this; }
   default <DOMAIN_EVENT extends EVENT> Aggregate<ENTITY, EVENT> then(TrySupplier<DOMAIN_EVENT> supply) { return this; }
-  default void commit() {}
+  default Future<Aggregate<ENTITY, EVENT>> push() { return null; }
 }
 
-enum Empty implements Aggregate<Record, Record> { Default }
+enum Empty implements Aggregate<Record, Object> {Companion}
 
 final class Node<ENTITY extends Record, EVENT> implements Aggregate<ENTITY, EVENT> {
   private final ENTITY entity;
@@ -38,16 +39,16 @@ final class Node<ENTITY extends Record, EVENT> implements Aggregate<ENTITY, EVEN
 
   @Override
   public <DOMAIN_EVENT extends EVENT> Aggregate<ENTITY, EVENT> then(TryFunction<? super ENTITY, ? extends DOMAIN_EVENT> apply) {
-    return new Node<>(entity, changes.append(apply.apply(entity)));
+    return new Node<>(entity, changes.add(apply.apply(entity)));
   }
 
   @Override
   public <DOMAIN_EVENT extends EVENT> Aggregate<ENTITY, EVENT> then(TrySupplier<DOMAIN_EVENT> supply) {
-    return new Node<>(entity, changes.append(supply.get()));
+    return new Node<>(entity, changes.add(supply.get()));
   }
 
   @Override
-  public void commit() {
-
+  public Future<Aggregate<ENTITY, EVENT>> push() {
+    return changes.commit().map(Aggregate.empty());
   }
 }

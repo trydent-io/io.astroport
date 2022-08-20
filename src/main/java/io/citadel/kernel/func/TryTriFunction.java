@@ -1,7 +1,10 @@
 package io.citadel.kernel.func;
 
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+
 @FunctionalInterface
-public interface ThrowableTriFunction<A, B, C, R> {
+public interface TryTriFunction<A, B, C, R> {
   R tryApply(A a, B b, C c) throws Throwable;
 
   default R apply(A a, B b, C c) {

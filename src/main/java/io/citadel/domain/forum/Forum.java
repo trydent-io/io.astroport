@@ -5,10 +5,7 @@ import io.citadel.domain.forum.handler.command.Register;
 import io.citadel.domain.member.Member;
 import io.citadel.kernel.domain.Committable;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.domain.Aggregates;
 import io.citadel.kernel.domain.Transaction;
-import io.citadel.kernel.eventstore.EventStore;
-import io.citadel.kernel.eventstore.metadata.MetaAggregate;
 import io.citadel.kernel.vertx.Task;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
@@ -16,38 +13,16 @@ import io.vertx.core.json.JsonObject;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public sealed interface Forum extends Committable {
+public sealed interface Forum {
+  enum Namespace implements Forum {}
   String NAME = "forum";
 
-  static ID id(final String value) {
-    return new ID(UUID.fromString(value));
+  record Entity(ID id, Details details) {
+    Entity(ID id) { this(id, null); }
+    public Entity details(Name name, Description description) {
+      return new Entity(id, new Details(name, description));
+    }
   }
-
-  private static Entity entity(JsonObject json) {
-    return json.mapTo(Entity.class);
-  }
-
-  private static State state(String value) {
-    return Forum.State.valueOf(value);
-  }
-
-  static Hydration lookup(EventStore eventStore) {
-    return Aggregates.repository(eventStore, NAME, Forum::zero, Forum::last);
-  }
-
-  private static Forum zero(EventStore eventStore, MetaAggregate.Zero zero) {
-    return new Aggregate(zero.id(Forum::id), null, State.Registered);
-  }
-
-  private static Forum last(EventStore eventStore, MetaAggregate.Last last) {
-    return new Aggregate(last.id(Forum::id), last.entity(Forum::entity), last.state(Forum::state));
-  }
-
-  Forum register(Name name, Description description);
-
-  Future<Member> registeredBy();
-
-  record Entity(Details details, Member.ID registeredBy) {}
 
   enum State implements io.citadel.kernel.domain.State<State, Event> {
     Registered, Open, Closed, Archived;
@@ -78,10 +53,10 @@ public sealed interface Forum extends Committable {
   sealed interface Event {
     enum Names {Opened, Closed, Registered, Reopened, Replaced, Archived}
 
-    record Registered(Details details) implements Event {
+    record Registered(Name name, Description description, Member.ID by) implements Event {
     }
 
-    record Replaced(Details details) implements Event {
+    record Replaced(Name name, Description description, Member.ID by) implements Event {
     }
 
     record Opened() implements Event {
@@ -110,28 +85,6 @@ public sealed interface Forum extends Committable {
   } // ValueObject for Details
 
   sealed interface Handler<C extends Record & Command> extends Domain.Handler<Forum, C> permits Register {
-  }
-}
-
-final class Aggregate implements Forum, Task {
-  private final Forum.ID id;
-  private final Forum.Entity entity;
-  private final Transaction<Forum.Event> transaction;
-
-  private Aggregate(ID id, Entity entity, Transaction<Event> transaction) {
-    this.id = id;
-    this.entity = entity;
-    this.transaction = transaction;
-  }
-
-  @Override
-  public Forum register(Name name, Description description) {
-    return new Aggregate(id, entity, transaction.log(new Registered(new Details(name, description))));
-  }
-
-  @Override
-  public Future<Void> commit() {
-    return transaction.commit();
   }
 }
 

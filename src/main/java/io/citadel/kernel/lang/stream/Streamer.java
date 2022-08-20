@@ -14,10 +14,6 @@ public interface Streamer {
     return Stream.concat(origin, Stream.of(items));
   }
 
-  default <SOURCE, TARGET> Fold<SOURCE, SOURCE, TARGET, TARGET> folding(TrySupplier<? extends TARGET> initializer, TryBiFunction<? super TARGET, ? super SOURCE, ? extends TARGET> accumulator) {
-    return new Fold<>(initializer, TryFunction.identity(), accumulator, (TryBiFunction<? super SOURCE, ? super TARGET, ? extends TARGET>) (source, target) -> target);
-  }
-
   default <SOURCE, TRANSFORMED, PRETARGET, TARGET> Fold<SOURCE, TRANSFORMED, PRETARGET, TARGET> folding(TrySupplier<? extends PRETARGET> initializer, TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer, TryBiFunction<? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator, TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher) {
     return new Fold<>(initializer, transformer, accumulator, finisher);
   }

@@ -24,7 +24,7 @@ public record Audit(Entity entity, Event event) {
       assert id != null && name != null && version >= 0;
     }
 
-    public static Entity zero(String id, String name) {
+    public static Entity with(String id, String name) {
       return new Entity(id, name, 0);
     }
 
