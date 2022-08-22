@@ -7,11 +7,12 @@ import io.vertx.core.Future;
 
 import java.util.stream.Stream;
 
-@SuppressWarnings("unchecked")
+
 public interface Changes<EVENT> {
   static <EVENT, STATE extends Enum<STATE> & State<STATE, EVENT>> Changes<EVENT> local(EventStore eventStore, Audit.Entity entity, STATE current) {
     return new Local<>(eventStore, entity, current);
   }
+  @SuppressWarnings("unchecked")
   static <EVENT> Changes<EVENT> nothing() { return (Changes<EVENT>) Nothing.Companion;}
   default <DOMAIN_EVENT extends EVENT> Changes<EVENT> add(DOMAIN_EVENT event) {
     return this;
@@ -20,7 +21,7 @@ public interface Changes<EVENT> {
     return Future.succeededFuture(this);
   }
   enum Nothing implements Changes<Object> {
-    Companion;
+    Companion
   }
 
   final class Local<EVENT, STATE extends Enum<STATE> & State<STATE, EVENT>> implements Changes<EVENT>, Arrayable<EVENT> {
@@ -29,6 +30,7 @@ public interface Changes<EVENT> {
     private final STATE state;
     private final EVENT[] events;
 
+    @SafeVarargs
     Local(EventStore eventStore, Audit.Entity entity, STATE state, EVENT... events) {
       this.eventStore = eventStore;
       this.entity = entity;

@@ -14,27 +14,19 @@ import java.util.stream.Collector;
 
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
-@SuppressWarnings("SwitchStatementWithTooFewBranches")
-final class Fold<STATE, SOURCE, TRANSFORMED, PRETARGET, TARGET> implements Collector<SOURCE, PRETARGET, TARGET> {
-  record Folded<STATE, SOURCE, PRETARGET>(STATE state, SOURCE source, PRETARGET pretarget) {
-  }
-
+final class Fold<SOURCE, TRANSFORMED, PRETARGET, TARGET> implements Collector<SOURCE, PRETARGET, TARGET> {
   private static final Set<Characteristics> IdentityFinish = Set.of(IDENTITY_FINISH);
 
-  private final Object lock = new Object();
-  private volatile STATE state;
-  private volatile PRETARGET pretarget;
+  private PRETARGET pretarget;
 
-  private final TrySupplier<? extends STATE> initial;
   private final TrySupplier<? extends PRETARGET> initializer;
 
   private final TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer;
-  private final TryTriFunction<? super STATE, ? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator;
+  private final TryBiFunction<? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator;
 
-  private final TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher;
+  private final TryFunction<? super PRETARGET, ? extends TARGET> finisher;
 
-  Fold(TrySupplier<? extends STATE> initial, TrySupplier<? extends PRETARGET> initializer, TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer, TryTriFunction<? super STATE, ? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator, TryBiFunction<? super SOURCE, ? super PRETARGET, ? extends TARGET> finisher) {
-    this.initial = initial;
+  Fold(TrySupplier<? extends PRETARGET> initializer, TryFunction<? super SOURCE, ? extends TRANSFORMED> transformer, TryBiFunction<? super PRETARGET, ? super TRANSFORMED, ? extends PRETARGET> accumulator, TryFunction<? super PRETARGET, ? extends TARGET> finisher) {
     this.initializer = initializer;
     this.transformer = transformer;
     this.accumulator = accumulator;
@@ -43,37 +35,22 @@ final class Fold<STATE, SOURCE, TRANSFORMED, PRETARGET, TARGET> implements Colle
 
   @Override
   public Supplier<PRETARGET> supplier() {
-    return () -> {
-      if (pretarget == null && state == null) {
-        synchronized (lock) {
-          if (pretarget == null && state == null) {
-            pretarget = initializer.get();
-            state = initial.get();
-          }
-        }
-      }
-      return pretarget;
-    };
+    return () -> pretarget = initializer.get();
   }
 
   @Override
   public BiConsumer<PRETARGET, SOURCE> accumulator() {
-    return (acc, elem) -> {
-      synchronized (lock) {
-        final var transformed = transformer.apply(elem);
-        pretarget = accumulator.apply(acc.pretarget, transformer.apply(elem)));
-      }
-    };
+    return (acc, elem) -> pretarget = accumulator.apply(pretarget, transformer.apply(elem));
   }
 
   @Override
-  public BinaryOperator<Folded<SOURCE, PRETARGET>> combiner() {
+  public BinaryOperator<PRETARGET> combiner() {
     return (acc1, acc2) -> acc1;
   }
 
   @Override
-  public Function<Folded<SOURCE, PRETARGET>, TARGET> finisher() {
-    return folded -> finisher.apply(folded.source, folded.pretarget);
+  public Function<PRETARGET, TARGET> finisher() {
+    return folded -> finisher.apply(pretarget);
   }
 
   @Override

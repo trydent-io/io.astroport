@@ -12,6 +12,10 @@ public interface State<STATE extends Enum<STATE> & State<STATE, EVENT>, EVENT> {
   STATE transit(EVENT event);
 
   default boolean transitable(EVENT event) {
-    return transit(event) != null;
+    try {
+      return transit(event) != null;
+    } catch (IllegalStateException ignored) {
+      return false;
+    }
   }
 }

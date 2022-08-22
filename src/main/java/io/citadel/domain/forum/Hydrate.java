@@ -5,7 +5,7 @@ import io.citadel.kernel.eventstore.Audit;
 
 public final class Hydrate implements Archetype<Forum.ID, Forum.Entity, Forum.Event, Forum.State> {
   @Override
-  public Forum.State state() {
+  public Forum.State initial() {
     return Forum.State.Registered;
   }
 

@@ -10,10 +10,6 @@ public sealed interface Migration permits Sql {
     return sql(vertx, database, "eventstore");
   }
 
-  static Migration projections(Vertx vertx, Database database) {
-    return sql(vertx, database, "projections");
-  }
-
   private static Migration sql(Vertx vertx, Database database, String migration) {
     return new Sql(vertx, database, migration, (dataSource, location) ->
       Flyway

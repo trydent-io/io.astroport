@@ -50,7 +50,7 @@ public interface Repository<ID, ENTITY extends Record, EVENT> {
       private Audit audit;
 
       private Aggregating(ID id) {
-        this.state = archetype.state();
+        this.state = archetype.initial();
         this.entity = archetype.initialize(id);
         this.audit = null;
       }

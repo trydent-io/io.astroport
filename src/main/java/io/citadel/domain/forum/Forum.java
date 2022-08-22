@@ -3,12 +3,7 @@ package io.citadel.domain.forum;
 import io.citadel.domain.forum.Forum.Event.*;
 import io.citadel.domain.forum.handler.command.Register;
 import io.citadel.domain.member.Member;
-import io.citadel.kernel.domain.Committable;
 import io.citadel.kernel.domain.Domain;
-import io.citadel.kernel.domain.Transaction;
-import io.citadel.kernel.vertx.Task;
-import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -25,12 +20,12 @@ public sealed interface Forum {
   }
 
   enum State implements io.citadel.kernel.domain.State<State, Event> {
-    Registered, Open, Closed, Archived;
+    Initial, Registered, Open, Closed, Archived, Final;
 
     @Override
     public State transit(final Event event) {
       return switch (event) {
-        case Registered it && this.is(Registered) -> this;
+        case Registered it && this.is(Initial) -> Registered;
         case Replaced it && this.is(Registered, Open) -> this;
         case Opened it && this.is(Registered) -> Open;
         case Closed it && this.is(Open) -> Closed;
